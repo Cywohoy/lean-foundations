@@ -62,7 +62,16 @@ async function main() {
     page.on('console', message => { if (message.type() === 'error' || process.env.TRACE_WASM) console.error('BROWSER:', message.text()); });
     page.on('requestfailed', request => console.error('REQUEST:', request.url(), request.failure()?.errorText));
     page.on('response', response => { if (response.status() >= 400) console.error('HTTP',response.status(),response.url()); });
-    page.on('request', request => { if (request.method() !== 'GET' || request.postData()) uploads.push(request.url()); });
+    page.on('request', request => {
+      if (request.method() === 'GET' && !request.postData()) return;
+      const url = new URL(request.url());
+      // A proxied deployment may send Cloudflare performance telemetry, not proofs.
+      if (process.env.BOOK_URL && url.origin === new URL(base).origin && url.pathname === '/cdn-cgi/rum') {
+        assert(!/exercise_|:=\s*by/.test(request.postData() || ''), 'Proof text appeared in performance telemetry');
+        return;
+      }
+      uploads.push(request.url());
+    });
     async function open(selected) {
       await page.goto(new URL(selected.url, base).href);
       const wrapper = page.locator(`[data-snippet="${selected.key}"]`);

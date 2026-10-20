@@ -55,3 +55,9 @@ GitHub 공식 안내:
 
 - [사용자 도메인 연결](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)
 - [도메인 소유 확인](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/verifying-your-custom-domain-for-github-pages)
+
+## 프록시를 켠 실제 연결
+
+2026-10-21. 사용자가 Cloudflare 프록시를 켠 CNAME으로 연결했다. `https://lean.p4per.dev/`와 각 장, 브라우저 실행 스크립트의 HTTPS 응답을 확인했다. 이 연결의 방문자용 HTTPS는 Cloudflare가 제공한다.
+
+DNS 전용은 초기 연결 확인을 위한 권장값이며 프록시 사용 자체를 금지하는 조건은 아니다. 다만 GitHub API상 원본 서버의 사용자 도메인 인증서는 아직 없으며, GitHub의 `https_enforced` 설정도 활성화할 수 없다. 방문자용 HTTPS 접속과 GitHub 자체 인증서 발급 상태를 구별하여 기록한다. Cloudflare의 실제 원본 연결 암호화 모드는 이 작업에서 변경하거나 확인하지 않았다.
