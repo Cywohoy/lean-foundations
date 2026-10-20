@@ -6,7 +6,7 @@ const path = require('node:path');
 let playwright;
 try { playwright = require('playwright'); }
 catch { playwright = require(path.join(process.env.USERPROFILE, '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright')); }
-const root = path.resolve(__dirname, '../_out/pages');
+const root = path.resolve(__dirname, '../_out/pages/foundations');
 const prefix = '/lean-foundations/';
 const mime = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript',
   '.css': 'text/css', '.json': 'application/json', '.woff2': 'font/woff2', '.svg': 'image/svg+xml'};

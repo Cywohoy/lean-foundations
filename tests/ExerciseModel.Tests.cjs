@@ -4,7 +4,7 @@ const fs = require('node:fs');
 (async () => {
   const source = fs.readFileSync('assets/web/exercise-model.js', 'utf8');
   const {exerciseModel} = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
-  const manifest = JSON.parse(fs.readFileSync('_out/pages/playground.json', 'utf8'));
+  const manifest = JSON.parse(fs.readFileSync('_out/pages/foundations/playground.json', 'utf8'));
   const exercises = Object.values(manifest).filter(item => item.exercise);
   assert(exercises.length > 50);
   let proofs = 0;

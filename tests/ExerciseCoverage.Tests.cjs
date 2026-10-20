@@ -6,7 +6,7 @@ const path = require('node:path');
 let playwright;
 try { playwright = require('playwright'); }
 catch { playwright = require(path.join(process.env.USERPROFILE, '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright')); }
-const site = path.resolve('_out/pages');
+const site = path.resolve('_out/pages/foundations');
 const localManifest = JSON.parse(fs.readFileSync(path.join(site, 'playground.json'), 'utf8'));
 let manifest = localManifest;
 const uploads = [];

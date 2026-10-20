@@ -5,6 +5,7 @@ from urllib.parse import unquote, urljoin, urlsplit
 
 root = Path(__file__).resolve().parents[1]
 site = root / '_out/pages'
+book = site / 'foundations'
 prefix = '/lean-foundations/'
 origin = 'https://example.test'
 
@@ -35,7 +36,8 @@ checked = 0
 for page in pages:
     parser = Links()
     parser.feed(page.read_text(encoding='utf-8'))
-    assert parser.static, page
+    if page.is_relative_to(book):
+        assert parser.static, page
     url = origin + prefix + page.relative_to(site).as_posix()
     base = urljoin(url, parser.base) if parser.base else url
     for link in parser.urls:
@@ -49,38 +51,38 @@ for page in pages:
         checked += 1
 
 assert (site / '.nojekyll').is_file()
-if 'content="wasm"' in (site / 'index.html').read_text(encoding='utf-8'):
+if 'content="wasm"' in (book / 'index.html').read_text(encoding='utf-8'):
     import json
     import re
     runtime_path = re.search(r'<meta name="lean-wasm-base" content="([^"]+)">',
-                             (site / 'index.html').read_text(encoding='utf-8')).group(1)
-    runtime = site / runtime_path
-    assert runtime.parent == site / 'wasm'
+                             (book / 'index.html').read_text(encoding='utf-8')).group(1)
+    runtime = book / runtime_path
+    assert runtime.parent == book / 'wasm'
     metadata = json.loads((runtime / 'runtime.json').read_text())
     assert metadata['version'] == '4.35.0'
     assert len(metadata['ampleCommit']) == 40
     assert (runtime / 'runtime/lean.wasm').is_file()
     assert (runtime / 'library.json').is_file()
     assert (runtime / 'licenses/Lean.txt').is_file()
-    assert (site / 'coi-serviceworker.js').is_file()
-    assert (site / 'assets/web/wasm-reader.js').is_file()
-    assert (site / 'assets/web/exercise-model.js').is_file()
-    assert not any('AlgebraBook.' in item['before'] for item in json.loads((site / 'playground.json').read_text()).values())
+    assert (book / 'coi-serviceworker.js').is_file()
+    assert (book / 'assets/web/wasm-reader.js').is_file()
+    assert (book / 'assets/web/exercise-model.js').is_file()
+    assert not any('AlgebraBook.' in item['before'] for item in json.loads((book / 'playground.json').read_text()).values())
     assert all(item.get('contextFiles') for item in json.loads(
-        (site / 'playground.json').read_text(encoding='utf-8')).values() if item.get('exercise'))
+        (book / 'playground.json').read_text(encoding='utf-8')).values() if item.get('exercise'))
 assert not (site / 'operations-and-groups').exists()
 # Reading does not require opening another page for each small subsection.
-reading_pages = [p for p in site.rglob('index.html')
-                 if p.relative_to(site).as_posix() not in ('find/index.html', 'search/index.html')
+reading_pages = [p for p in book.rglob('index.html')
+                 if p.relative_to(book).as_posix() not in ('find/index.html', 'search/index.html')
                  and '<main>' in p.read_text(encoding='utf-8')]
 assert len(reading_pages) == 7, reading_pages  # cover, four chapters, two appendices
-assert all(len(p.relative_to(site).parts) <= 2 for p in reading_pages)
-sections = json.loads((site / 'xref.json').read_text(encoding='utf-8'))[
+assert all(len(p.relative_to(book).parts) <= 2 for p in reading_pages)
+sections = json.loads((book / 'xref.json').read_text(encoding='utf-8'))[
     'Verso.Genre.Manual.section']['contents']
 for entries in sections.values():
     for entry in entries:
         address = entry['address'].strip('/')
-        page = site / address / 'index.html'
+        page = book / address / 'index.html'
         assert page.is_file(), address
         assert address in ('', 'proof', 'sets-functions', 'numbers-relations', 'sizes', 'tactics', 'symbols'),address
         if len(entry['data']['context']) > 2:

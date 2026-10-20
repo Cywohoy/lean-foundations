@@ -23,10 +23,12 @@ class PreviewTests(unittest.TestCase):
         base = f'http://127.0.0.1:{server.server_port}'
         try:
             with urllib.request.urlopen(base + '/') as response:
+                self.assertIn(b'href="foundations/"', response.read())
+            with urllib.request.urlopen(base + '/foundations/') as response:
                 self.assertIn(b'<meta name="book-mode" content="wasm">', response.read())
                 self.assertEqual(response.headers['Cross-Origin-Embedder-Policy'], 'require-corp')
                 self.assertEqual(response.headers['Cross-Origin-Opener-Policy'], 'same-origin')
-            with urllib.request.urlopen(base + '/assets/web/exercise-model.js') as response:
+            with urllib.request.urlopen(base + '/foundations/assets/web/exercise-model.js') as response:
                 self.assertIn(b'exerciseModel', response.read())
             with self.assertRaises(urllib.error.HTTPError) as missing:
                 urllib.request.urlopen(base + '/api/lean/status')

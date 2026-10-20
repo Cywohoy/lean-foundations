@@ -1,6 +1,7 @@
 """Stage the book and its pinned browser Lean runtime for every preview/host."""
 import argparse
 import json
+import os
 from pathlib import Path
 import shutil
 
@@ -30,18 +31,40 @@ def main():
         raise SystemExit('Generate the book first: lake exe textbook')
     if destination.exists():
         shutil.rmtree(destination)
-    shutil.copytree(source, destination)
+    book = destination / "foundations"
+    shutil.copytree(source, book)
     # Keep Verso's existing SRI-verified dependency on the same origin under COEP.
-    shutil.copyfile(ROOT / 'assets/web/marked.min.js', destination / '-verso-data/marked.min.js')
+    shutil.copyfile(ROOT / 'assets/web/marked.min.js', book / '-verso-data/marked.min.js')
     from wasm_pages import prepare
-    relative = prepare(destination, args.wasm_bundle, download=not args.wasm_bundle,
+    relative = prepare(book, args.wasm_bundle, download=not args.wasm_bundle,
                        config=args.runtime_config)
     marker = '<meta name="book-mode" content="wasm">' + f'<meta name="lean-wasm-base" content="{relative}">'
-    for page in destination.rglob('*.html'):
+    for page in book.rglob('*.html'):
         html = page.read_text(encoding='utf-8')
         html = html.replace('https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js', '-verso-data/marked.min.js')
         assert '</head>' in html, page
         page.write_text(html.replace('</head>', marker + '</head>', 1), encoding='utf-8')
+    shutil.copyfile(ROOT / 'web/portal.html', destination / 'index.html')
+    # Keep existing bookmarks, including fragments and query strings. Paths in
+    # old redirect pages remain relative to the book after the extra prefix.
+    for original in source.rglob('*.html'):
+        relative_path = original.relative_to(source)
+        if relative_path == Path('index.html'):
+            continue
+        redirect = destination / relative_path
+        if redirect.exists():
+            continue
+        target = os.path.relpath(book / relative_path, redirect.parent).replace('\\', '/')
+        if target.endswith('index.html'):
+            target = target[:-10]
+        redirect.parent.mkdir(parents=True, exist_ok=True)
+        redirect.write_text(
+            '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
+            '<title>옮겨진 본문</title><script>location.replace('
+            + json.dumps(target) + '+location.search+location.hash)</script>'
+            + f'<meta http-equiv="refresh" content="0;url={target}">'
+            + f'<link rel="canonical" href="{target}"></head>'
+            + f'<body><a href="{target}">본문으로 이동</a></body></html>', encoding='utf-8')
     (destination / '.nojekyll').write_text('', encoding='utf-8')
     print('Static book staged in _out/pages.')
 

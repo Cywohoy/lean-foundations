@@ -22,7 +22,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', type=int, default=8000)
     args = parser.parse_args()
-    index = PUBLIC / 'index.html'
+    index = PUBLIC / 'foundations/index.html'
     if not index.is_file() or 'content="wasm"' not in index.read_text(encoding='utf-8'):
         raise SystemExit('Prepare the WASM textbook first: python scripts/prepare_pages.py')
     server = ThreadingHTTPServer(('127.0.0.1', args.port), PreviewHandler)
