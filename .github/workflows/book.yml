@@ -1,0 +1,39 @@
+name: Book checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: book-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: true
+          use-mathlib-cache: false
+      - name: Build and check the four-chapter book
+        run: |
+          lake exe textbook
+          python tests/check_book.py
+          python tests/check_lean.py
+      - name: Check browser input and exercise model
+        run: |
+          python scripts/build_unicode_input.py --check
+          node tests/UnicodeTable.Tests.cjs
+          node tests/ExerciseModel.Tests.cjs

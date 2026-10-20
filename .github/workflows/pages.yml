@@ -1,0 +1,61 @@
+name: Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Deploy the built site to GitHub Pages
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: true
+          use-mathlib-cache: false
+      - name: Build the book
+        run: |
+          lake exe textbook
+          python tests/check_book.py
+          python tests/check_lean.py
+      - uses: actions/cache@v4
+        with:
+          path: tmp/wasm/downloads
+          key: foundations-wasm-${{ hashFiles('web/wasm-runtime.json') }}
+      - name: Stage the checked public browser runtime
+        run: |
+          python scripts/prepare_pages.py
+          python tests/Pages.Tests.py
+          python tests/Preview.Tests.py
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _out/pages
+  deploy:
+    if: inputs.publish
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - uses: actions/deploy-pages@v4
+        id: deployment
