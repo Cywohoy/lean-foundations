@@ -32,6 +32,15 @@ jobs:
           lake exe textbook
           python tests/check_book.py
           python tests/check_lean.py
+      - uses: actions/cache@v4
+        with:
+          path: tmp/wasm/downloads
+          key: foundations-wasm-${{ hashFiles('web/wasm-runtime.json') }}
+      - name: Stage and check the browser site
+        run: |
+          python scripts/prepare_pages.py
+          python tests/Pages.Tests.py
+          python tests/Preview.Tests.py
       - name: Check browser input and exercise model
         run: |
           python scripts/build_unicode_input.py --check
