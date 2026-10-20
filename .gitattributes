@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.bat text eol=crlf
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+# Unified diff context markers are data, including spaces on otherwise empty lines.
+experiments/wasm/patches/*.patch -whitespace

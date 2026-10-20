@@ -1,0 +1,2 @@
+import Ample.Tactic.ArithmeticRules
+import AlgebraBook.Compatibility

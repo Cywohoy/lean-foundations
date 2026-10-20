@@ -1,0 +1,197 @@
+{
+  "finite_listing_extension": [
+    "10020264138025013544"
+  ],
+  "exercise_indexTwo_bijective": [
+    "10180185462367846911"
+  ],
+  "exercise_divisibility_sign": [
+    "10943030922194718394"
+  ],
+  "exercise_even_mul": [
+    "11211598526245034483"
+  ],
+  "exercise_parityClass_three_one": [
+    "12065819093236767785"
+  ],
+  "exercise_nat_pairs_infinite": [
+    "12157265447164313011"
+  ],
+  "exercise_nextParity_respects": [
+    "12309268031493759378"
+  ],
+  "exercise_parity_no_mod_three": [
+    "12437621878996936503"
+  ],
+  "exercise_forall_implication": [
+    "13154708258715926189"
+  ],
+  "exercise_sameFirst_equivalence": [
+    "13459130606934878630"
+  ],
+  "exercise_image_double_twoThree": [
+    "13475114087485946164"
+  ],
+  "exercise_fin_collision": [
+    "13809551516515521699"
+  ],
+  "fresh_element_exists": [
+    "13906078499590299946"
+  ],
+  "exercise_twoThree_inter": [
+    "13953143111401542810"
+  ],
+  "exercise_subset_trans": [
+    "14157420289601578645"
+  ],
+  "exercise_preimage_inter": [
+    "14217711601769854149"
+  ],
+  "exercise_diff_empty_iff": [
+    "14271740633085718049"
+  ],
+  "exercise_powerSet_mono": [
+    "14299857658189964173"
+  ],
+  "exercise_congruent_thirty_seven_two": [
+    "14598168776650874766"
+  ],
+  "exercise_add_three_preserves_lt": [
+    "14699303351624017450"
+  ],
+  "exercise_divides_zero": [
+    "15290344389596778929"
+  ],
+  "exercise_partial_area": [
+    "15389732279639915727"
+  ],
+  "exercise_equal_values_equivalence": [
+    "15825509975429267420"
+  ],
+  "exercise_injective_of_compose": [
+    "15923800904806233290"
+  ],
+  "exercise_congruent_divisor": [
+    "163571973290749860"
+  ],
+  "exercise_congruent_add_right": [
+    "16565645051845714774"
+  ],
+  "exercise_compl_union": [
+    "16953393254024667770"
+  ],
+  "exercise_function_bound": [
+    "17109223316101774928"
+  ],
+  "exercise_image_union": [
+    "17203495023353333903"
+  ],
+  "exercise_implication_chain": [
+    "17331681036695679999"
+  ],
+  "exercise_finite_cardinal_transport": [
+    "17548395332449355385"
+  ],
+  "exercise_double_after_successor_at_three": [
+    "17588522011589857300"
+  ],
+  "exercise_classes_of_common_element": [
+    "1781971819108645233"
+  ],
+  "exercise_four_square": [
+    "2302490634416714117"
+  ],
+  "exercise_cancel_injective": [
+    "2368709840779297611"
+  ],
+  "exercise_union_eq_right": [
+    "2388106409724192056"
+  ],
+  "exercise_inter_subset_right": [
+    "2503819598067071010"
+  ],
+  "exercise_from_two_countably_infinite": [
+    "2627369978282605572"
+  ],
+  "exercise_diagonal_injective": [
+    "2645734664576814603"
+  ],
+  "exercise_inter_union_absorb": [
+    "3061920619940165526"
+  ],
+  "exercise_relation_of_classes_equal": [
+    "3125707102910286365"
+  ],
+  "exercise_shift_lt": [
+    "3225922264034135824"
+  ],
+  "exercise_even_add": [
+    "3576748253493998235"
+  ],
+  "exercise_oneModThree_bijective": [
+    "3706752710168616110"
+  ],
+  "exercise_singleton_diagonal_empty": [
+    "3943864836191546510"
+  ],
+  "exercise_first_surjective": [
+    "4424102341489383425"
+  ],
+  "exercise_increasing_composition": [
+    "4656890706444899836"
+  ],
+  "exercise_mem_own_equivalenceClass": [
+    "5036846383151276652"
+  ],
+  "exercise_relation_specialization": [
+    "5431544270731884100"
+  ],
+  "exercise_powerSet_inter": [
+    "5505400296295048627"
+  ],
+  "exercise_setProduct_swap": [
+    "5804507699068896159"
+  ],
+  "exercise_cardinal_swap": [
+    "5964028781484826879"
+  ],
+  "exercise_inverse_inverse": [
+    "6338174606442049351"
+  ],
+  "exercise_preimage_subset": [
+    "7066691280964740511"
+  ],
+  "exercise_diff_antitone_right": [
+    "7213410929955425610"
+  ],
+  "exercise_one_add_induction": [
+    "7259463948361071760"
+  ],
+  "exercise_singletons_same_cardinal": [
+    "7501502809688316361"
+  ],
+  "exercise_positives_not_subset_twoThree": [
+    "754561971234840245"
+  ],
+  "exercise_fin_two_three_not_same": [
+    "7818174506890652162"
+  ],
+  "exercise_cardinal_product": [
+    "785860791780349149"
+  ],
+  "exercise_diff_self_subset_empty": [
+    "810059989127392135"
+  ],
+  "exercise_infinite_transport": [
+    "8245577672742814453"
+  ],
+  "exercise_property_twice": [
+    "8471689161190881615"
+  ],
+  "exercise_surjective_of_compose": [
+    "8702421171102509841"
+  ],
+  "exercise_fin_succ_not_injective": [
+    "8754053449892329082"
+  ]
+}

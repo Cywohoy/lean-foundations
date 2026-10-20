@@ -1,0 +1,28 @@
+name = "lean-foundations"
+defaultTargets = ["AlgebraBook", "textbook"]
+
+[[require]]
+name = "ample"
+git = "https://github.com/Cywohoy/ample"
+rev = "v0.2.1"
+
+[[require]]
+name = "MD4Lean"
+path = "vendor/MD4Lean"
+
+[[require]]
+name = "subverso"
+path = "vendor/subverso"
+
+[[require]]
+name = "verso"
+git = "https://github.com/leanprover/verso"
+rev = "v4.35.0"
+
+[[lean_lib]]
+name = "AlgebraBook"
+globs = ["AlgebraBook.*"]
+
+[[lean_exe]]
+name = "textbook"
+root = "Main"

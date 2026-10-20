@@ -1,0 +1,235 @@
+% Project-specific PDF typography. Loaded after Verso's generated preamble.
+\usepackage{luatexko}
+\usepackage{unicode-math}
+\usepackage{etoolbox}
+\usepackage[a4paper,margin=24mm,headheight=16pt]{geometry}
+
+\directlua{
+  luaotfload.add_fallback("bookmath", {
+    "[fonts/NotoSansMath-Regular.otf]:mode=node;",
+    "[fonts/Pretendard-Regular.ttf]:mode=node;"
+  })
+}
+
+\setmainfont{Pretendard-Regular.ttf}[
+  Path=fonts/,
+  BoldFont=Pretendard-Bold.ttf,
+  ItalicFont=Pretendard-Regular.ttf,
+  ItalicFeatures={FakeSlant=0.15},
+  BoldItalicFont=Pretendard-Bold.ttf,
+  BoldItalicFeatures={FakeSlant=0.15},
+  RawFeature={fallback=bookmath}
+]
+\setsansfont{Pretendard-Regular.ttf}[
+  Path=fonts/,
+  BoldFont=Pretendard-Bold.ttf,
+  ItalicFont=Pretendard-Regular.ttf,
+  ItalicFeatures={FakeSlant=0.15},
+  BoldItalicFont=Pretendard-Bold.ttf,
+  BoldItalicFeatures={FakeSlant=0.15},
+  RawFeature={fallback=bookmath}
+]
+\setmainhangulfont{Pretendard-Regular.ttf}[
+  Path=fonts/,
+  BoldFont=Pretendard-Bold.ttf,
+  ItalicFont=Pretendard-Regular.ttf,
+  ItalicFeatures={FakeSlant=0.15},
+  BoldItalicFont=Pretendard-Bold.ttf,
+  BoldItalicFeatures={FakeSlant=0.15}
+]
+\setsanshangulfont{Pretendard-Regular.ttf}[
+  Path=fonts/,
+  BoldFont=Pretendard-Bold.ttf,
+  ItalicFont=Pretendard-Regular.ttf,
+  ItalicFeatures={FakeSlant=0.15},
+  BoldItalicFont=Pretendard-Bold.ttf,
+  BoldItalicFeatures={FakeSlant=0.15}
+]
+\setmonofont{CascadiaCode-Regular.ttf}[
+  Path=fonts/,
+  BoldFont=CascadiaCode-Bold.ttf,
+  ItalicFont=CascadiaCodeItalic-Regular.ttf,
+  BoldItalicFont=CascadiaCodeItalic-Bold.ttf,
+  Ligatures=NoCommon,
+  RawFeature={-calt,fallback=bookmath}
+]
+\setmonohangulfont{Pretendard-Regular.ttf}[
+  Path=fonts/,
+  BoldFont=Pretendard-Bold.ttf,
+  ItalicFont=Pretendard-Regular.ttf,
+  ItalicFeatures={FakeSlant=0.15},
+  BoldItalicFont=Pretendard-Bold.ttf,
+  BoldItalicFeatures={FakeSlant=0.15}
+]
+\setmathfont{TeX Gyre Pagella Math}
+\setmathfont{NotoSansMath-Regular.otf}[
+  Path=fonts/,
+  Scale=1.10,
+  range={"00AC,"00B1,"00D7,"00F7,"2190-"22FF,
+    "27C0-"27FF,"2900-"2AFF}
+]
+
+% Override symbols even when Cascadia contains them. A missing-glyph
+% fallback alone leaves arrows such as U+2194 in the code font.
+\newfontfamily\bookSymbolFont{NotoSansMath-Regular.otf}[
+  Path=fonts/,
+  Scale=1.10,
+  BoldFont=NotoSansMath-Regular.otf,
+  ItalicFont=NotoSansMath-Regular.otf,
+  BoldItalicFont=NotoSansMath-Regular.otf
+]
+\newcommand{\BookMathSymbol}[1]{{\bookSymbolFont\char"#1\relax}}
+\newcommand{\BookSymbolCodes}{%
+  \catcode"00AC=\active\relax
+  \catcode"00B1=\active\relax
+  \catcode"00D7=\active\relax
+  \catcode"00F7=\active\relax
+  \catcode"2115=\active\relax
+  \catcode"2124=\active\relax
+  \catcode"2190=\active\relax
+  \catcode"2192=\active\relax
+  \catcode"2194=\active\relax
+  \catcode"21A6=\active\relax
+  \catcode"21D2=\active\relax
+  \catcode"21D4=\active\relax
+  \catcode"2200=\active\relax
+  \catcode"2203=\active\relax
+  \catcode"2205=\active\relax
+  \catcode"2208=\active\relax
+  \catcode"2209=\active\relax
+  \catcode"2218=\active\relax
+  \catcode"2223=\active\relax
+  \catcode"2224=\active\relax
+  \catcode"2227=\active\relax
+  \catcode"2228=\active\relax
+  \catcode"2229=\active\relax
+  \catcode"222A=\active\relax
+  \catcode"2234=\active\relax
+  \catcode"2260=\active\relax
+  \catcode"2261=\active\relax
+  \catcode"2264=\active\relax
+  \catcode"2265=\active\relax
+  \catcode"2282=\active\relax
+  \catcode"2283=\active\relax
+  \catcode"2286=\active\relax
+  \catcode"2287=\active\relax
+  \catcode"22A2=\active\relax
+  \catcode"27E8=\active\relax
+  \catcode"27E9=\active\relax
+}
+\begingroup
+\BookSymbolCodes
+\protected\gdef¬{\BookMathSymbol{00AC}}
+\protected\gdef±{\BookMathSymbol{00B1}}
+\protected\gdef×{\BookMathSymbol{00D7}}
+\protected\gdef÷{\BookMathSymbol{00F7}}
+\protected\gdefℕ{\BookMathSymbol{2115}}
+\protected\gdefℤ{\BookMathSymbol{2124}}
+\protected\gdef←{\BookMathSymbol{2190}}
+\protected\gdef→{\BookMathSymbol{2192}}
+\protected\gdef↔{\BookMathSymbol{2194}}
+\protected\gdef↦{\BookMathSymbol{21A6}}
+\protected\gdef⇒{\BookMathSymbol{21D2}}
+\protected\gdef⇔{\BookMathSymbol{21D4}}
+\protected\gdef∀{\BookMathSymbol{2200}}
+\protected\gdef∃{\BookMathSymbol{2203}}
+\protected\gdef∅{\BookMathSymbol{2205}}
+\protected\gdef∈{\BookMathSymbol{2208}}
+\protected\gdef∉{\BookMathSymbol{2209}}
+\protected\gdef∘{\BookMathSymbol{2218}}
+\protected\gdef∣{\BookMathSymbol{2223}}
+\protected\gdef∤{\BookMathSymbol{2224}}
+\protected\gdef∧{\BookMathSymbol{2227}}
+\protected\gdef∨{\BookMathSymbol{2228}}
+\protected\gdef∩{\BookMathSymbol{2229}}
+\protected\gdef∪{\BookMathSymbol{222A}}
+\protected\gdef∴{\BookMathSymbol{2234}}
+\protected\gdef≠{\BookMathSymbol{2260}}
+\protected\gdef≡{\BookMathSymbol{2261}}
+\protected\gdef≤{\BookMathSymbol{2264}}
+\protected\gdef≥{\BookMathSymbol{2265}}
+\protected\gdef⊂{\BookMathSymbol{2282}}
+\protected\gdef⊃{\BookMathSymbol{2283}}
+\protected\gdef⊆{\BookMathSymbol{2286}}
+\protected\gdef⊇{\BookMathSymbol{2287}}
+\protected\gdef⊢{\BookMathSymbol{22A2}}
+\protected\gdef⟨{\BookMathSymbol{27E8}}
+\protected\gdef⟩{\BookMathSymbol{27E9}}
+\endgroup
+
+\linespread{1.28}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.45em}
+\setcounter{tocdepth}{1}
+\setcounter{secnumdepth}{3}
+\renewcommand{\contentsname}{목차}
+\renewcommand{\chaptername}{장}
+\renewcommand{\figurename}{그림}
+\renewcommand{\tablename}{표}
+
+% Keep the four-column symbol reference within the text area.
+\newlength{\BookSymbolTableWidth}
+\newenvironment{BookSymbolTable}{%
+  \par\begingroup
+  \linespread{1.0}%
+  \fontsize{9.5}{11.5}\selectfont
+  \setlength{\parskip}{0pt}%
+  \setlength{\tabcolsep}{4pt}%
+  \setlength{\BookSymbolTableWidth}{\dimexpr\linewidth-6\tabcolsep\relax}%
+  \renewcommand{\arraystretch}{1.08}%
+  \begin{tabular}{@{}%
+    >{\raggedright\arraybackslash}p{0.22\BookSymbolTableWidth}%
+    >{\raggedright\arraybackslash}p{0.09\BookSymbolTableWidth}%
+    >{\raggedright\arraybackslash}p{0.36\BookSymbolTableWidth}%
+    >{\raggedright\arraybackslash}p{0.33\BookSymbolTableWidth}@{}}%
+}{\end{tabular}\endgroup\par}
+
+\definecolor{codeBorder}{HTML}{D6DCE3}
+\DefineVerbatimEnvironment{LeanVerbatim}{Verbatim}{
+  commandchars=\\\{\},
+  codes*={\BookSymbolCodes},
+  fontsize=\small,
+  baselinestretch=1.35,
+  breaklines=true,
+  breakanywhere=true,
+  samepage=false,
+  frame=single,
+  rulecolor=\color{codeBorder},
+  framesep=2mm,
+  vspace=0pt,
+  xleftmargin=1mm,
+  xrightmargin=1mm
+}
+\RecustomVerbatimCommand{\LeanVerb}{Verb}{
+  commandchars=\\\{\},codes*={\BookSymbolCodes},
+  fontsize=\small,breaklines=true,breakanywhere=true
+}
+\BeforeBeginEnvironment{LeanVerbatim}{%
+  \par\begingroup
+  \setlength{\parskip}{0pt}%
+  \setlength{\topsep}{0pt}%
+  \setlength{\partopsep}{0pt}%
+}
+\AfterEndEnvironment{LeanVerbatim}{\endgroup\par}
+
+% Memoir uses slanted text in its running headings.
+\makeatletter
+\DeclareFontShape{TU}{\rmdefault}{m}{sl}{<->ssub * \rmdefault/m/it}{}
+\makeatother
+
+\hypersetup{
+  unicode=true,
+  colorlinks=true,
+  linkcolor={blue!45!black},
+  urlcolor={blue!45!black},
+  pdftitle={Lean으로 배우는 기초 수학},
+  pdfsubject={한국어 대수학 교재와 Lean 예제}
+}
+\pretitle{\begin{center}\sffamily\bfseries\fontsize{30}{40}\selectfont}
+\posttitle{\par\end{center}}
+
+% Keep headings with the paragraph that follows them.
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+\emergencystretch=2em
