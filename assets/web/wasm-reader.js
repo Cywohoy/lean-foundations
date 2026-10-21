@@ -2,6 +2,7 @@ import {createLeanRuntime} from './lean-wasm.js';
 
 // Keep the reader's request/response contract; execution stays in one Worker.
 export function createBrowserBackend(siteRoot) {
+  const assetsRoot = new URL(document.querySelector('meta[name="book-assets-base"]')?.content || '.', siteRoot);
   const runtime = createLeanRuntime(new URL(document.querySelector('meta[name="lean-wasm-base"]').content, siteRoot), message => {
     const count = /Loading library packs: (\d+\/\d+)/.exec(message)?.[1];
     window.dispatchEvent(new CustomEvent('book-lean-progress', {
@@ -81,7 +82,7 @@ export function createBrowserBackend(siteRoot) {
       boot ||= runtime.boot();
       await boot;
       if (!snippets.has(payload.snippet)) {
-        const response = await fetch(new URL(`playground/${payload.snippet}.json`, siteRoot));
+        const response = await fetch(new URL(`playground/${payload.snippet}.json`, assetsRoot));
         if (!response.ok) throw new Error('예제의 실행 환경을 불러오지 못했습니다.');
         snippets.set(payload.snippet, await response.json());
       }

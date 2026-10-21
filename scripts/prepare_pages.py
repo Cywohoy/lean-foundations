@@ -38,7 +38,11 @@ def main():
     from wasm_pages import prepare
     relative = prepare(book, args.wasm_bundle, download=not args.wasm_bundle,
                        config=args.runtime_config)
-    marker = '<meta name="book-mode" content="wasm">' + f'<meta name="lean-wasm-base" content="{relative}">'
+    from reader_assets import stage_reader_assets, version_reader_links
+    assets = stage_reader_assets(book)
+    marker = ('<meta name="book-mode" content="wasm">'
+              + f'<meta name="lean-wasm-base" content="{relative}">'
+              + f'<meta name="book-assets-base" content="{assets}">')
     from reader_navigation import render_navigation
     for page in book.rglob('*.html'):
         html = page.read_text(encoding='utf-8')
@@ -51,6 +55,7 @@ def main():
         html = html.replace('<link rel="stylesheet" href="book.css">',
                             preloads + '\n<link rel="stylesheet" href="book.css">', 1)
         assert '</head>' in html, page
+        html = version_reader_links(html, assets)
         page.write_text(html.replace('</head>', marker + '</head>', 1), encoding='utf-8')
     shutil.copyfile(ROOT / 'web/portal.html', destination / 'index.html')
     # Keep existing bookmarks, including fragments and query strings. Paths in

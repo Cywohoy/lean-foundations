@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const siteRoot = new URL('.', document.baseURI);
+  const assetsRoot = new URL(document.querySelector('meta[name="book-assets-base"]')?.content || '.', siteRoot);
   const staticReading = document.querySelector('meta[name="book-mode"]')?.content === 'static';
   const browserLean = document.querySelector('meta[name="book-mode"]')?.content === 'wasm';
   let browserBackend;
@@ -28,7 +29,7 @@
   };
   async function snippet(key) {
     if (!snippets.has(key)) {
-      snippets.set(key, fetch(new URL(`playground/${key}.json`, siteRoot)).then(response => {
+      snippets.set(key, fetch(new URL(`playground/${key}.json`, assetsRoot)).then(response => {
         if (!response.ok) throw new Error('코드를 불러오지 못했습니다. 페이지를 새로고침해 주세요.');
         return response.json();
       }).catch(error => { snippets.delete(key); throw error; }));
@@ -56,7 +57,7 @@
   }
   let draftManifest;
   function exerciseManifest() {
-    draftManifest ||= fetch(new URL('exercises.json', siteRoot)).then(response => {
+    draftManifest ||= fetch(new URL('exercises.json', assetsRoot)).then(response => {
       if (!response.ok) throw new Error('Exercise metadata is unavailable.');
       return response.json();
     }).catch(error => { draftManifest = undefined; throw error; });
@@ -74,7 +75,7 @@
   }
   async function call(path, payload) {
     if (!browserLean) throw new Error('WASM 실행 환경이 준비되지 않았습니다. 미리보기를 다시 시작해 주세요.');
-    browserBackend ||= import(new URL('assets/web/wasm-reader.js', siteRoot))
+    browserBackend ||= import(new URL('assets/web/wasm-reader.js', assetsRoot))
       .then(module => module.createBrowserBackend(siteRoot));
     return (await browserBackend).call(path, payload);
   }
@@ -342,8 +343,8 @@
           if (mode !== 'edit') return;
           panel.replaceChildren();
           if (!editor) {
-            const model = exercise ? await import(new URL('assets/web/exercise-model.js', siteRoot)) : null;
-            const unicode = await import(new URL('assets/web/unicode-input.js', siteRoot));
+            const model = exercise ? await import(new URL('assets/web/exercise-model.js', assetsRoot)) : null;
+            const unicode = await import(new URL('assets/web/unicode-input.js', assetsRoot));
             if (mode !== 'edit') return;
             editor = createEditor(key, data, model?.exerciseModel, unicode.attachUnicodeInput,
               (code, verification) => showDraft(data, code, verification));

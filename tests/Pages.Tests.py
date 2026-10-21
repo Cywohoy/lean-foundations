@@ -78,11 +78,18 @@ reading_pages = [p for p in book.rglob('index.html')
 assert len(reading_pages) == 7, reading_pages  # cover, four chapters, two appendices
 for page in reading_pages:
     html = page.read_text(encoding='utf-8')
+    assets = re.search(r'<meta name="book-assets-base" content="([^"]+)">', html).group(1)
+    assert assets.startswith('_reader/') and assets.endswith('/'), page
+    for file in ('book.css', '-verso-data/typography.css', '-verso-data/reader.js',
+                 'assets/web/wasm-reader.js', 'assets/web/lean-wasm.js',
+                 'playground.json', 'exercises.json'):
+        assert (book / assets / file).read_bytes() == (book / file).read_bytes(), file
+    assert f'src="{assets}-verso-data/reader.js"' in html, page
     assert html.count('<ol class="book-toc-tree"') == 1, page
     assert 'class="split-tocs"' not in html, page
     for name in ('NanumSquareNeo-ExtraBold.woff2', 'PretendardVariable.woff2', 'CascadiaCode.woff2'):
-        preload = f'<link rel="preload" href="-verso-data/{name}" as="font" type="font/woff2" crossorigin>'
-        assert preload in html and html.index(preload) < html.index('href="book.css"'), (page, name)
+        preload = f'<link rel="preload" href="{assets}-verso-data/{name}" as="font" type="font/woff2" crossorigin>'
+        assert preload in html and html.index(preload) < html.index(f'href="{assets}book.css"'), (page, name)
 assert all(len(p.relative_to(book).parts) <= 2 for p in reading_pages)
 sections = json.loads((book / 'xref.json').read_text(encoding='utf-8'))[
     'Verso.Genre.Manual.section']['contents']
