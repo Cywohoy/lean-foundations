@@ -1018,14 +1018,19 @@ def classOf {A : Type _} (R : Relation A) (a : A) :
 따라서 서로 다른 대표원을 넣어도 같은 동치류를 얻으면 두 몫 원소는 같다.
 
 앞으로 원소 `a`에 대응하는 몫 원소는 `⟦a⟧`로 표기하겠다.
-몫타입이 `A / R`로 정해져 있으면 `⟦a⟧`는 `classOf R a`를 뜻한다.
+다음 선언으로 이 표기를 `classOf`에 연결한다.
+
+```savedLean
+scoped notation:max (name := classOfNotation) "⟦" a "⟧" => classOf _ a
+```
+
+여기서 `_`는 몫타입에서 추론할 관계이다.
+따라서 몫타입이 `A / R`로 정해져 있으면 `⟦a⟧`는 `classOf R a`를 뜻한다.
 가령 `F : A / R → B`일 때 `F ⟦a⟧`는 이 몫 원소에서의 함수값이다.
 몫타입을 명시해야 할 때는 `(⟦a⟧ : A / R)`로 적는다.
 `⟦`와 `⟧`는 각각 `\[[`와 `\]]`로 입력한다.
 
 ```savedLean -show
-scoped notation:max (name := classOfNotation) "⟦" a "⟧" => classOf _ a
-
 open Lean PrettyPrinter Delaborator SubExpr in
 /-- Display a quotient constructor using the ambient quotient type. -/
 def Notation.delabClassOf : Delab :=
