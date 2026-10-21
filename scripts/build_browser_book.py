@@ -7,6 +7,7 @@ from pathlib import Path
 import argparse, hashlib, json, os, re, subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from book_code import ROOT, CHAPTERS, export_module, translate
+from theorem_catalog import exercise_candidates
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--lean", type=Path, required=True)
@@ -32,12 +33,22 @@ def compile_module(name, source):
 
 book_files = compile_module("AmpleBrowserContext.LearningGuard",
     (ROOT / "web/lean/LearningGuard.lean").read_text(encoding="utf-8"))
+compile_module("AmpleBrowserContext.TheoremCatalog",
+    (ROOT / "web/lean/TheoremCatalog.lean").read_text(encoding="utf-8"))
 for chapter in CHAPTERS:
     book_files += compile_module("AmpleBrowserContext.Book." + chapter,
         export_module((ROOT / "AlgebraBook" / (chapter + ".lean")).read_text(encoding="utf-8")))
     print("Checked chapter " + chapter, flush=True)
 
 manifest = json.loads((ROOT / "_out/html-multi/playground.json").read_text(encoding="utf-8"))
+candidate_names = exercise_candidates()
+context_names = {}
+for snippet in manifest.values():
+    if not snippet.get('exercise'):
+        continue
+    name = re.search(r'^theorem\s+(exercise_\w+)\b', snippet['code'], re.M)[1]
+    digest = hashlib.sha256(translate(snippet['before']).encode()).hexdigest()
+    context_names.setdefault(digest, set()).update(candidate_names[name])
 prefixes = {hashlib.sha256(translate(v["before"]).encode()).hexdigest(): translate(v["before"])
             for v in manifest.values() if v.get("exercise")}
 
@@ -57,7 +68,22 @@ def context(digest, source):
     name = "AmpleBrowserContext.C" + digest[:24]
     closed = source + "\n" + "".join("end" + (" " + s if s else "") + "\n" for s in reversed(scopes))
     files = compile_module(name, closed)
-    return digest, {"module": name, "scope": "\n".join(commands), "files": book_files + files}
+    scope = "\n".join(commands)
+    probe = out / ('Theorems' + digest[:24] + '.lean')
+    requested = json.dumps(json.dumps(sorted(context_names[digest])))
+    probe.write_text('import AmpleBrowserContext.TheoremCatalog\nimport ' + name + '\n'
+        + scope + '\n#book_theorems ' + requested + '\n'
+        + ''.join('end' + (' ' + s if s else '') + '\n' for s in reversed(scopes)), encoding='utf-8')
+    checked = subprocess.run([str(args.lean.resolve()), str(probe)], cwd=out, env=env,
+                             capture_output=True, text=True, timeout=180)
+    if checked.returncode:
+        raise RuntimeError('Theorem catalog\n' + checked.stdout + checked.stderr)
+    catalogs = [line.removeprefix('BOOK_THEOREMS:') for line in checked.stdout.splitlines()
+                if line.startswith('BOOK_THEOREMS:')]
+    if len(catalogs) != 1:
+        raise RuntimeError('Missing checked theorem catalog: ' + digest)
+    return digest, {"module": name, "scope": scope, "files": book_files + files,
+                    "theorems": json.loads(catalogs[0])}
 
 contexts={}
 with ThreadPoolExecutor(max_workers=3) as pool:

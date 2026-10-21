@@ -641,6 +641,20 @@ example {A : Type} (S T : Set A)
 
 `at hxS`는 등식을 사용할 가정을 지정한다.
 
+등식의 방향만 바꾸려면 `symm`을 사용한다.
+목표가 `b = a`일 때 `symm`을 쓰면 `a = b`가 새 목표가 되므로,
+주어진 등식 `h : a = b`로 증명을 마칠 수 있다.
+
+```savedLean
+example (a b : Nat)
+    (h : a = b) :
+    b = a := by
+  symm
+  exact h
+```
+
+`symm at h`는 목표 대신 가정 `h`의 등식 방향을 바꾼다.
+
 ## 교집합의 교환법칙
 
 {anchor "sets-intersection-equivalence"}[]앞의 정리에서는 $`x \in S \cap T`에서 $`x \in T \cap S`를 얻는 한 방향을 증명했다.
@@ -2071,7 +2085,8 @@ theorem doubleToEvens_bijective :
     unpack y.property with ⟨n, hn⟩
     exists n
     ext
-    exact hn.symm
+    symm
+    exact hn
 ```
 
 단사성에서는 부분타입 원소의 등식을 값의 등식으로 바꾸어 `double_injective`에 사용한다.

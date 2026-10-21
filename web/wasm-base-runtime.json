@@ -1,8 +1,8 @@
 {
-  "sha256": "d8e982ef5fef646fa1e05844fbc785181ec2598fe994fc573ee5273fb3a35799",
-  "bytes": 199409434,
-  "ampleCommit": "34c86c2e7bec022a21ba58e643b03bb22386d063",
+  "sha256": "c5aa92774286f31e20760730a368d57f6323880edfc25cee62e4234f5ba477e1",
+  "bytes": 201280911,
+  "ampleCommit": "2191012d4840357471ed95d07fd81d09732fddfc",
   "schemaVersion": 1,
   "leanVersion": "4.35.0",
-  "url": "https://github.com/Cywohoy/lean-algebra/releases/download/wasm-4.35.0-ample-34c86c2/lean-browser-4.35.0-ample-34c86c2.tar.gz"
+  "url": "https://github.com/Cywohoy/lean-foundations/releases/download/wasm-4.35.0-foundations-v3/lean-base-browser.tar.gz"
 }

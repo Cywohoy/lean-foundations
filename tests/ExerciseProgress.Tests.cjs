@@ -35,7 +35,7 @@ async function main() {
     await context.route('**/assets/web/wasm-reader.js', route => route.fulfill({
       contentType:'text/javascript', body:`export function createBrowserBackend(){ return {call(path,payload){
         return new Promise(resolve=>{ (window.pendingChecks ||= []).push(()=>resolve({session:'fixture',version:1,
-          goal:[],goalNote:'',diagnostics:[],contextErrors:[],proofs:(payload.proofNames||[]).map(name=>({name,axioms:[]}))})); });
+          goal:[],goalNote:'',diagnostics:[],contextErrors:[],proofs:(payload.proofNames||[]).map(name=>({name,axioms:window.fixtureAxioms||[]}))})); });
       }} }`
     }));
     const manifest=JSON.parse(await fs.readFile(path.join(root,'playground.json'),'utf8'));
@@ -94,6 +94,35 @@ async function main() {
     await page.waitForURL(new URL(`sets-functions/#exercise-${next[0]}`,base).href);
     await page.locator(`#exercise-${next[0]} dialog`).waitFor({state:'visible'});
     await page.keyboard.press('Escape');
+    // A context-only update retains historical completion and rechecks without opening the problem.
+    await page.addInitScript(() => Object.defineProperty(window, 'crossOriginIsolated', {value:true}));
+    await page.evaluate(data=>{
+      const key='lean-algebra.result.'+data.storageKey;
+      const saved=JSON.parse(localStorage.getItem(key));
+      saved.version=JSON.stringify([data.code,data.allowedTactics,['previous-context']]);
+      localStorage.setItem(key,JSON.stringify(saved));
+    },single[1]);
+    await page.goto(base+'proof/');
+    await count('9 / 63');
+    await page.waitForFunction(key=>document.querySelector(`#exercise-${key}`)?.parentElement.querySelector('.book-exercise-result')?.textContent==='✓ 완료 · 재검사 대기',single[0]);
+    await page.waitForFunction(()=>window.pendingChecks?.length>0);
+    await page.evaluate(()=>window.pendingChecks.shift()());
+    await page.waitForFunction(key=>document.querySelector(`#exercise-${key}`)?.parentElement.querySelector('.book-exercise-result')?.textContent==='✓ 완료',single[0]);
+    await count('9 / 63');
+    // A newly failing audit removes completion but never deletes the saved solution.
+    await page.evaluate(data=>{
+      const key='lean-algebra.result.'+data.storageKey;
+      const saved=JSON.parse(localStorage.getItem(key));
+      saved.version=JSON.stringify([data.code,data.allowedTactics,['another-context']]);
+      localStorage.setItem(key,JSON.stringify(saved));
+    },single[1]);
+    await page.goto(base+'proof/');
+    await page.evaluate(()=>{window.fixtureAxioms=['sorryAx'];});
+    await page.waitForFunction(()=>window.pendingChecks?.length>0);
+    await page.evaluate(()=>window.pendingChecks.shift()());
+    await count('8 / 63');
+    assert(await page.evaluate(data=>localStorage.getItem('lean-algebra.code.'+data.storageKey)?.includes('exact True.intro'),single[1]));
+    await seed([[...single,1]]);
     await page.evaluate(id=>{
       const key='lean-algebra.result.'+id;
       const saved=JSON.parse(localStorage.getItem(key)); saved.version='old-context';

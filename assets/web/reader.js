@@ -52,7 +52,12 @@
   function checkedExercise(original, key, code) {
     try {
       const saved = JSON.parse(stored(`lean-algebra.result.${exerciseStorageId(original, key)}`));
-      return saved?.code === code && saved.version === exerciseVersion(original) ? saved : null;
+      if (saved?.code !== code) return null;
+      if (saved.version === exerciseVersion(original)) return saved;
+      // Keep historical results only when the exercise itself is unchanged.
+      const previous = JSON.parse(saved.version);
+      if (previous[0] !== original.code) return null;
+      return {...saved, stale: true};
     } catch { return null; }
   }
   let draftManifest;
@@ -78,6 +83,57 @@
     browserBackend ||= import(new URL('assets/web/wasm-reader.js', assetsRoot))
       .then(module => module.createBrowserBackend(siteRoot));
     return (await browserBackend).call(path, payload);
+  }
+
+  let rechecking = false;
+  async function recheckStoredExercises() {
+    // Do not trigger a service-worker reload merely to restore progress.
+    if (!browserLean || !crossOriginIsolated || rechecking) return;
+    rechecking = true;
+    try {
+      const manifest = await exerciseManifest();
+      const {exerciseModel} = await import(new URL('assets/web/exercise-model.js', assetsRoot));
+      for (const [key, data] of Object.entries(manifest)) {
+        const code = exerciseDraft(data, key);
+        if (code == null || !checkedExercise(data, key, code)?.stale) continue;
+        const epoch = progressEpoch();
+        const original = await snippet(key);
+        const model = exerciseModel(original.code, code);
+        const result = await call('/api/lean/check', {snippet: key, code, background: true,
+          proofNames: model.parts.map(part => part.name)});
+        if (epoch !== progressEpoch() || exerciseDraft(data, key) !== code) continue;
+        if (result.contextErrors?.length) continue;
+        const {verification} = verifyExercise(original, code, result, model);
+        store(`lean-algebra.result.${exerciseStorageId(data, key)}`, JSON.stringify(verification));
+        window.dispatchEvent(new CustomEvent('book-exercise-verified', {detail: {key}}));
+        window.dispatchEvent(new Event('book-exercise-progress'));
+        // Let foreground editing requests run before the next saved proof.
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+    } catch { /* Retain historical results if the runtime is unavailable. */ }
+    finally { rechecking = false; }
+  }
+  window.addEventListener('book-lean-ready', recheckStoredExercises);
+
+  function verifyExercise(original, code, result, exercise) {
+    const errors = result.diagnostics.filter(item => item.severity === 1 && item.kind !== 'unfinished');
+    const holes = result.diagnostics.some(item => item.kind === 'unfinished');
+    const allowed = new Set(['propext', 'Classical.choice', 'Quot.sound']);
+    const bodies = exercise?.parse(code);
+    const audited = exercise?.parts.map(part => result.proofs?.find(proof =>
+      proof.name === part.name || proof.name.endsWith('.' + part.name)));
+    const forbidden = proof => proof?.axioms.filter(name => !allowed.has(name)) || [];
+    const complete = audited?.map((proof, index) => {
+      if (!bodies || !proof || forbidden(proof).length) return false;
+      const start = exercise.start(bodies, index);
+      const startLine = code.slice(0, start).split('\n').length;
+      const endLine = code.slice(0, start + bodies[index].length).split('\n').length;
+      return !errors.some(error => error.line >= startLine && error.line <= endLine);
+    }) || [];
+    const count = complete.filter(Boolean).length;
+    const verification = {code, version: exerciseVersion(original),
+      done: count, total: exercise?.parts.length || 0, parts: complete};
+    return {errors, holes, bodies, audited, forbidden, complete, count, verification};
   }
 
   // Keep both branch-local states and the outer state after a nested `have`.
@@ -239,7 +295,8 @@
         progressState = nextProgressState;
         window.dispatchEvent(new Event('book-exercise-progress'));
       }
-      const label = complete ? '✓ 완료' : done ? `${done}/${total} 완료` : written ? '작성 중' : '';
+      const label = complete ? (verification.stale ? '✓ 완료 · 재검사 대기' : '✓ 완료')
+        : done ? `${done}/${total} 완료${verification.stale ? ' · 재검사 대기' : ''}` : written ? '작성 중' : '';
       if (exerciseResult.textContent !== label) exerciseResult.textContent = label;
       exerciseResult.classList.toggle('book-exercise-complete', complete);
       editButton.textContent = complete ? '풀이 보기' : written ? '이어서 풀기' : '풀기';
@@ -271,6 +328,9 @@
     if (exercise) {
       window.addEventListener('storage', refreshStoredExercise);
       window.addEventListener('book-exercise-reset', refreshStoredExercise);
+      window.addEventListener('book-exercise-verified', event => {
+        if (event.detail.key === key) refreshStoredExercise(event);
+      });
     }
     for (const control of [stepButton, editButton].filter(Boolean)) {
       control.setAttribute('aria-controls', panel.id);
@@ -396,6 +456,7 @@
     let toggleCode;
     let selectedProof = 0;
     let unicodeInput;
+    let refreshTheorems = () => {};
     const declaration = element('pre', 'book-exercise-declaration');
     const support = element('details', 'book-exercise-support');
     support.open = true;
@@ -419,6 +480,7 @@
       input.setAttribute('aria-label', fullCode ? '연습문제 전체 코드' : `풀이 ${selectedProof + 1}`);
       [...proofControls.children].forEach((node, i) => node.setAttribute('aria-pressed', String(i === selectedProof)));
       showSubproofs(checkedExercise(original, key, currentCode()));
+      refreshTheorems();
     }
     function showSubproofs(verification) {
       [...proofControls.children].forEach((control, index) => {
@@ -470,6 +532,7 @@
         support.hidden = fullCode || !supportCode.textContent;
         proofControls.hidden = fullCode || exercise.parts.length === 1;
         toggleCode.textContent = fullCode ? '증명만 편집' : '전체 코드';
+        refreshTheorems();
         input.setAttribute('aria-label', fullCode ? '연습문제 전체 코드' : `풀이 ${selectedProof + 1}`);
         input.focus(); changed();
       });
@@ -504,6 +567,49 @@
     const goal = element('pre', 'book-live-goal', '실행 후 코드 위치를 선택하면 가정과 목표가 표시됩니다.');
     const diagnostics = element('div', 'book-diagnostics');
     output.append(outputHeading, goal, diagnostics);
+    if (exercise && original.theorems) {
+      const reference = element('section', 'book-theorems');
+      reference.setAttribute('aria-label', '사용할 수 있는 정리');
+      const heading = element('div', 'book-theorems-heading');
+      const count = element('span', 'book-theorems-count');
+      heading.append(element('strong', '', '찾기'), count);
+      const search = element('input', 'book-theorems-search');
+      search.type = 'search'; search.placeholder = '이름 또는 명제';
+      search.setAttribute('aria-label', '정리 검색');
+      const list = element('div', 'book-theorems-list');
+      reference.append(heading, search, list);
+      output.append(reference);
+      refreshTheorems = () => {
+        const earlier = fullCode ? [] : exercise.parts.slice(0, selectedProof).map(part => ({
+          name: part.name, reference: part.name,
+          statement: part.header.trim().replace(/^theorem\s+\S+\s*/, '').replace(/\s*:=\s*by$/, ''),
+        }));
+        const available = [...earlier, ...original.theorems];
+        const query = search.value.trim().toLocaleLowerCase();
+        const words = query.split(/\s+/).filter(Boolean);
+        const found = available.filter(item => words.every(word =>
+          `${item.name} ${item.reference} ${item.statement} ${item.declaration || ''}`.toLocaleLowerCase().includes(word)));
+        count.textContent = query ? `${found.length} / ${available.length}` : String(available.length);
+        list.replaceChildren();
+        for (const item of found) {
+          const row = element('article', 'book-theorem');
+          const name = button(item.reference, async () => {
+            try {
+              await navigator.clipboard.writeText(item.reference);
+              name.title = '복사됨';
+              setTimeout(() => { name.title = '정리 이름 복사'; }, 1200);
+            } catch { name.title = '복사하지 못했습니다.'; }
+          }, 'book-theorem-name');
+          name.title = '정리 이름 복사';
+          name.setAttribute('aria-label', `${item.reference} 이름 복사`);
+          row.append(name, element('pre', 'book-theorem-statement', item.declaration || item.statement));
+          list.append(row);
+        }
+        if (!found.length) list.append(element('p', 'book-theorems-empty', '일치하는 정리가 없습니다.'));
+      };
+      search.addEventListener('input', refreshTheorems);
+      refreshTheorems();
+    }
     columns.append(codePane, output);
     root.append(controls, columns, element('p', 'book-help',
       '자동 검사 · Ctrl+Enter 즉시 검사 · \\forall → ∀ 자동 입력'));
@@ -645,23 +751,8 @@
         if (result.contextErrors.length) {
           throw new Error('이 예제에 필요한 정의를 불러오지 못했습니다.\n' + result.contextErrors.join('\n'));
         }
-        const errors = result.diagnostics.filter(item => item.severity === 1 && item.kind !== 'unfinished');
-        const holes = result.diagnostics.some(item => item.kind === 'unfinished');
-        const allowed = new Set(['propext', 'Classical.choice', 'Quot.sound']);
-        const bodies = exercise?.parse(code);
-        const audited = exercise?.parts.map(part => result.proofs?.find(proof =>
-          proof.name === part.name || proof.name.endsWith('.' + part.name)));
-        const forbidden = proof => proof?.axioms.filter(name => !allowed.has(name)) || [];
-        const complete = audited?.map((proof, index) => {
-          if (!bodies || !proof || forbidden(proof).length) return false;
-          const start = exercise.start(bodies, index);
-          const startLine = code.slice(0, start).split('\n').length;
-          const endLine = code.slice(0, start + bodies[index].length).split('\n').length;
-          return !errors.some(error => error.line >= startLine && error.line <= endLine);
-        }) || [];
-        const count = complete.filter(Boolean).length;
-        const verification = {code, version: exerciseVersion(original),
-          done: count, total: exercise?.parts.length || 0, parts: complete};
+        const {errors, holes, bodies, audited, forbidden, complete, count, verification} =
+          verifyExercise(original, code, result, exercise);
         store(`lean-algebra.result.${exerciseStorageId(original, key)}`, JSON.stringify(verification));
         showSubproofs(verification);
         onDraft?.(code, verification);
@@ -927,6 +1018,7 @@
       });
       window.addEventListener('pageshow', schedule);
       refresh();
+      setTimeout(recheckStoredExercises, 1500);
     } catch { /* Reading remains available without local progress metadata. */ }
   }
 

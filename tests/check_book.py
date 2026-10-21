@@ -35,6 +35,8 @@ sets=(root/"AlgebraBook/SetsFunctions.lean").read_text(encoding="utf-8")
 assert sets.index("theorem inter_comm_forward")<sets.index("# 동치와 두 방향")
 assert "def cardinality_fin_three_last" not in sets
 sizes=(root/"AlgebraBook/CardinalityChapter.lean").read_text(encoding="utf-8")
+relations=(root/"AlgebraBook/NumbersRelations.lean").read_text(encoding="utf-8")
+assert relations.index('theorem parityClass_zero_ne_one') < relations.index('theorem exercise_parityClass_three_one'), 'The parity exercise must follow the theorem its instructions require'
 assert sizes.index("def Cardinal")<sizes.index("# 유한한 번호")<sizes.index("def IsFinite")
 assert sizes.index("# 자연수와 같은 크기의 집합") < sizes.index("## 가장 작은 무한기수") < sizes.index("# 멱집합과 칸토어 정리")
 assert "Advanced:" not in source

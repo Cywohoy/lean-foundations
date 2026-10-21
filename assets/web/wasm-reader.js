@@ -79,7 +79,10 @@ export function createBrowserBackend(siteRoot) {
   async function execute(path, payload) {
     if (path === '/api/lean/check') {
       await isolate(payload.snippet);
-      boot ||= runtime.boot();
+      boot ||= runtime.boot().then(result => {
+        window.dispatchEvent(new Event('book-lean-ready'));
+        return result;
+      });
       await boot;
       if (!snippets.has(payload.snippet)) {
         const response = await fetch(new URL(`playground/${payload.snippet}.json`, assetsRoot));
@@ -118,8 +121,10 @@ export function createBrowserBackend(siteRoot) {
       const document = {source: source + audit + closeScopes(source), code: payload.code,
         offset: prefix.split('\n').length - 1, version: (previous?.version || 0) + 1};
       // The public reader has one active editor. Bound retained source strings.
-      sessions.clear();
-      sessions.set(token, document);
+      if (!payload.background) {
+        sessions.clear();
+        sessions.set(token, document);
+      }
       const result = await compile(document);
       const diagnostics = [];
       const contextErrors = [];
@@ -147,7 +152,7 @@ export function createBrowserBackend(siteRoot) {
           kind: unfinished ? 'unfinished' : 'diagnostic', message: item.data, isSilent: item.isSilent});
       }
       return {session: token, version: document.version, diagnostics, contextErrors, proofs,
-        ...await goals(document, payload.position || {line: 0, character: 0}, payload.proofRange)};
+        ...(payload.background ? {} : await goals(document, payload.position || {line: 0, character: 0}, payload.proofRange))};
     }
     const document = sessions.get(payload.session);
     if (!document || document.version !== payload.version) throw new Error('The code changed. Run this example again.');

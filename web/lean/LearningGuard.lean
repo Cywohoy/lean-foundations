@@ -30,11 +30,13 @@ syntax (name := learningGuard) "learning_guard " str " in " tacticSeq : tactic
 
 elab_rules : tactic
   | `(tactic| learning_guard $policy:str in $body:tacticSeq) => do
-      try
+      -- Ordinary tactic try/catch restores its saved state, including messages.
+      -- An abortTactic exception means the original error was already logged;
+      -- backtracking here would erase that error and logException cannot recreate it.
+      Tactic.tryCatch (do
         checkTactics (policy.getString.splitOn ",") body
         if (body.raw.find? (·.isOfKind ``Parser.Tactic.unknown)).isSome then return
-        evalTactic body
-      catch error =>
+        evalTactic body) fun error => do
         if error.isInterrupt then throw error
         -- Keep the current goals available after a rejected or malformed step.
         logException error

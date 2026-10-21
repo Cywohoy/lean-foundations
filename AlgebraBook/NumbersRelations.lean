@@ -189,13 +189,14 @@ theorem five_not_even : ¬ IsEvenNat 5 := by
 
   -- 2k = 5는 짝수와 홀수가 같을 수 없다는 정리에 어긋난다.
   apply even_ne_odd k 2
-  exact hk.symm
+  symm
+  exact hk
 ```
 
 `h : IsEvenNat 5`는 정의에 따라 `∃ k : Nat, 5 = 2 * k`의 증명이므로
 `unpack`으로 자연수 `k`와 등식 `hk`를 얻는다.
 `apply even_ne_odd k 2`로 모순을 보이는 데 필요한 등식 `2 * k = 5`를 목표로 삼고,
-`hk`의 양변을 바꾼 증명 `hk.symm`을 제시한다.
+`symm`으로 목표를 `5 = 2 * k`로 바꾼 뒤 `hk`를 제시한다.
 
 ## 함수의 상과 짝수
 %%%
@@ -1136,19 +1137,6 @@ example (a b : Int)
 
 두 명령 모두 방금 증명한 `parityClass_eq_iff`를 사용한다.
 
-*문제 13* $`3`과 $`1`이 같은 홀수 동치류를 나타냄을 증명하라.
-이 결과와 `parityClass_zero_ne_one`을 사용하여 $`3`의 동치류와 $`0`의 동치류가 다름을 보이라.
-
-```savedLean -keep
-theorem exercise_parityClass_three_one :
-    parityClass 3 = parityClass 1 := by
-  sorry
-
-theorem exercise_parityClass_three_ne_zero :
-    parityClass 3 ≠ parityClass 0 := by
-  sorry
-```
-
 ## 대표원의 선택
 %%%
 tag := "relations-quotient-representatives"
@@ -1306,7 +1294,8 @@ noncomputable def quotientLiftData {A B : Type _}
       let b := quotientRepr R ⟦a⟧
       have hRelation : R b a := by
         apply (classOf_eq_iff R hR b a).mp
-        exact (quotientRepr_spec R ⟦a⟧).symm
+        symm
+        exact quotientRepr_spec R ⟦a⟧
 
       -- 같은 동치류에서 f의 값은 같다.
       exact hf b a hRelation }
@@ -1401,6 +1390,19 @@ theorem parityClass_zero_ne_one :
 이 증명은 두 동치류의 원소를 모두 비교하는 대신
 이미 정의한 함수의 값으로 두 몫 원소를 구별한다.
 일반적으로 $`f(x)\ne f(y)`임을 알면 $`x\ne y`임을 보일 수 있다.
+
+*문제 13* $`3`과 $`1`이 같은 홀수 동치류를 나타냄을 증명하라.
+이 결과와 `parityClass_zero_ne_one`을 사용하여 $`3`의 동치류와 $`0`의 동치류가 다름을 보이라.
+
+```savedLean -keep
+theorem exercise_parityClass_three_one :
+    parityClass 3 = parityClass 1 := by
+  sorry
+
+theorem exercise_parityClass_three_ne_zero :
+    parityClass 3 ≠ parityClass 0 := by
+  sorry
+```
 
 대표원을 고르는 방식을 바꾸어 함수를 구성해도 같은 결과를 얻는지 확인하자.
 어떤 방식으로 구성했든 모든 대표원에서 $`F([a]_R)=f(a)`를 만족한다면,

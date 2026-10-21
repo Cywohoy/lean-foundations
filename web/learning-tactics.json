@@ -72,7 +72,8 @@
     [
       "sets-equality-comparisons",
       [
-        "rw"
+        "rw",
+        "symm"
       ]
     ],
     [
@@ -148,12 +149,6 @@
     ]
   ],
   "CardinalityChapter": [
-    [
-      "cardinality-empty-and-singleton",
-      [
-        "symm"
-      ]
-    ],
     [
       "infinite-cardinality-automation",
       [

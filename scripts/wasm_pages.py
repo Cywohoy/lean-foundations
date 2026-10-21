@@ -78,7 +78,9 @@ def prepare(site, bundle=None, download=False, config=None):
     exercise_names = set()
     exercise_index = {}
     from learning_policy import exercise_policies
+    from theorem_catalog import exercise_candidates, preferred_names
     policies = exercise_policies()
+    theorem_candidates = exercise_candidates()
     for key, snippet in manifest.items():
         if snippet.get('exercise'):
             name = re.search(r'^theorem\s+(\w+)', snippet['code'], re.M)
@@ -98,6 +100,13 @@ def prepare(site, bundle=None, download=False, config=None):
             snippet['sourceBefore'] = snippet['before']
             snippet['contextFiles'] = [dict(item, url=relative + 'contexts/' + item['name'])
                                        for item in context['files']]
+            preferred = preferred_names(snippet['code'])
+            positions = {full_name: index for index, full_name in enumerate(theorem_candidates[name[1]])}
+            snippet['theorems'] = [dict(item, preferred=item['reference'] in preferred
+                                       or item['name'] in preferred,
+                                       declaration=re.sub(r'^\S+\s*', '', item.get('declaration', item['statement'])))
+                                  for item in context.get('theorems', []) if item['name'] in positions]
+            snippet['theorems'].sort(key=lambda item: (not item['preferred'], -positions.get(item['name'], -1)))
             snippet['before'] = ('import ' + context['module'] + '\nimport Ample.Tactic.Unfold\nimport AmpleBrowserContext.LearningGuard\n\n'
                 'register_expand_module AmpleBrowserContext\n' + context['scope'] + '\n')
         if snippet.get('exercise'):

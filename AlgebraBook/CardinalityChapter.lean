@@ -202,8 +202,9 @@ theorem sameCardinality_of_cardinal_eq {A B : Type}
 
 namespace Cardinal
 
-theorem eq_symm {a b : Cardinal} (h : a = b) : b = a :=
-  h.symm
+theorem eq_symm {a b : Cardinal} (h : a = b) : b = a := by
+  symm
+  exact h
 
 theorem eq_trans {a b c : Cardinal}
     (hab : a = b) (hbc : b = c) : a = c :=
@@ -374,7 +375,8 @@ theorem singleton_cardinal {A : Type} (a : A) :
       { val := 0, isLt := by decide }
     exists zero
     ext
-    exact x.property.symm
+    symm
+    exact x.property
 ```
 
 함수 `f`의 값은 원소 `a`와 그 원소 조건인 `a = a`의 증명을 함께 담는다.
@@ -382,7 +384,7 @@ theorem singleton_cardinal {A : Type} (a : A) :
 두 값이 모두 $`1`보다 작은 자연수라는 조건 `i.isLt`와 `j.isLt`에 따라
 두 값은 모두 $`0`이다. 이 범위 조건으로 두 값이 같음을 `arith`가 확인한다.
 전사성에서는 번호 $`0`을 택하고 `ext`로 집합의 원소 값을 비교한다.
-이때 `x.property`는 `x.val = a`의 증명이므로 `.symm`으로 양변의 순서를 바꾼다.
+이때 `x.property`는 `x.val = a`의 증명이므로 `symm`으로 목표의 양변을 바꾼 뒤 이를 제시한다.
 
 *문제 1* 원소가 하나씩 있는 두 집합은 크기가 같음을 증명하라.
 
@@ -1018,10 +1020,11 @@ theorem finite_cardinal_unique {A : Type} {m n : Nat}
     (hn : cardinal A = cardinal (Fin n)) :
     m = n := by
   apply cardinal_fin_eq
-  exact hm.symm.trans hn
+  symm at hm
+  exact hm.trans hn
 ```
 
-`hm.symm`으로 첫 등식의 방향을 바꾸면 `cardinal (Fin m) = cardinal A`를 얻는다.
+`symm at hm`으로 첫 등식의 방향을 바꾸면 `cardinal (Fin m) = cardinal A`를 얻는다.
 여기에 `.trans hn`으로 두 번째 등식을 이어 붙이면 두 번호 타입의 기수가 같다는 등식이 된다.
 
 앞에서 센 집합에 이 정리를 적용하면 다음과 같다. 첫 번째 인수는 새로운 방법으로 센 결과이고,
@@ -1444,7 +1447,8 @@ theorem isInfinite_transport {A B : Type}
     IsInfinite B := by
   intro hB
   apply hA
-  exact isFinite_transport hAB.symm hB
+  symm at hAB
+  exact isFinite_transport hAB hB
 ```
 
 ## 연습문제: 무한성의 전달

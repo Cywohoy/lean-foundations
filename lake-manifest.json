@@ -39,10 +39,10 @@
       "type": "git",
       "subDir": null,
       "scope": "",
-      "rev": "34c86c2e7bec022a21ba58e643b03bb22386d063",
+      "rev": "2191012d4840357471ed95d07fd81d09732fddfc",
       "name": "ample",
       "manifestFile": "lake-manifest.json",
-      "inputRev": "v0.2.1",
+      "inputRev": "v0.2.2",
       "inherited": false,
       "configFile": "lakefile.toml"
     },

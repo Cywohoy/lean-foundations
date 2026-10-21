@@ -34,6 +34,7 @@ jobs:
           python tests/check_book.py
           python tests/check_lean.py
           python tests/LearningPolicy.Tests.py
+          python tests/BrowserDiagnostics.Tests.py
       - uses: actions/cache@v4
         with:
           path: tmp/wasm/downloads
@@ -41,6 +42,7 @@ jobs:
       - name: Stage the checked public browser runtime
         run: |
           python scripts/prepare_pages.py
+          python tests/TheoremCatalog.Tests.py
           python tests/Pages.Tests.py
           python tests/Preview.Tests.py
       - uses: actions/upload-pages-artifact@v4

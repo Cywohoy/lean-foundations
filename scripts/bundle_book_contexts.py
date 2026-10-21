@@ -8,9 +8,10 @@ parser.add_argument("--url",help="Public URL for the resulting book runtime")
 parser.add_argument("--contexts",type=Path,required=True)
 parser.add_argument("--output",type=Path,required=True)
 parser.add_argument("--config",type=Path,required=True)
+parser.add_argument("--base-config",type=Path,help="Explicit checksum pin for an unpublished development runtime")
 args=parser.parse_args()
 root=Path(__file__).resolve().parents[1]
-pin=json.loads((root/"web/wasm-base-runtime.json").read_text())
+pin=json.loads((args.base_config or root/"web/wasm-base-runtime.json").read_text())
 assert hashlib.file_digest(args.base.open("rb"),"sha256").hexdigest()==pin["sha256"],"Base runtime does not match the public pin"
 contexts=json.loads((args.contexts/"contexts.json").read_text())
 files={item["name"]:item for c in contexts.values() for item in c["files"]}

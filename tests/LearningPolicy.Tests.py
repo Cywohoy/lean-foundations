@@ -13,6 +13,8 @@ early = policies['exercise_add_three_preserves_lt']
 assert 'apply' in early and 'exact' in early
 assert not {'intro', 'arith', 'constructor', 'trivial'} & set(early)
 assert 'have' in policies['exercise_two_shifts_lt']
+assert 'symm' not in policies['exercise_two_shifts_lt']
+assert 'symm' in policies['exercise_parityClass_three_one']
 assert 'intro' in policies['exercise_relation_specialization']
 assert 'arith' not in policies['exercise_congruent_divisor']
 assert 'arith' in policies['exercise_equal_values_equivalence']
