@@ -1,9 +1,9 @@
 {
-  "sha256": "6a56869466f168dcbe3e949c78c2c3ab356da20261444f8b8860e9679ba76f71",
-  "bytes": 209053086,
+  "sha256": "0d56fffa909e8d5282793568c8ebd87dbb26cc38e56f8aeb1e8204b30df3f8d3",
+  "bytes": 208622994,
   "ampleCommit": "2ae723ba8d66051b9278701346f70e2270bc95ff",
   "schemaVersion": 1,
   "leanVersion": "4.35.0",
-  "url": "https://github.com/Cywohoy/lean-foundations/releases/download/wasm-4.35.0-foundations-v5/foundations-browser.tar.gz",
-  "bookContexts": 49
+  "url": "https://github.com/Cywohoy/lean-foundations/releases/download/wasm-4.35.0-foundations-v6/foundations-browser.tar.gz",
+  "bookContexts": 48
 }

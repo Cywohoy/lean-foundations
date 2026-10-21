@@ -43,8 +43,17 @@ assert sets.index('def productMap') < sets.index('theorem productMap_bijective')
 assert 'def productMap' not in sizes
 relations=(root/"AlgebraBook/NumbersRelations.lean").read_text(encoding="utf-8")
 assert relations.index('theorem parityClass_zero_ne_one') < relations.index('theorem exercise_parityClass_three_one'), 'The parity exercise must follow the theorem its instructions require'
-assert sizes.index("def Cardinal")<sizes.index("# 유한한 번호")<sizes.index("def IsFinite")
-assert sizes.index("# 자연수와 같은 크기의 집합") < sizes.index("## 가장 작은 무한기수") < sizes.index("# 멱집합과 칸토어 정리")
+assert sizes.index("def Cardinal") < sizes.index("## 유한한 번호") < sizes.index("def IsFinite")
+assert sizes.index('def CardinalityLE') < sizes.index('def IsInfinite') < sizes.index('def IsCountablyInfinite')
+assert sizes.index('theorem cantor_not_surjective') < sizes.index('def characteristic') < sizes.index('theorem cardinal_set')
+deletion_steps = ['def eraseIndex', 'theorem eraseIndex_lt', 'theorem eraseIndex_injective',
+                  'theorem fin_injection_remove', 'theorem fin_injective_le',
+                  'theorem finite_cardinal_unique', 'theorem fin_injective_surjective']
+assert [sizes.index(s) for s in deletion_steps] == sorted(sizes.index(s) for s in deletion_steps)
+for flags,code in re.findall(r'```savedLean([^\n]*)\n(.*?)```', sizes, re.S):
+    if any(re.search(r'^' + re.escape(step) + r'\b', code, re.M) for step in deletion_steps):
+        assert '-show' not in flags, 'The finite counting proof must expose the mathematical steps it uses'
+assert sizes.index('def finSum') < sizes.index('def finProduct') < sizes.index('noncomputable def binaryData')
 assert "Advanced:" not in source
 assert sizes.count("# 크기 비교의 자동화")==1
 appendix=(root/"AlgebraBook/Tactics.lean").read_text(encoding="utf-8")

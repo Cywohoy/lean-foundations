@@ -99,6 +99,19 @@ theorem exercise_two_to_three_functions :
     cardinal (Fin 2 → Fin 3) = 9 := by
   sorry
 
+theorem exercise_cardinal_sum_two_three {A B : Type}
+    (hA : cardinal A = 2)
+    (hB : cardinal B = 3) :
+    cardinal (A ⊕ B) = 5 := by
+  sorry
+
+theorem exercise_cardinal_product_sum {A B C : Type}
+    (hA : cardinal A = 2)
+    (hB : cardinal B = 3)
+    (hC : cardinal C = 4) :
+    cardinal (A × (B ⊕ C)) = 14 := by
+  sorry
+
 def practiceSplitFunction {A B C : Type}
     (f : A ⊕ B → C) : (A → C) × (B → C) :=
   (fun a => f (.inl a), fun b => f (.inr b))
@@ -116,19 +129,6 @@ theorem exercise_cardinal_power_sum (A B C : Type) :
     cardinal C ^ (cardinal A + cardinal B) =
       cardinal C ^ cardinal A *
         cardinal C ^ cardinal B := by
-  sorry
-
-theorem exercise_cardinal_sum_two_three {A B : Type}
-    (hA : cardinal A = 2)
-    (hB : cardinal B = 3) :
-    cardinal (A ⊕ B) = 5 := by
-  sorry
-
-theorem exercise_cardinal_product_sum {A B C : Type}
-    (hA : cardinal A = 2)
-    (hB : cardinal B = 3)
-    (hC : cardinal C = 4) :
-    cardinal (A × (B ⊕ C)) = 14 := by
   sorry
 
 theorem exercise_three_boxes_sum :
