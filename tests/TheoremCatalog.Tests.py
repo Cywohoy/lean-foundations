@@ -9,7 +9,10 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from theorem_catalog import exercise_candidates
 
 candidates = exercise_candidates()
-assert len(candidates) == 103
+assert len(candidates) == 105
+assert {'Int.add_comm', 'Int.sub_add_cancel'} <= set(candidates['exercise_congruent_one'])
+assert 'Ample.congruent_add_right' in candidates['exercise_congruent_add_left']
+assert 'Ample.congruent_add_right' in candidates['exercise_nextParity_respects']
 assert 'Ample.parityClass_zero_ne_one' in candidates['exercise_parityClass_three_one']
 assert 'Ample.quotientLift_unique' not in candidates['exercise_parityClass_three_one']
 assert 'Nat.add_lt_add_right' in candidates['exercise_add_three_preserves_lt']

@@ -33,6 +33,11 @@ theorem exercise_inter_union_absorb {A : Type}
     S ∩ (S ∪ T) = S := by
   sorry
 
+theorem exercise_inter_union_absorb_via_subset {A : Type}
+    (S T : Set A) :
+    S ∩ (S ∪ T) = S := by
+  sorry
+
 theorem exercise_compl_union {A : Type} (S T : Set A) :
     (S ∪ T)ᶜ = Sᶜ ∩ Tᶜ := by
   sorry

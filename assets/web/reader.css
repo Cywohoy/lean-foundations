@@ -61,9 +61,12 @@
 }
 .book-example { position: relative; margin: 1.4rem 0 1.8rem; }
 @media screen {
+  .book-example:not(.book-editing) > .book-example-body {
+    border-left: 2px solid #d9dde1;
+  }
   .book-example-body > .hl.lean.block {
     background: #f7f8f9;
-    border-left: 2px solid #d9dde1;
+    border-left: 0;
   }
   .book-example > .book-toolbar { background: #f7f8f9; }
 }
@@ -82,7 +85,7 @@
 .book-reader-panel[hidden] { display: none; }
 .book-reading .book-example-body { display: block; }
 .book-reading .book-example-body > .hl.lean.block { max-height: 30rem; overflow: auto; white-space: pre-wrap; overflow-wrap: break-word; font-size: 1rem; }
-.book-reader-panel { min-width: 0; padding: 1rem .75rem; border-top: 1px solid #ddd; }
+.book-reader-panel { min-width: 0; padding: 1rem .75rem; border-top: 0; }
 .book-panel-heading { display: block; margin-bottom: .85rem; font: .9rem var(--verso-text-font-family); color: #666; }
 .book-step-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .book-step-header .book-panel-heading { margin: 0; }
@@ -127,7 +130,8 @@
 @media (hover: none) { .book-copy { opacity: 1; pointer-events: auto; } }
 @media (max-width: 1000px) {
   .book-reading .book-example-body, .book-editor-columns { grid-template-columns: minmax(0, 1fr); }
-  .book-reader-panel, .book-live-output { border-left: 0; border-top: 1px solid #ddd; padding: .85rem .75rem; }
+  .book-reader-panel, .book-live-output { border-left: 0; padding: .85rem .75rem; }
+  .book-live-output { border-top: 1px solid #ddd; }
 }
 @media (max-width: 640px) {
   .book-line-numbers { display: none; }
@@ -200,8 +204,8 @@
 .book-toc-tree ol { padding-left: 1rem; margin-block: .3rem; }
 .book-toc-tree a { display: block; padding: .15rem .25rem; line-height: 1.5; }
 .book-toc-tree [aria-current="page"] { font-weight: 700; }
-.book-toc-tree .book-chapter-link { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
-.book-chapter-progress { flex: 0 0 auto; color: #777; font-size: .78rem; font-weight: 400; font-variant-numeric: tabular-nums; }
+.book-toc-tree .book-chapter-link, .book-toc-tree .book-section-link { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+.book-chapter-progress, .book-section-progress { flex: 0 0 auto; color: #777; font-size: .78rem; font-weight: 400; font-variant-numeric: tabular-nums; }
 .book-progress { margin: .5rem .25rem 1rem; padding-top: .8rem; border-top: 1px solid #e5e5e5; color: #777; }
 .book-progress-summary { display: flex; justify-content: space-between; gap: 1rem; font-size: .82rem; }
 .book-progress-total { font-variant-numeric: tabular-nums; }

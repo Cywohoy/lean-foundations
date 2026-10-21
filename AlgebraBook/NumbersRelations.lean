@@ -431,16 +431,17 @@ example (a b : Int)
     2 ∣ a + b := by
   have hTwoSix : 2 ∣ 6 := by exists 3
   have hTwoTen : 2 ∣ 10 := by exists 5
-  have hTwoA : 2 ∣ a := by
+  replace ha : 2 ∣ a := by
     exact divides_trans 2 6 a hTwoSix ha
 
-  have hTwoB : 2 ∣ b := by
+  replace hb : 2 ∣ b := by
     exact divides_trans 2 10 b hTwoTen hb
 
-  exact divides_add 2 a b hTwoA hTwoB
+  exact divides_add 2 a b ha hb
 ```
 
 수를 직접 택하는 부분은 $`6=2\cdot3`과 $`10=2\cdot5`를 확인하는 두 줄이다.
+두 `replace`에서는 `ha : 6 ∣ a`와 `hb : 10 ∣ b`를 각각 `ha : 2 ∣ a`, `hb : 2 ∣ b`로 바꾼다.
 $`a`, $`b`가 어떤 수인지는 몰라도 `divides_trans`와 `divides_add`에
 주어진 나누어떨어짐을 사용하면 합에 관한 결론을 얻는다.
 
@@ -581,6 +582,16 @@ theorem congruent_twenty_three_neg_five :
 두 번째 목표는 `2 ≡ -5 [ZMOD 7]`이므로 방금 얻은 합동에 대칭성을 사용한다.
 따라서 두 정수의 차이를 새로 계산하지 않고 앞의 합동들을 이어서 결론을 얻는다.
 
+합동의 식을 정리할 때는 덧셈의 순서를 바꾸거나 더한 수를 다시 빼기도 한다.
+덧셈의 교환법칙 `Int.add_comm`은 `a + b = b + a`를,
+상쇄 법칙 `Int.sub_add_cancel`은 `(a - b) + b = a`를 나타낸다.
+예를 들어 $`b+(a-b)=a`는 먼저 두 항의 순서를 바꾸면 상쇄 법칙으로 확인할 수 있다.
+
+```savedLean
+example (a b : Int) : b + (a - b) = a := by
+  rw [Int.add_comm b, Int.sub_add_cancel]
+```
+
 {anchor "preliminaries-congruence-zero-and-one"}[]*문제 6* (법이 0이나 1인 합동)
 합동의 정의는 법이 $`0`이나 $`1`인 경우도 포함한다.
 (1) 법이 $`0`이면 합동과 등식이 같음을 보이라.
@@ -596,13 +607,33 @@ theorem exercise_congruent_one (a b : Int) :
   sorry
 ```
 
-*문제 7* $`a\equiv b\pmod n`이면 $`a+t\equiv b+t\pmod n`임을 증명하라.
+*정리* $`a\equiv b\pmod n`이면 $`a+t\equiv b+t\pmod n`이다.
 
-```savedLean -keep
-theorem exercise_congruent_add_right
-    (n a b t : Int)
+*증명* $`a=b+nk`인 정수 $`k`를 택하자.
+양변에 $`t`를 더하고 덧셈의 순서와 괄호를 정리하면
+$`a+t=(b+t)+nk`이므로 같은 정수 $`k`를 사용할 수 있다.
+
+```savedLean
+theorem congruent_add_right (n a b t : Int)
     (h : a ≡ b [ZMOD n]) :
     a + t ≡ b + t [ZMOD n] := by
+  unpack h with ⟨k, hk⟩
+  exists k
+  rw [hk, Int.add_assoc, Int.add_comm (n * k) t,
+    ← Int.add_assoc]
+```
+
+`Int.add_assoc`로 괄호를 옮긴 뒤 `Int.add_comm (n * k) t`로 $`nk`와 $`t`의 순서를 바꾼다.
+마지막에는 결합법칙을 반대 방향으로 사용하여 $`(b+t)+nk`로 묶는다.
+
+*문제 7* 앞의 정리를 사용하여 $`a\equiv b\pmod n`이면
+$`t+a\equiv t+b\pmod n`임을 증명하라.
+
+```savedLean -keep
+theorem exercise_congruent_add_left
+    (n a b t : Int)
+    (h : a ≡ b [ZMOD n]) :
+    t + a ≡ t + b [ZMOD n] := by
   sorry
 ```
 
@@ -732,8 +763,11 @@ file := "equivalence-relations"
 두 원소에 관한 관계의 타입은 `A → A → Prop`이다.
 수학에서 $`R(a,b)`나 $`a\mathrel{R}b`, $`a\sim b`로 쓰는 명제는 Lean에서 `R a b`로 쓴다.
 
+이 타입에 짧은 이름을 붙일 때는 `abbrev`를 사용할 수 있다.
+아래의 `Relation A`는 `A → A → Prop`를 줄여 쓴 이름이다.
+
 ```savedLean
-def Relation (A : Type _) := A → A → Prop
+abbrev Relation (A : Type _) := A → A → Prop
 ```
 
 등식도 합동에서 확인한 세 성질을 만족한다.
@@ -1022,7 +1056,8 @@ def classOf {A : Type _} (R : Relation A) (a : A) :
 다음 선언으로 이 표기를 `classOf`에 연결한다.
 
 ```savedLean
-scoped notation:max (name := classOfNotation) "⟦" a "⟧" => classOf _ a
+scoped notation:max (name := classOfNotation)
+  "⟦" a "⟧" => classOf _ a
 ```
 
 여기서 `_`는 몫타입에서 추론할 관계이다.
@@ -1090,7 +1125,7 @@ theorem classOf_eq_iff {A : Type _} (R : Relation A)
 
 ```savedLean
 def Parity := Int / Congruent 2
-def parityClass (a : Int) : Parity :=
+abbrev parityClass (a : Int) : Parity :=
   ⟦a⟧
 ```
 
@@ -1168,7 +1203,7 @@ theorem quotient_exists_classOf {A : Type _}
 ```
 
 역함수에서와 같이 존재 증명에서 대표원과 그 성질을 함께 고른다.
-`quotientRepr R q`는 고른 대표원이고 `quotientRepr_spec R q`는
+`quotientRepr R q`는 고른 대표원이고 `quotientRepr_spec q`는
 `q = ⟦quotientRepr R q⟧`의 증명이다.
 
 ```savedLean
@@ -1183,7 +1218,7 @@ noncomputable def quotientRepr {A : Type _}
     (R : Relation A) (q : A / R) : A :=
   (quotientReprData R q).val
 theorem quotientRepr_spec {A : Type _}
-    (R : Relation A) (q : A / R) :
+    {R : Relation A} (q : A / R) :
     q = ⟦quotientRepr R q⟧ := by
   exact (quotientReprData R q).property
 ```
@@ -1278,7 +1313,8 @@ $`R(a,b)\Rightarrow f(a)=f(b)`를 만족한다고 하자.
 Lean에서는 함수와 이 계산 규칙을 `quotientLiftData`에 함께 담는다.
 `val`에는 대표원에 `f`를 적용하는 함수를, `property`에는 모든 대표원에서의 등식 증명을 넣는다.
 
-{anchor "relations-local-definitions"}[]코드의 `let b := ...`는 선택한 대표원을 나타내는 긴 식에 `b`라는 이름을 붙인다.
+{anchor "relations-local-definitions"}[]대표원을 나타내는 식에도 앞에서 배운 `set`을 사용하자.
+`set b := quotientRepr R ⟦a⟧`로 이름을 붙이면 목표의 함수값도 `f b`로 쓸 수 있다.
 
 ```savedLean
 noncomputable def quotientLiftData {A B : Type _}
@@ -1291,11 +1327,11 @@ noncomputable def quotientLiftData {A B : Type _}
   { val := fun q => f (quotientRepr R q)
     property := by
       intro a
-      let b := quotientRepr R ⟦a⟧
+      set b := quotientRepr R ⟦a⟧
       have hRelation : R b a := by
         apply (classOf_eq_iff R hR b a).mp
         symm
-        exact quotientRepr_spec R ⟦a⟧
+        exact quotientRepr_spec ⟦a⟧
 
       -- 같은 동치류에서 f의 값은 같다.
       exact hf b a hRelation }
@@ -1316,11 +1352,11 @@ noncomputable def quotientLift {A B : Type _}
     A / R → B :=
   (quotientLiftData R hR f hf).val
 theorem quotientLift_classOf {A B : Type _}
-    (R : Relation A)
-    (hR : IsEquivalence R)
-    (f : A → B)
-    (hf : ∀ a b, R a b → f a = f b)
-    (a : A) :
+    {R : Relation A}
+    {hR : IsEquivalence R}
+    {f : A → B}
+    {hf : ∀ a b, R a b → f a = f b}
+    {a : A} :
     quotientLift R hR f hf ⟦a⟧ = f a := by
   exact (quotientLiftData R hR f hf).property a
 ```
@@ -1332,19 +1368,23 @@ theorem quotientLift_classOf {A B : Type _}
 
 ```savedLean
 noncomputable def parityRemainder : Parity → Int :=
-  quotientLift (Congruent 2) (congruent_equivalence 2)
-    (fun a => a % 2) congruent_two_same_remainder
+  quotientLift
+    (Congruent 2)
+    (congruent_equivalence 2)
+    (fun a => a % 2)
+    congruent_two_same_remainder
 ```
 
-정의할 때 함께 구성한 성질을 `quotientLift_classOf`로 꺼내면
-`parityRemainder (parityClass a) = a % 2`를 얻는다.
+`parityRemainder (parityClass a)`의 정의를 펼치면
+`quotientLift`로 만든 함수를 몫 원소 `⟦a⟧`에 적용한 식이 된다.
+계산 규칙 `quotientLift_classOf`는 이 식을 원래 함수의 값 `a % 2`로 바꾼다.
+이때 관계와 함수, 두 증명, 원소는 재작성할 식에서 모두 추론하므로 다시 적지 않는다.
 
 ```savedLean
 theorem parityRemainder_class (a : Int) :
     parityRemainder (parityClass a) = a % 2 := by
-  exact quotientLift_classOf (Congruent 2)
-    (congruent_equivalence 2) (fun a => a % 2)
-    congruent_two_same_remainder a
+  expand
+  rw [quotientLift_classOf]
 ```
 
 정의에 사용한 원소 선택은 계산 절차를 제공하지 않으므로 `#eval`로 값을 구하는 대신
@@ -1377,13 +1417,13 @@ example :
 theorem parityClass_zero_ne_one :
     parityClass 0 ≠ parityClass 1 := by
   intro h
-  have hRemainders :
+  replace h :
       parityRemainder (parityClass 0) =
         parityRemainder (parityClass 1) := by
     rw [h]
 
   rw [parityRemainder_class,
-    parityRemainder_class] at hRemainders
+    parityRemainder_class] at h
   contradiction
 ```
 
@@ -1485,8 +1525,8 @@ theorem exercise_classes_of_common_element {A : Type}
   sorry
 
 theorem exercise_mod_six_common :
-    ∃ x, x ∈ equivalenceClass (Congruent 6) 8 ∧
-      x ∈ equivalenceClass (Congruent 6) 20 := by
+    2 ∈ equivalenceClass (Congruent 6) 8 ∧
+      2 ∈ equivalenceClass (Congruent 6) 20 := by
   sorry
 
 theorem exercise_mod_six_classes :
@@ -1512,7 +1552,8 @@ theorem exercise_parity_no_mod_three :
 
 동치류 $`[a]`에 $`[a+1]`을 대응시키는 함수를 구성한다.
 
-(1) $`a\equiv b\pmod2`이면 $`[a+1]=[b+1]`임을 증명하여 대표원에 무관함을 확인하라.
+(1) 본문의 `congruent_add_right`를 사용하여 $`a\equiv b\pmod2`이면
+$`[a+1]=[b+1]`임을 증명하라. 이로써 대표원에 무관함을 확인한다.
 
 (2) 이 증명을 사용한 아래 함수의 계산 규칙을 증명하라.
 
@@ -1525,7 +1566,9 @@ theorem exercise_nextParity_respects (a b : Int)
   sorry
 
 noncomputable def practiceNextParity : Parity → Parity :=
-  quotientLift (Congruent 2) (congruent_equivalence 2)
+  quotientLift
+    (Congruent 2)
+    (congruent_equivalence 2)
     (fun a => parityClass (a + 1))
     exercise_nextParity_respects
 theorem exercise_nextParity_class (a : Int) :

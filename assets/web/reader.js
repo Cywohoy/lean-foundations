@@ -136,7 +136,8 @@
     return {errors, holes, bodies, audited, forbidden, complete, count, verification};
   }
 
-  // Keep both branch-local states and the outer state after a nested `have`.
+  // Keep branch-local states and each compound tactic's final state. In
+  // particular, the last rw rule precedes rw's automatic reflexivity check.
   function proofSteps(code) {
     const steps = [];
     const walk = tactic => {
@@ -151,7 +152,7 @@
         const heading = parent.querySelector(':scope > label');
         if (heading && /^(have|suffices|let|replace)\b/.test(plain(heading).trim())) nested = true;
       }
-      if (!children.length || /^(have|suffices|let|replace)\b/.test(first)) steps.push({label, state, title: first, nested});
+      if (!children.length || /^(have|suffices|let|replace|rw|rewrite)\b/.test(first)) steps.push({label, state, title: first, nested});
     };
     [...code.querySelectorAll('.tactic')].filter(node => !node.parentElement.closest('.tactic')).forEach(walk);
     return steps;
@@ -914,11 +915,11 @@
     schedule();
   }
 
-  function openLinkedExercise() {
+  function scrollLinkedExercise() {
     const match = /^#exercise-(\d+)$/.exec(location.hash);
-    if (!match || !openEditors.has(match[1])) return false;
-    document.getElementById(`exercise-${match[1]}`)?.scrollIntoView({block: 'start'});
-    openEditors.get(match[1])();
+    const target = match && document.getElementById(`exercise-${match[1]}`);
+    if (!target) return false;
+    target.scrollIntoView({block: 'start'});
     return true;
   }
 
@@ -943,7 +944,7 @@
         const target = new URL(`${data.exerciseChapter}/#exercise-${key}`, siteRoot);
         if (target.pathname === location.pathname) {
           history.replaceState(null, '', target);
-          openLinkedExercise();
+          scrollLinkedExercise();
         } else location.assign(target.href);
       }, 'book-progress-next');
       const note = element('small', 'book-progress-storage');
@@ -984,6 +985,18 @@
       }
       const currentChapter = [...chapters.keys()].find(chapter =>
         new URL(`${chapter}/`, siteRoot).pathname === location.pathname);
+      const sectionCounts = [];
+      for (const anchor of tree.querySelectorAll(':scope > li > ol > li > a')) {
+        const url = new URL(anchor.href);
+        const section = decodeURIComponent(url.hash.slice(1));
+        const items = exercises.filter(([, data]) => data.exerciseChapter === currentChapter
+          && data.exerciseSection === section);
+        if (!items.length) continue;
+        const count = element('span', 'book-section-progress');
+        anchor.classList.add('book-section-link');
+        anchor.append(count);
+        sectionCounts.push({count, items});
+      }
       let completed = new Set();
       let pending = false;
       function refresh() {
@@ -999,6 +1012,11 @@
         if (total.textContent !== label) total.textContent = label;
         for (const [chapter, count] of chapters) {
           const items = exercises.filter(([, data]) => data.exerciseChapter === chapter);
+          const done = items.filter(([key]) => completed.has(key)).length;
+          count.textContent = `${done}/${items.length}`;
+          count.setAttribute('aria-label', `연습문제 ${items.length}개 중 ${done}개 완료`);
+        }
+        for (const {count, items} of sectionCounts) {
           const done = items.filter(([key]) => completed.has(key)).length;
           count.textContent = `${done}/${items.length}`;
           count.setAttribute('aria-label', `연습문제 ${items.length}개 중 ${done}개 완료`);
@@ -1150,10 +1168,11 @@
     if (browserLean) {
       const tree = document.querySelector('.book-toc-tree');
       if (tree) startExerciseProgress(tree);
-      window.addEventListener('hashchange', openLinkedExercise);
+      window.addEventListener('hashchange', scrollLinkedExercise);
       const reopen = sessionStorage.getItem('lean-algebra.reopen');
       sessionStorage.removeItem('lean-algebra.reopen');
-      if (!openLinkedExercise() && reopen) openEditors.get(reopen)?.();
+      scrollLinkedExercise();
+      if (reopen) openEditors.get(reopen)?.();
     }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);

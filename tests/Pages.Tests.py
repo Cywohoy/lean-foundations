@@ -109,8 +109,8 @@ for entries in sections.values():
             assert f'id="{entry["id"]}"' in page.read_text(encoding='utf-8'), entry
 exercise_items = sorted((v for v in json.loads((book / 'playground.json').read_text(encoding='utf-8')).values()
                          if v.get('exercise')), key=lambda v: v['exerciseOrder'])
-assert [v['exerciseOrder'] for v in exercise_items] == list(range(63))
-for chapter, count in [('proof', 9), ('sets-functions', 22), ('numbers-relations', 17), ('sizes', 15)]:
+assert [v['exerciseOrder'] for v in exercise_items] == list(range(62))
+for chapter, count in [('proof', 9), ('sets-functions', 22), ('numbers-relations', 17), ('sizes', 14)]:
     numbers = [v['exerciseNumber'] for v in exercise_items if v['exerciseChapter'] == chapter]
     assert numbers == list(range(1, count + 1)), (chapter, numbers)
 progress_index = json.loads((book / 'exercises.json').read_text(encoding='utf-8'))
@@ -119,6 +119,9 @@ assert len(progress_index) == len(exercise_items)
 for key, item in progress_index.items():
     full = full_manifest[key]
     assert item['code'] == full['code']
+    assert item['exerciseSection'] == full['exerciseSection']
+    chapter_html = (book / item['exerciseChapter'] / 'index.html').read_text(encoding='utf-8')
+    assert f'#{item["exerciseSection"]}' in chapter_html
     assert [f['sha256'] for f in item['contextFiles']] == [f['sha256'] for f in full['contextFiles']]
     assert not {'before', 'sourceBefore'} & item.keys()
     assert all(set(f) == {'sha256'} for f in item['contextFiles'])

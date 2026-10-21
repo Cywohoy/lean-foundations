@@ -53,10 +53,10 @@ theorem exercise_congruent_one (a b : Int) :
     a ≡ b [ZMOD 1] := by
   sorry
 
-theorem exercise_congruent_add_right
+theorem exercise_congruent_add_left
     (n a b t : Int)
     (h : a ≡ b [ZMOD n]) :
-    a + t ≡ b + t [ZMOD n] := by
+    t + a ≡ t + b [ZMOD n] := by
   sorry
 
 theorem exercise_congruent_thirty_seven_two :
@@ -132,8 +132,8 @@ theorem exercise_classes_of_common_element {A : Type}
   sorry
 
 theorem exercise_mod_six_common :
-    ∃ x, x ∈ equivalenceClass (Congruent 6) 8 ∧
-      x ∈ equivalenceClass (Congruent 6) 20 := by
+    2 ∈ equivalenceClass (Congruent 6) 8 ∧
+      2 ∈ equivalenceClass (Congruent 6) 20 := by
   sorry
 
 theorem exercise_mod_six_classes :
@@ -152,7 +152,9 @@ theorem exercise_nextParity_respects (a b : Int)
   sorry
 
 noncomputable def practiceNextParity : Parity → Parity :=
-  quotientLift (Congruent 2) (congruent_equivalence 2)
+  quotientLift
+    (Congruent 2)
+    (congruent_equivalence 2)
     (fun a => parityClass (a + 1))
     exercise_nextParity_respects
 theorem exercise_nextParity_class (a : Int) :

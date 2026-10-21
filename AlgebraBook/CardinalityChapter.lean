@@ -344,10 +344,10 @@ def singleton {A : Type} (a : A) : Set A := fun x => x = a
 단사성을 확인하려고 번호 $`i`, $`j`를 택하면 둘 다 $`0`이므로 서로 같다.
 또한 $`\{a\}`의 모든 원소가 $`a`와 같으므로 이 대응은 전사이다.
 
-이 대응을 증명 안에서 여러 번 사용하므로 `let`으로 함수 `f`를 정의하자.
-{ref "relations-local-definitions"}[앞에서는] `let`으로 대표원에 이름을 붙였으며,
-이번에는 `let f (_ : Fin 1) ...`처럼 인수를 적어 함수를 정의한다.
-이후에는 `f`를 함수 이름으로 사용하고 필요할 때 그 정의를 펼친다.
+{anchor "cardinality-local-functions"}[]이 대응을 증명 안에서 여러 번 사용하므로 `let`으로 함수 `f`를 정의하자.
+`let f (_ : Fin 1) ...`처럼 인수와 함수값을 적으면 이후에 `f`를 함수 이름으로 사용할 수 있다.
+앞의 `set`이 이미 나타난 식에 이름을 붙이는 데 쓰였다면,
+여기서는 새 함수를 구성하는 것이므로 `let`으로 그 정의를 적는다.
 전사성을 증명할 때 쓰는 번호 `zero`도 같은 방법으로 정의한다.
 
 ```savedLean
@@ -780,16 +780,14 @@ theorem fin_injection_remove {m n : Nat}
   have hne (i : Fin m) :
       (f (next i)).val ≠ (f first).val := by
     intro h
-    have hfi : f (next i) = f first := by
+    replace h : f (next i) = f first := by
       ext
       exact h
 
-    have hi : next i = first :=
-      hf (next i) first hfi
-    have hiVal : (next i).val = first.val := by
-      rw [hi]
-
-    expand at hiVal
+    replace h : next i = first :=
+      hf (next i) first h
+    indisc at h
+    expand at h
     arith
 
   -- 공역에서 f(0)을 지우고 번호를 다시 붙인다.
@@ -801,22 +799,19 @@ theorem fin_injection_remove {m n : Nat}
   have hg : Injective g := by
     intro i j hij
     -- 새 번호의 등식에서 원래 함수값의 등식을 얻는다.
-    have hVal : (g i).val = (g j).val := by
-      rw [hij]
-
-    have hfi : f (next i) = f (next j) := by
+    indisc at hij
+    replace hij : f (next i) = f (next j) := by
       ext
-      exact eraseIndex_injective (hne i) (hne j) hVal
+      exact eraseIndex_injective (hne i) (hne j) hij
 
     -- f의 단사성으로 i + 1 = j + 1을 얻는다.
-    have hi : next i = next j :=
-      hf (next i) (next j) hfi
-    have hiVal : (next i).val = (next j).val := by
-      rw [hi]
+    replace hij : next i = next j :=
+      hf (next i) (next j) hij
+    indisc at hij
 
     -- 양변의 1을 소거하여 i = j를 보인다.
     ext
-    expand at hiVal
+    expand at hij
     arith
 
   exists g
@@ -1093,7 +1088,7 @@ noncomputable def cardinalityData (A : Type)
 noncomputable def cardinality (A : Type)
     (hA : IsFinite A) : Nat :=
   (cardinalityData A hA).val
-theorem cardinality_spec (A : Type)
+theorem cardinality_spec {A : Type}
     (hA : IsFinite A) :
     cardinal A = cardinality A hA := by
   exact (cardinalityData A hA).property
@@ -1102,7 +1097,7 @@ theorem cardinality_eq {A : Type} {n : Nat}
     (hA : IsFinite A)
     (hn : cardinal A = n) :
     cardinality A hA = n := by
-  exact finite_cardinal_unique (cardinality_spec A hA) hn
+  exact finite_cardinal_unique (cardinality_spec hA) hn
 ```
 
 ```savedLean -show
@@ -1323,10 +1318,19 @@ file := "exercises"
 
 각 문제의 `sorry`를 증명으로 바꾸어 완성하라.
 
-*문제 7* 유한집합 $`A`, $`B`의 원소 수가 각각 $`m`, $`n`이면
-집합의 곱 $`A\times B`의 원소 수가 $`mn`임을 증명하라.
-즉 $`|A\times B|=|A||B|`이다.
-앞에서 증명한 `productMap_bijective`를 사용하여 `Fin m × Fin n`에서 `A × B`로 가는 전단사를 구성하라.
+*문제 7* (유한집합의 곱)
+
+(1) 유한집합 $`A`, $`B`의 원소 수가 각각 $`m`, $`n`이면
+$`|A\times B|=|A||B|=mn`임을 증명하라.
+`finProduct_bijective`와 `productMap_bijective`를 합성하되,
+기수의 등식에서 전단사를 꺼낼 때는 함수의 방향을 확인하라.
+
+(2) 두 성분을 바꾸는 함수를 사용하여 $`|A\times B|=|B\times A|`임을 증명하라.
+
+(3) 두 가지 색과 세 가지 번호를 각각 `Fin 2`, `Fin 3`으로 나타낸다.
+첫 결과를 사용하여 색과 번호를 짝짓는 방법이 모두 여섯 가지임을 보이라.
+
+(4) 둘째와 셋째 결과를 사용하여 번호와 색의 순서로 나열해도 여섯 가지임을 보이라.
 
 ```savedLean -keep
 theorem exercise_cardinal_product {A B : Type} {m n : Nat}
@@ -1334,20 +1338,7 @@ theorem exercise_cardinal_product {A B : Type} {m n : Nat}
     (hB : cardinal B = n) :
     cardinal (A × B) = m * n := by
   sorry
-```
 
-*힌트* `finProduct_bijective`와 `productMap_bijective`를 합성하라. 기수의 등식에서 전단사를 꺼낼 때는 함수의 방향을 확인하라.
-
-*문제 8* (색과 번호의 조합)
-
-(1) 두 성분을 바꾸는 함수를 사용하여 $`|A\times B|=|B\times A|`임을 증명하라.
-
-(2) 두 가지 색 중 하나와 세 가지 번호 중 하나를 고르는 방법이 모두 여섯 가지임을 보이라.
-색과 번호를 각각 `Fin 2`, `Fin 3`으로 나타낸다.
-
-(3) 앞의 두 결과를 사용하여 번호와 색의 순서로 나열해도 조합의 수는 같음을 보이라.
-
-```savedLean -keep
 theorem exercise_cardinal_swap (A B : Type) :
     cardinal (A × B) = cardinal (B × A) := by
   sorry
@@ -1451,17 +1442,18 @@ theorem isInfinite_transport {A B : Type}
   exact isFinite_transport hAB hB
 ```
 
-## 연습문제: 무한성의 전달
+## 연습문제: 유한성과 무한성
 
-*문제 9* 무한집합과 크기가 같은 집합도 무한집합임을 증명하라.
-이 문제에서는 유한성의 정의를 펼쳐 번호 수를 꺼낸 뒤,
-앞의 `cardinality_finite_transport`로 그 번호를 다른 집합에 옮겨 모순을 얻으라.
+*문제 8* (유한집합과 무한집합의 구별)
+
+$`A`가 무한집합이고 $`B`가 유한집합이면 두 집합의 크기가 다름을 증명하라.
+크기가 같다고 가정하여 유한성을 옮기면 어떤 모순이 생기는지 살펴보라.
 
 ```savedLean -keep
-theorem exercise_infinite_transport {A B : Type}
+theorem exercise_infinite_finite_ne_cardinal {A B : Type}
     (hA : IsInfinite A)
-    (hAB : cardinal A = cardinal B) :
-    IsInfinite B := by
+    (hB : IsFinite B) :
+    cardinal A ≠ cardinal B := by
   sorry
 ```
 
@@ -1484,7 +1476,7 @@ namespace Ample
 local infixr:90 (priority := high) " ∘ " => compose
 ```
 
-*문제 10* (순서쌍 집합의 무한성)
+*문제 9* (순서쌍 집합의 무한성)
 
 자연수의 순서쌍 전체가 무한집합임을 증명하라.
 자연수에서 오는 단사함수를 하나 구성하여 `infinite_of_nat_injection`을 사용하라.
@@ -1775,16 +1767,16 @@ tag := "cardinality-countable-practice"
 
 양의 자연수에 사용한 대응을 바꾸어 다음 집합의 크기를 확인해 보자.
 
-*문제 11* $`\{n\in\mathbb{N}:2\leq n\}`이 가산무한집합임을 증명하라.
+*문제 10* $`\{n\in\mathbb{N}:2\leq n\}`이 가산무한집합임을 증명하라.
 
 ```savedLean -keep
-theorem exercise_from_two_countably_infinite {n : Nat} :
+theorem exercise_from_two_countably_infinite :
     IsCountablyInfinite
     (Elem (fun n : Nat => 2 ≤ n)) := by
   sorry
 ```
 
-*문제 12* (등차수열과 가산무한집합)
+*문제 11* (등차수열과 가산무한집합)
 
 집합 $`S=\{1,4,7,10,\ldots\}`을 $`3k+1` 꼴의 자연수로 정의한다.
 
@@ -1794,6 +1786,10 @@ theorem exercise_from_two_countably_infinite {n : Nat} :
 
 (3) $`S`가 자연수 전체와 같은 집합은 아님을 보이라.
 집합의 같음과 크기의 같음을 구별하라.
+
+아래 정의에서 `y : Elem practiceOneModThree`이면
+`y.property`는 `∃ k, y.val = 3 * k + 1`의 증명이다.
+짝수 집합의 전사성을 증명할 때와 같이 이 번호를 꺼내 사용할 수 있다.
 
 ```savedLean -keep
 def practiceOneModThree : Set Nat :=
@@ -1875,7 +1871,7 @@ example {A : Type}
 둘째 목표는 `S`가 자신의 부분집합이라는 명제이다.
 따라서 집합 절에서 증명한 `empty_subset`과 `subset_refl`을 그대로 사용할 수 있다.
 
-*문제 13* $`\mathcal{P}(S\cap T)=\mathcal{P}(S)\cap\mathcal{P}(T)`임을 증명하라.
+*문제 12* $`\mathcal{P}(S\cap T)=\mathcal{P}(S)\cap\mathcal{P}(T)`임을 증명하라.
 
 ```savedLean -keep
 theorem exercise_powerSet_inter {A : Type} (S T : Set A) :
@@ -2104,7 +2100,7 @@ file := "exercises"
 
 각 문제의 `sorry`를 증명으로 바꾸어 완성하라.
 
-*문제 14* (멱집합의 포함 관계)
+*문제 13* (멱집합의 포함 관계)
 
 (1) $`S\subseteq T`이면 $`\mathcal{P}(S)\subseteq\mathcal{P}(T)`임을 증명하라.
 
@@ -2129,7 +2125,7 @@ theorem exercise_powerSet_twoThree_positives :
   sorry
 ```
 
-*문제 15* (한 원소 집합들을 나열한 경우)
+*문제 14* (한 원소 집합들을 나열한 경우)
 
 $`f(n)=\{n\}`으로 부분집합들을 나열하자.
 

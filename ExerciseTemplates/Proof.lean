@@ -37,6 +37,11 @@ theorem exercise_implication_chain
     P → (P → Q) → (Q → R) → R := by
   sorry
 
+theorem exercise_relation_specialization_apply
+    (A : Type) (R : A → A → Prop) (a b : A) :
+    (∀ x : A, ∀ y : A, R x y) → R a b := by
+  sorry
+
 theorem exercise_relation_specialization
     (A : Type) (R : A → A → Prop) (a b : A) :
     (∀ x : A, ∀ y : A, R x y) → R a b := by

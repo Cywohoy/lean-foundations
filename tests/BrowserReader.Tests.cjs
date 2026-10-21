@@ -202,7 +202,7 @@ async function main() {
     assert.equal(await wrapper.locator('dialog').isVisible(), false);
     assert((await wrapper.locator('.book-example-body > .hl.lean.block').innerText()).includes('exact h'));
     assert.equal(await wrapper.locator('..').locator('.book-exercise-result').innerText(), '✓ 완료');
-    await page.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='1 / 63');
+    await page.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='1 / 62');
     assert.equal(await page.locator('.book-toc-tree [aria-current="page"] .book-chapter-progress').innerText(),'1/9');
     assert.equal(await wrapper.locator('..').getByRole('button', {name:'풀이 보기', exact:true}).count(), 1);
     await wrapper.getByRole('button', {name:'복사',exact:true}).click({force:true});
@@ -251,11 +251,11 @@ async function main() {
     await status(wrapper, '증명 완료 (1/2 완료)');
     assert.equal(await wrapper.getByRole('button',{name:'(1)',exact:true}).getAttribute('data-complete'),'true');
     assert.equal(await wrapper.getByRole('button',{name:'(2)',exact:true}).getAttribute('data-complete'),'false');
-    assert.equal(await page.locator('.book-progress-total').innerText(),'1 / 63');
+    assert.equal(await page.locator('.book-progress-total').innerText(),'1 / 62');
     await wrapper.getByRole('button', {name: '(2)', exact: true}).click();
     await wrapper.locator('textarea').fill('apply exercise_shift_lt\napply exercise_shift_lt\nexact hab');
     await status(wrapper, '풀이 완료');
-    await page.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='2 / 63');
+    await page.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='2 / 62');
     await wrapper.getByRole('button', {name: '(1)', exact: true}).click();
     assert((await wrapper.locator('textarea').inputValue()).includes('(k := c)'));
     await status(wrapper, '풀이 완료');

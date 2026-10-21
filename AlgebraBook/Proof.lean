@@ -201,8 +201,6 @@ h : 0 < n
 먼저 $`4\cdot4=16`을 증명하고 그 결과로 $`4`가 방정식 $`n^2=16`의 해임을 보이라.
 마지막으로 수의 값이 주어지지 않은 경우에도 해라는 가정에서 등식을 얻으라.
 아래의 `sorry`는 미완성 증명의 자리이며 실제 증명으로 바꾸어야 한다.
-웹의 풀이 편집기에서는 해당 문제까지 소개한 전술만 사용할 수 있다.
-아직 배우지 않은 전술을 쓰면 그 위치에 오류가 표시된다.
 
 ```savedLean -keep
 theorem exercise_four_square : 4 * 4 = 16 := by
@@ -638,6 +636,28 @@ example
 앞에서 배운 증명항의 적용을 사용하면 이 중간 증명을
 `have hQ : Q := hPQ hP`로 짧게 적을 수도 있다.
 
+{anchor "proofs-replacing-proofs"}[]앞의 증명에서는 `hP : P`를 남겨 두고 `have`로 `hQ : Q`를 추가했다.
+원래 가정을 더 이상 따로 쓰지 않는다면 `replace`로 그 가정을 새 사실로 교체할 수 있다.
+다음 증명에서는 `h : P`로부터 `Q`를 증명하고, 이후에는 같은 이름 `h`로 `Q`의 증명을 사용한다.
+
+```savedLean
+example (P Q R : Prop)
+    (h : P)
+    (hPQ : P → Q)
+    (hQR : Q → R) :
+    R := by
+  replace h : Q := by
+    apply hPQ
+    exact h
+
+  apply hQR
+  exact h
+```
+
+`replace`의 내부에서 새 사실을 증명하는 동안에는 원래 `h : P`를 사용할 수 있다.
+그 증명이 끝난 뒤에는 `h : Q`로 바뀐다.
+이미 증명항을 적을 수 있다면 `replace h : Q := hPQ h`로 줄여 쓸 수도 있다.
+
 *문제 4* $`P`, $`P \Rightarrow Q`, $`Q \Rightarrow R`을 차례로 가정하여 $`R`을 얻으라.
 
 ```savedLean -keep
@@ -762,9 +782,14 @@ example (A : Type) : ∀ x : A, x = x :=
 
 *문제 5* 두 원소에 관한 술어 `R : A → A → Prop`를 생각하자.
 모든 원소 `x`, `y`에서 `R x y`가 성립한다는 사실을 주어진 원소 `a`, `b`에서 사용하라.
-이 문제에서는 `apply`를 사용하는 증명과 `exact h a b`처럼 인수를 직접 넣는 증명을 각각 적으라.
+첫 증명에서는 `apply`를 사용하고, 둘째 증명에서는 `exact h a b`처럼 인수를 직접 넣으라.
 
 ```savedLean -keep
+theorem exercise_relation_specialization_apply
+    (A : Type) (R : A → A → Prop) (a b : A) :
+    (∀ x : A, ∀ y : A, R x y) → R a b := by
+  sorry
+
 theorem exercise_relation_specialization
     (A : Type) (R : A → A → Prop) (a b : A) :
     (∀ x : A, ∀ y : A, R x y) → R a b := by

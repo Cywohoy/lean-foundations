@@ -59,21 +59,29 @@ async function main() {
     }
     const requests=[]; page.on('request',request=>requests.push(request.url()));
     await page.goto(base+'proof/');
-    await count('0 / 63');
+    await count('0 / 62');
     assert(await page.evaluate(() => !!(document.querySelector('.book-toc-tree')
       .compareDocumentPosition(document.querySelector('.book-progress')) & Node.DOCUMENT_POSITION_FOLLOWING)),
       'Progress belongs below the table of contents');
     assert(!requests.some(url=>url.endsWith('/playground.json')),'Reading progress must not fetch the full execution manifest');
-    assert.deepEqual(await page.locator('.book-chapter-progress').allTextContents(),['0/9','0/22','0/17','0/15']);
+    assert.deepEqual(await page.locator('.book-chapter-progress').allTextContents(),['0/9','0/22','0/17','0/14']);
     const single=proof.find(([,v])=>(v.code.match(/^theorem\s+/gm)||[]).length===1);
     const partial=proof.find(([,v])=>(v.code.match(/^theorem\s+/gm)||[]).length>1);
     await seed([[...single,1],[...partial,1]]);
     await page.reload();
-    await count('1 / 63');
+    await count('1 / 62');
     assert.equal(await page.locator('.book-toc-tree [aria-current="page"] .book-chapter-progress').innerText(),'1/9');
+    const sectionTotal = await page.locator('.book-section-progress').allTextContents();
+    assert.equal(sectionTotal.reduce((sum,text)=>sum+Number(text.split('/')[1]),0),proof.length);
+    const section = page.locator(`.book-section-link[href$="#${single[1].exerciseSection}"]`);
+    const sectionItems=proof.filter(([,data])=>data.exerciseSection===single[1].exerciseSection);
+    assert.equal(await section.locator('.book-section-progress').innerText(),`1/${sectionItems.length}`);
     const card=page.locator(`[data-snippet="${partial[0]}"]`).locator('..');
     assert((await card.locator('.book-exercise-result').innerText()).startsWith('1/'));
     await page.locator('.book-progress-next').click();
+    await page.waitForURL(new URL(`proof/#exercise-${partial[0]}`,base).href);
+    assert(!await page.locator(`#exercise-${partial[0]} dialog`).isVisible(), 'Resume navigation only scrolls');
+    await card.getByRole('button',{name:'이어서 풀기',exact:true}).click();
     await page.locator(`#exercise-${partial[0]} dialog`).waitFor({state:'visible'});
     assert.equal(await page.locator(`#exercise-${partial[0]} .book-proof-controls button`).first().getAttribute('data-complete'),'true');
     await page.setViewportSize({width:390,height:600});
@@ -88,11 +96,11 @@ async function main() {
     await page.setViewportSize({width:1360,height:1000});
     await seed(proof.map(([key,data])=>[key,data]));
     await page.goto(base+'proof/');
-    await count('9 / 63');
+    await count('9 / 62');
     const next=exercises.find(([,v])=>v.exerciseChapter==='sets-functions');
     await page.locator('.book-progress-next').click();
     await page.waitForURL(new URL(`sets-functions/#exercise-${next[0]}`,base).href);
-    await page.locator(`#exercise-${next[0]} dialog`).waitFor({state:'visible'});
+    assert(!await page.locator(`#exercise-${next[0]} dialog`).isVisible(), 'Cross-chapter resume only scrolls');
     await page.keyboard.press('Escape');
     // A context-only update retains historical completion and rechecks without opening the problem.
     await page.addInitScript(() => Object.defineProperty(window, 'crossOriginIsolated', {value:true}));
@@ -103,12 +111,12 @@ async function main() {
       localStorage.setItem(key,JSON.stringify(saved));
     },single[1]);
     await page.goto(base+'proof/');
-    await count('9 / 63');
+    await count('9 / 62');
     await page.waitForFunction(key=>document.querySelector(`#exercise-${key}`)?.parentElement.querySelector('.book-exercise-result')?.textContent==='✓ 완료 · 재검사 대기',single[0]);
     await page.waitForFunction(()=>window.pendingChecks?.length>0);
     await page.evaluate(()=>window.pendingChecks.shift()());
     await page.waitForFunction(key=>document.querySelector(`#exercise-${key}`)?.parentElement.querySelector('.book-exercise-result')?.textContent==='✓ 완료',single[0]);
-    await count('9 / 63');
+    await count('9 / 62');
     // A newly failing audit removes completion but never deletes the saved solution.
     await page.evaluate(data=>{
       const key='lean-algebra.result.'+data.storageKey;
@@ -120,7 +128,7 @@ async function main() {
     await page.evaluate(()=>{window.fixtureAxioms=['sorryAx'];});
     await page.waitForFunction(()=>window.pendingChecks?.length>0);
     await page.evaluate(()=>window.pendingChecks.shift()());
-    await count('8 / 63');
+    await count('8 / 62');
     assert(await page.evaluate(data=>localStorage.getItem('lean-algebra.code.'+data.storageKey)?.includes('exact True.intro'),single[1]));
     await seed([[...single,1]]);
     await page.evaluate(id=>{
@@ -129,7 +137,7 @@ async function main() {
       localStorage.setItem(key,JSON.stringify(saved));
     },single[1].storageKey);
     await page.goto(base+'proof/');
-    await count('8 / 63');
+    await count('8 / 62');
     assert.equal(await page.locator(`#exercise-${single[0]}`).locator('..').locator('.book-exercise-result').innerText(),'작성 중');
     const staleCard=page.locator(`#exercise-${single[0]}`).locator('..');
     await staleCard.getByRole('button',{name:'이어서 풀기',exact:true}).click();
@@ -142,13 +150,13 @@ async function main() {
       saved.version=JSON.stringify([data.code,data.allowedTactics,data.contextFiles?.map(f=>f.sha256)]);
       localStorage.setItem(key,JSON.stringify(saved));
     },single[1]);
-    await count('9 / 63');
+    await count('9 / 62');
     await page.waitForFunction(key=>document.querySelector(`#exercise-${key}`)?.parentElement.querySelector('.book-exercise-result')?.textContent==='✓ 완료',single[0]);
     await other.evaluate(data=>{
       const key='lean-algebra.code.'+data.storageKey;
       localStorage.setItem(key,localStorage.getItem(key).replace('exact True.intro','-- changed elsewhere\n  exact True.intro'));
     },single[1]);
-    await count('8 / 63');
+    await count('8 / 62');
     await page.waitForFunction(key=>document.querySelector(`#exercise-${key} .book-draft-code`)?.textContent.includes('changed elsewhere'),single[0]);
     await staleCard.getByRole('button',{name:'이어서 풀기',exact:true}).click();
     assert((await staleCard.locator('textarea').inputValue()).includes('changed elsewhere'));
@@ -160,7 +168,7 @@ async function main() {
     await page.setViewportSize({width:1360,height:1000});
     await seed(exercises.map(([key,data])=>[key,data]));
     await page.goto(base);
-    await count('63 / 63');
+    await count('62 / 62');
     assert.equal(await page.locator('.book-progress-next').innerText(),'모든 문제 완료');
     assert(await page.locator('.book-progress-next').isDisabled());
     assert.equal(await page.locator('.book-progress-storage').textContent(),'');
@@ -168,7 +176,7 @@ async function main() {
       .filter(([key])=>key.startsWith('lean-algebra.code.'))));
     const reading=await context.newPage();
     await reading.goto(base+'proof/');
-    await reading.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='63 / 63');
+    await reading.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='62 / 62');
     const activeCard=reading.locator(`#exercise-${single[0]}`).locator('..');
     await activeCard.getByRole('button',{name:'풀이 보기',exact:true}).click();
     await reading.waitForFunction(()=>window.pendingChecks?.length>0);
@@ -181,14 +189,14 @@ async function main() {
     // Cancelling must not remove any saved work.
     page.once('dialog',dialog=>dialog.dismiss());
     await page.locator('.book-progress-reset').click();
-    await count('63 / 63');
+    await count('62 / 62');
     assert.equal(await page.evaluate(id=>localStorage.getItem('lean-algebra.code.'+id),single[1].storageKey),
       draftsBefore['lean-algebra.code.'+single[1].storageKey]);
     page.once('dialog',dialog=>dialog.accept());
     await page.locator('.book-progress-reset').click();
-    await count('0 / 63');
+    await count('0 / 62');
     assert.equal(await page.locator('.book-progress-storage').innerText(),'초기화됨');
-    await reading.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='0 / 63');
+    await reading.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='0 / 62');
     await reading.waitForFunction(()=>document.querySelector('dialog[open] textarea')?.value.trim()==='sorry');
     // An older in-flight verification must not restore the discarded solution.
     await reading.evaluate(()=>window.pendingChecks.shift()());
@@ -205,10 +213,29 @@ async function main() {
       && key!=='lean-algebra.result.other-book-proof').length),0);
     assert.equal(await page.evaluate(id=>localStorage.getItem('lean-algebra.code.'+id),partial[1].storageKey),null);
     await page.reload();
-    await count('0 / 63');
-    assert.deepEqual(await page.locator('.book-chapter-progress').allTextContents(),['0/9','0/22','0/17','0/15']);
+    await count('0 / 62');
+    assert.deepEqual(await page.locator('.book-chapter-progress').allTextContents(),['0/9','0/22','0/17','0/14']);
     await reading.close();
     await page.screenshot({path:'tmp/exercise-progress.png'});
+    // Alternative methods have independent proof slots; applications that
+    // reuse an exercise result share its checked compilation unit.
+    for (const [name, parts] of [
+      ['exercise_relation_specialization_apply', 2],
+      ['exercise_inter_union_absorb', 2],
+      ['exercise_cardinal_product', 4]
+    ]) {
+      const [key, data] = exercises.find(([,v])=>v.code.includes(`theorem ${name}`));
+      await page.goto(base+data.exerciseChapter+'/');
+      const card=page.locator(`#exercise-${key}`).locator('..');
+      await card.getByRole('button',{name:'풀기',exact:true}).click();
+      const dialog=page.locator(`#exercise-${key} dialog`);
+      await dialog.waitFor({state:'visible'});
+      await dialog.locator('.book-proof-controls button').last().waitFor({state:'visible'});
+      assert.equal(await dialog.locator('.book-proof-controls button').count(),parts);
+      await dialog.locator('.book-proof-controls button').last().click();
+      assert.equal(await dialog.locator('textarea').getAttribute('aria-label'),`풀이 ${parts}`);
+      await page.keyboard.press('Escape');
+    }
     console.log('PASS: full reset and cancellation, active-editor and in-flight check reset across tabs, legacy draft cleanup, chapter/book counts, and resume links');
   } finally {
     await browser.close();

@@ -74,17 +74,17 @@ theorem exercise_three_by_two_cardinal :
     cardinal (Fin 3 × Fin 2) = 6 := by
   sorry
 
-theorem exercise_infinite_transport {A B : Type}
+theorem exercise_infinite_finite_ne_cardinal {A B : Type}
     (hA : IsInfinite A)
-    (hAB : cardinal A = cardinal B) :
-    IsInfinite B := by
+    (hB : IsFinite B) :
+    cardinal A ≠ cardinal B := by
   sorry
 
 theorem exercise_nat_pairs_infinite :
     IsInfinite (Nat × Nat) := by
   sorry
 
-theorem exercise_from_two_countably_infinite {n : Nat} :
+theorem exercise_from_two_countably_infinite :
     IsCountablyInfinite
     (Elem (fun n : Nat => 2 ≤ n)) := by
   sorry

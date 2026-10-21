@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import tarfile
 import urllib.request
+from urllib.parse import parse_qs, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -55,18 +56,34 @@ def prepare(site, bundle=None, download=False, config=None):
         def __init__(self):
             super().__init__()
             self.keys = []
+            self.sections = {}
+            self.section = None
+            self.in_heading = False
 
         def handle_starttag(self, tag, attrs):
-            key = dict(attrs).get('data-snippet')
+            attrs = dict(attrs)
+            if tag == 'h2':
+                self.in_heading = True
+                self.section = attrs.get('id')
+            elif self.in_heading and tag == 'a' and not self.section:
+                self.section = parse_qs(urlsplit(attrs.get('href', '')).query).get('name', [None])[0]
+            key = attrs.get('data-snippet')
             if key in manifest and manifest[key].get('exercise'):
+                if not self.section:
+                    raise ValueError('Exercise has no parent section: ' + key)
                 self.keys.append(key)
+                self.sections[key] = self.section
+
+        def handle_endtag(self, tag):
+            if tag == 'h2':
+                self.in_heading = False
 
     ordered = []
     for chapter in ['proof', 'sets-functions', 'numbers-relations', 'sizes']:
         reader = ExerciseOrder()
         reader.feed((site / chapter / 'index.html').read_text(encoding='utf-8'))
         for number, key in enumerate(reader.keys, 1):
-            manifest[key].update(exerciseChapter=chapter, exerciseNumber=number,
+            manifest[key].update(exerciseChapter=chapter, exerciseSection=reader.sections[key], exerciseNumber=number,
                                  exerciseOrder=len(ordered))
             ordered.append(key)
     expected = {key for key, item in manifest.items() if item.get('exercise')}
@@ -113,7 +130,7 @@ def prepare(site, bundle=None, download=False, config=None):
             # Reading progress needs identities and versions, not every worked
             # example, import prefix, runtime file URL, or dependency source.
             fields = ['exercise', 'code', 'storageKey', 'legacyKeys', 'allowedTactics',
-                      'exerciseChapter', 'exerciseNumber', 'exerciseOrder']
+                      'exerciseChapter', 'exerciseSection', 'exerciseNumber', 'exerciseOrder']
             exercise_index[key] = {field: snippet[field] for field in fields}
             exercise_index[key]['contextFiles'] = [{'sha256': item['sha256']}
                                                     for item in snippet['contextFiles']]

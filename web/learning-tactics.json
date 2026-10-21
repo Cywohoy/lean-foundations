@@ -31,6 +31,12 @@
       [
         "intro"
       ]
+    ],
+    [
+      "proofs-replacing-proofs",
+      [
+        "replace"
+      ]
     ]
   ],
   "SetsFunctions": [
@@ -113,6 +119,12 @@
       [
         "congr"
       ]
+    ],
+    [
+      "functions-local-abbreviations",
+      [
+        "set"
+      ]
     ]
   ],
   "NumbersRelations": [
@@ -140,15 +152,15 @@
       [
         "and_intros"
       ]
-    ],
-    [
-      "relations-local-definitions",
-      [
-        "let"
-      ]
     ]
   ],
   "CardinalityChapter": [
+    [
+      "cardinality-local-functions",
+      [
+        "let"
+      ]
+    ],
     [
       "infinite-cardinality-automation",
       [

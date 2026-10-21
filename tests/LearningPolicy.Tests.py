@@ -8,11 +8,22 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from learning_policy import exercise_policies
 
 policies = exercise_policies()
-assert len(policies) == 103
+assert len(policies) == 105
+assert policies['exercise_relation_specialization_apply'] == policies['exercise_relation_specialization']
+assert policies['exercise_inter_union_absorb'] == policies['exercise_inter_union_absorb_via_subset']
+assert 'arith' not in policies['exercise_congruent_add_left']
 early = policies['exercise_add_three_preserves_lt']
 assert 'apply' in early and 'exact' in early
 assert not {'intro', 'arith', 'constructor', 'trivial'} & set(early)
 assert 'have' in policies['exercise_two_shifts_lt']
+assert 'replace' not in early
+assert 'replace' in policies['exercise_implication_chain']
+assert 'set' not in policies['exercise_preimage_subset']
+assert 'set' in policies['exercise_diff_antitone_right']
+assert 'set' in policies['exercise_equal_values_equivalence']
+assert 'let' not in policies['exercise_equal_values_equivalence']
+assert 'let' in policies['exercise_powerSet_mono']
+assert 'set' in policies['exercise_powerSet_mono']
 assert 'symm' not in policies['exercise_two_shifts_lt']
 assert 'symm' in policies['exercise_parityClass_three_one']
 assert 'intro' in policies['exercise_relation_specialization']
@@ -21,8 +32,16 @@ assert 'arith' in policies['exercise_equal_values_equivalence']
 assert 'card' not in policies['exercise_powerSet_mono']
 assert all('omega' not in allowed for allowed in policies.values())
 
-guard = (ROOT / 'web/lean/LearningGuard.lean').read_text(encoding='utf-8')
+guard = 'import Ample.Tactic.Auto\n' + (ROOT / 'web/lean/LearningGuard.lean').read_text(encoding='utf-8')
 cases = '''
+open scoped Ample
+example (P : Prop) (h : P) : P := by learning_guard "set,exact" in
+  set Q := P
+  exact h
+example (P Q : Prop) (h : P) (f : P → Q) : Q := by learning_guard "replace,exact" in
+  replace h : Q := f h
+  exact h
+
 example : True := by learning_guard "exact" in
   -- trivial here is only a comment
   exact True.intro

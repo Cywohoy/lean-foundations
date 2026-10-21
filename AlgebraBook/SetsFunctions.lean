@@ -573,9 +573,9 @@ tag := "sets-proving-set-equality"
 4. `h x`는 전칭명제의 증명 `h`를 원소 `x`에서 사용한 것으로, 이 동치의 증명이다.
    따라서 `exact h x`로 모든 단계가 끝난다.
 
-등식의 목표를 원소별 비교로 바꾸는 전술이 `ext`이다.
-함수의 등식에서는 `ext x`를 `funext x` 대신 사용할 수 있다.
-집합의 등식에서는 `funext x`와 `apply propext`를 대신하여 `x ∈ S ↔ x ∈ T`를 목표로 남긴다.
+`ext`는 `funext`나 `apply propext`처럼 등식인 목표를 두 대상의 값이나 조건을 비교하는 목표로 바꾸는 전술이다.
+함수의 등식에서 `ext x`는 `funext x`를 대신하며,
+집합의 등식에서는 `funext x`와 `apply propext`를 차례로 쓰는 과정을 대신하여 `x ∈ S ↔ x ∈ T`를 목표로 남긴다.
 
 ```savedLean
 example (A B : Type) (f g : A → B)
@@ -821,10 +821,15 @@ theorem exercise_twoThree_union_positives :
 *문제 4* (흡수법칙)
 
 $`S\cap(S\cup T)=S`임을 증명하라.
-원소별로 두 방향을 보인 뒤, 본문의 `inter_eq_left_of_subset`을 사용한 증명도 작성하라.
+첫 증명에서는 원소별로 두 방향을 보이고, 둘째 증명에서는 본문의 `inter_eq_left_of_subset`을 사용하라.
 
 ```savedLean -keep
 theorem exercise_inter_union_absorb {A : Type}
+    (S T : Set A) :
+    S ∩ (S ∪ T) = S := by
+  sorry
+
+theorem exercise_inter_union_absorb_via_subset {A : Type}
     (S T : Set A) :
     S ∩ (S ∪ T) = S := by
   sorry
@@ -1495,6 +1500,11 @@ example :
 앞의 `double`에서도 $`5`가 상에 속한다고 가정하면 $`2n=5`인 자연수 $`n`을 얻게 된다.
 이 등식에서 모순을 얻는 방법은 {ref "preliminaries-double-image"}[짝수와 함수의 상]에서 다룬다.
 
+상의 원소 조건에 합집합이 들어 있으면 경우 구분을 함께 사용한다.
+가령 `hy : y ∈ image f (S ∪ T)`에서 원소 `x`와 `hx : x ∈ S ∪ T`, `hEq : f x = y`를 꺼내면,
+`hx`에 따라 `x ∈ S`와 `x ∈ T`인 두 경우로 나눌 수 있다.
+각 경우에 같은 원소 `x`와 등식 `hEq`를 사용하면 `y ∈ image f S` 또는 `y ∈ image f T`를 얻는다.
+
 *문제 7* (합집합의 상)
 
 $`f(S\cup T)=f(S)\cup f(T)`임을 증명하라.
@@ -1699,10 +1709,10 @@ theorem preimage_image_of_injective {A B : Type} (f : A → B)
   apply set_eq_of_subset
   · intro x hx
     rcases hx with ⟨y, hy, hxy⟩
-    have hyx : y = x := by
+    replace hxy : y = x := by
       exact hf y x hxy
 
-    rw [← hyx]
+    rw [← hxy]
     exact hy
 
   · exact subset_preimage_image f S
@@ -1710,8 +1720,9 @@ theorem preimage_image_of_injective {A B : Type} (f : A → B)
 
 `hx`는 `∃ y, y ∈ S ∧ f y = f x`라는 존재명제의 증명이므로
 `rcases`로 원소 `y`, 원소 조건 `hy`, 함수값의 등식 `hxy`를 얻는다.
-`hf`로 얻은 `hyx`를 오른쪽에서 왼쪽으로 사용하면 목표 `x ∈ S`가 `y ∈ S`로 바뀐다.
-`rw [← hyx]`의 `←`는 이처럼 등식을 반대 방향으로 사용하라는 뜻이며 `\l`로 입력한다.
+`replace`로 함수값의 등식 `hxy`를 원소의 등식 `y = x`로 바꾼다.
+`rw [← hxy]`로 이 등식을 오른쪽에서 왼쪽으로 사용하면 목표 `x ∈ S`가 `y ∈ S`로 바뀐다.
+`←`는 등식을 반대 방향으로 사용하라는 뜻이며 `\l`로 입력한다.
 
 *보기* $`\{2,3\}`의 상은 $`\{4,6\}`이다. 이 상의 역상을 구하면 원래 집합 $`\{2,3\}`을 얻는다.
 두 번째 사실은 `double`의 단사성에서 바로 따른다.
@@ -2656,12 +2667,12 @@ theorem swapPair_bijective {A B : Type} :
     Bijective (swapPair : A × B → B × A) := by
   constructor
   · intro p q hpq
-    have h :
+    replace hpq :
         swapPair (swapPair p) = swapPair (swapPair q) := by
       rw [hpq]
 
-    rw [swapPair_twice, swapPair_twice] at h
-    exact h
+    rw [swapPair_twice, swapPair_twice] at hpq
+    exact hpq
 
   · intro q
     exists (swapPair q)
@@ -2788,8 +2799,8 @@ noncomputable def inverseMap {A B : Type} (f : A → B)
     (hf : Bijective f) : B → A :=
   (inverseMapData f hf).val
 theorem inverseMap_right {A B : Type} (f : A → B)
-    (hf : Bijective f)
-    (y : B) :
+    {hf : Bijective f}
+    {y : B} :
     f (inverseMap f hf y) = y := by
   exact (inverseMapData f hf).property y
 ```
@@ -2798,17 +2809,21 @@ theorem inverseMap_right {A B : Type} (f : A → B)
 $`f(g(f(x)))=f(x)`이므로 $`f`의 단사성을 사용하면 된다.
 
 ```savedLean
-theorem inverseMap_left {A B : Type} (f : A → B)
-    (hf : Bijective f)
-    (x : A) :
+theorem inverseMap_left {A B : Type} {f : A → B}
+    {hf : Bijective f}
+    {x : A} :
     inverseMap f hf (f x) = x := by
   apply hf.inj
-  exact inverseMap_right f hf (f x)
+  exact inverseMap_right f
 ```
 
 `apply hf.inj`는 두 원소가 같다는 목표를 그 함수값이 같다는 목표로 바꾼다.
 남은 목표 `f (inverseMap f hf (f x)) = f x`는
-`inverseMap_right`에 공역의 원소 `f x`를 넣어 얻는다.
+`inverseMap_right f`로 얻는다.
+
+이 계산 정리들은 목표의 역함수 식에 이미 들어 있는 인수를 추론한다.
+따라서 `inverseMap_left`는 인수를 적지 않고 사용할 수 있으며,
+`inverseMap_right f`에는 바깥에서 적용하는 함수 `f`만 지정한다.
 
 이름의 `left`와 `right`는 합성에서 역함수가 놓이는 위치를 가리킨다.
 `inverseMap_left`는 $`g(f(x))=x`를, `inverseMap_right`는 $`f(g(y))=y`를 나타낸다.
@@ -2825,10 +2840,10 @@ theorem inverse_exists {A B : Type} (f : A → B)
   exists (inverseMap f hf)
   constructor
   · intro x
-    exact inverseMap_left f hf x
+    exact inverseMap_left
 
   · intro y
-    exact inverseMap_right f hf y
+    exact inverseMap_right f
 ```
 
 `exists`로 앞에서 정의한 함수를 제시한 뒤 두 조건을 각각 증명했다.
@@ -2880,8 +2895,11 @@ example {A B : Type} :
       swapPair := by
   apply inverse_function_unique swapPair
   · constructor
-    · exact inverseMap_left swapPair swapPair_bijective
-    · exact inverseMap_right swapPair swapPair_bijective
+    · intro x
+      exact inverseMap_left
+
+    · intro y
+      exact inverseMap_right swapPair
 
   · constructor
     · exact swapPair_twice
@@ -2905,13 +2923,15 @@ theorem inverseMap_compose {A B : Type} (f : A → B)
     (hf : Bijective f) :
     inverseMap f hf ∘ f = identity A := by
   ext x
-  exact inverseMap_left f hf x
+  expand
+  rw [inverseMap_left]
 
 theorem compose_inverseMap {A B : Type} (f : A → B)
     (hf : Bijective f) :
     f ∘ inverseMap f hf = identity B := by
   ext y
-  exact inverseMap_right f hf y
+  expand
+  rw [inverseMap_right f]
 ```
 
 {anchor "functions-inverse-bijectivity"}[]*정리* 전단사함수의 역함수도 전단사이다.
@@ -2921,32 +2941,40 @@ $`g(x)=g(y)`이면 양변에 $`f`를 적용하여 $`f(g(x))=f(g(y))`를 얻고
 역함수의 성질로 양변을 바꾸면 $`x=y`이다.
 또한 임의의 $`a\in A`에 대하여 $`g(f(a))=a`이므로 $`g`는 전사이다.
 
+{anchor "functions-local-abbreviations"}[]반복해서 쓰는 역함수 `inverseMap f hf`를 `g`로 줄여 쓰자.
+`set g := inverseMap f hf`는 증명 안에서 `g`를 정의하고,
+목표와 가정에 나타난 같은 식을 `g`로 바꾸는 전술이다.
+따라서 아래에서는 목표가 `Bijective g`가 되며, 두 함수값이 같다는 가정도 `g x = g y`로 읽을 수 있다.
+
 ```savedLean
 theorem inverseMap_bijective {A B : Type} (f : A → B)
     (hf : Bijective f) :
     Bijective (inverseMap f hf) := by
+  set g := inverseMap f hf
   constructor
   · intro x y hxy
     -- 같은 두 역함수 값에 f를 적용한다.
-    have h :
-        f (inverseMap f hf x) = f (inverseMap f hf y) := by
+    replace hxy : f (g x) = f (g y) := by
       rw [hxy]
 
     -- f와 역함수를 차례로 적용하면 원래 원소이다.
-    rw [inverseMap_right f hf x,
-      inverseMap_right f hf y] at h
-    exact h
+    rw [inverseMap_right f,
+      inverseMap_right f] at hxy
+    exact hxy
 
   · intro x
     -- f x를 역함수에 넣으면 x를 얻는다.
     exists (f x)
-    exact inverseMap_left f hf x
+    exact inverseMap_left
 ```
 
-단사성을 보일 때는 `hxy`로 두 함수값의 등식 `h`를 얻은 뒤
-`inverseMap_right`을 `x`와 `y`에 각각 적용한 등식으로 양변을 바꾼다.
-전사성을 보일 때는 `exists (f x)`로 원소를 택하면
-남은 목표가 `inverseMap f hf (f x) = x`가 되므로 `inverseMap_left`를 사용한다.
+단사성을 보일 때는 `replace`로 `hxy : g x = g y`를 `f (g x) = f (g y)`로 바꾼다.
+`g`는 `inverseMap f hf`로 정의되어 있으므로 `inverseMap_right`으로 양변을 각각 `x`, `y`로 바꿀 수 있다.
+전사성을 보일 때는 `exists (f x)`로 원소를 택하면 목표가 `g (f x) = x`가 된다.
+`g`의 정의에 따라 이 목표에도 `inverseMap_left`를 사용할 수 있다.
+
+`set`으로 붙인 이름은 자동으로 정리하는 과정에서도 유지된다.
+`g`의 정의를 직접 펼치려면 앞에서 배운 `dsimp`를 써서 `dsimp [g]`로 적는다.
 
 # 연습문제
 %%%
