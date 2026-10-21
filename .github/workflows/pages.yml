@@ -45,6 +45,16 @@ jobs:
           python tests/TheoremCatalog.Tests.py
           python tests/Pages.Tests.py
           python tests/Preview.Tests.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check the actual browser exercise editor
+        env:
+          NODE_PATH: ${{ runner.temp }}/book-browser/node_modules
+        run: |
+          npm install --prefix "$RUNNER_TEMP/book-browser" playwright@1.62.1
+          "$RUNNER_TEMP/book-browser/node_modules/.bin/playwright" install --with-deps chrome
+          node tests/BrowserReader.Tests.cjs
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _out/pages
