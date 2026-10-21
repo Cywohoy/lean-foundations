@@ -67,6 +67,7 @@ if 'content="wasm"' in (book / 'index.html').read_text(encoding='utf-8'):
     assert (book / 'coi-serviceworker.js').is_file()
     assert (book / 'assets/web/wasm-reader.js').is_file()
     assert (book / 'assets/web/exercise-model.js').is_file()
+    assert (book / 'assets/web/exercise-context.js').is_file()
     assert not any('AlgebraBook.' in item['before'] for item in json.loads((book / 'playground.json').read_text()).values())
     assert all(item.get('contextFiles') for item in json.loads(
         (book / 'playground.json').read_text(encoding='utf-8')).values() if item.get('exercise'))
@@ -83,6 +84,7 @@ for page in reading_pages:
     for file in ('book.css', '-verso-data/typography.css', '-verso-data/reader.js',
                  '-verso-search/search-init.js', '-verso-search/search-box.js',
                  'assets/web/wasm-reader.js', 'assets/web/lean-wasm.js',
+                 'assets/web/exercise-context.js',
                  'playground.json', 'exercises.json'):
         assert (book / assets / file).read_bytes() == (book / file).read_bytes(), file
     assert f'src="{assets}-verso-data/reader.js"' in html, page

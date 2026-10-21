@@ -132,11 +132,11 @@ theorem exercise_cardinal_power_sum (A B C : Type) :
   sorry
 
 theorem exercise_three_boxes_sum :
-    cardinal (Σ i : Fin 3, Fin (i.val + 1)) = 6 := by
+    cardinal (Fin 1 ⊕ (Fin 2 ⊕ Fin 3)) = 6 := by
   sorry
 
 theorem exercise_three_boxes_product :
-    cardinal ((i : Fin 3) → Fin (i.val + 1)) = 6 := by
+    cardinal (Fin 1 × (Fin 2 × Fin 3)) = 6 := by
   sorry
 
 theorem exercise_infinite_finite_ne_cardinal {A B : Type}

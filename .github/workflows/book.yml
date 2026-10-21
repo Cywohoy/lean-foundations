@@ -49,4 +49,5 @@ jobs:
           python scripts/build_unicode_input.py --check
           node tests/UnicodeTable.Tests.cjs
           node tests/ExerciseModel.Tests.cjs
+          node tests/ExerciseContext.Tests.cjs
           node tests/BackgroundRecheck.Tests.cjs

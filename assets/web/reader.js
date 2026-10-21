@@ -53,6 +53,7 @@
     try {
       const saved = JSON.parse(stored(`lean-algebra.result.${exerciseStorageId(original, key)}`));
       if (saved?.code !== code) return null;
+      if (!dependenciesCurrent(saved.dependencies)) return null;
       if (saved.version === exerciseVersion(original)) return saved;
       // Keep historical results only when the exercise itself is unchanged.
       const previous = JSON.parse(saved.version);
@@ -60,13 +61,27 @@
       return {...saved, stale: true};
     } catch { return null; }
   }
+  function dependenciesCurrent(dependencies = []) {
+    return dependencies.every(item => (exerciseDraft(item, item.key) ?? item.originalCode) === item.code);
+  }
   let draftManifest;
+  let exerciseIndex;
+  let dependencyModule;
+  function dependencyTools() {
+    dependencyModule ||= import(new URL('assets/web/exercise-context.js', assetsRoot));
+    return dependencyModule;
+  }
   function exerciseManifest() {
     draftManifest ||= fetch(new URL('exercises.json', assetsRoot)).then(response => {
       if (!response.ok) throw new Error('Exercise metadata is unavailable.');
-      return response.json();
+      return response.json().then(data => { exerciseIndex = data; return data; });
     }).catch(error => { draftManifest = undefined; throw error; });
     return draftManifest;
+  }
+  async function exerciseDependencies(original, key, code) {
+    if (!original.exercise) return [];
+    const [manifest, tools] = await Promise.all([exerciseManifest(), dependencyTools()]);
+    return tools.selectDependencies(manifest, manifest[key], code, exerciseDraft);
   }
   function hasExerciseDrafts() {
     try { return Object.keys(localStorage).some(key => key.startsWith('lean-algebra.code.')); }
@@ -99,9 +114,11 @@
         const epoch = progressEpoch();
         const original = await snippet(key);
         const model = exerciseModel(original.code, code);
+        const dependencies = await exerciseDependencies(original, key, code);
         const result = await call('/api/lean/check', {snippet: key, code, background: true,
-          proofNames: model.parts.map(part => part.name)});
+          proofNames: model.parts.map(part => part.name), dependencies});
         if (epoch !== progressEpoch() || exerciseDraft(data, key) !== code) continue;
+        if (!dependenciesCurrent(result.dependencies)) continue;
         if (result.contextErrors?.length) continue;
         const {verification} = verifyExercise(original, code, result, model);
         store(`lean-algebra.result.${exerciseStorageId(data, key)}`, JSON.stringify(verification));
@@ -131,7 +148,7 @@
       return !errors.some(error => error.line >= startLine && error.line <= endLine);
     }) || [];
     const count = complete.filter(Boolean).length;
-    const verification = {code, version: exerciseVersion(original),
+    const verification = {code, version: exerciseVersion(original), dependencies: result.dependencies || [],
       done: count, total: exercise?.parts.length || 0, parts: complete};
     return {errors, holes, bodies, audited, forbidden, complete, count, verification};
   }
@@ -329,6 +346,7 @@
     if (exercise) {
       window.addEventListener('storage', refreshStoredExercise);
       window.addEventListener('book-exercise-reset', refreshStoredExercise);
+      window.addEventListener('book-exercise-progress', refreshStoredExercise);
       window.addEventListener('book-exercise-verified', event => {
         if (event.detail.key === key) refreshStoredExercise(event);
       });
@@ -405,10 +423,12 @@
           panel.replaceChildren();
           if (!editor) {
             const model = exercise ? await import(new URL('assets/web/exercise-model.js', assetsRoot)) : null;
+            const dependencies = exercise ? await dependencyTools() : null;
+            if (exercise) await exerciseManifest();
             const unicode = await import(new URL('assets/web/unicode-input.js', assetsRoot));
             if (mode !== 'edit') return;
             editor = createEditor(key, data, model?.exerciseModel, unicode.attachUnicodeInput,
-              (code, verification) => showDraft(data, code, verification));
+              (code, verification) => showDraft(data, code, verification), dependencies);
           }
           panel.append(editor.root);
           editor.input.focus();
@@ -441,7 +461,7 @@
     }
   }
 
-  function createEditor(key, original, makeExercise, attachUnicodeInput, onDraft) {
+  function createEditor(key, original, makeExercise, attachUnicodeInput, onDraft, dependencyTools) {
     const root = element('div', 'book-live-editor');
     const controls = element('div', 'book-editor-controls');
     const input = element('textarea', 'book-code-input');
@@ -537,8 +557,17 @@
         input.setAttribute('aria-label', fullCode ? '연습문제 전체 코드' : `풀이 ${selectedProof + 1}`);
         input.focus(); changed();
       });
-      const download = button('풀이 내려받기', () => {
+      const download = button('풀이 내려받기', async () => {
         let source = (original.sourceBefore || original.before).trimEnd() + '\n\n' + currentCode() + '\n';
+        const dependencies = await exerciseDependencies(original, key, currentCode());
+        if (dependencies.length) {
+          source = (original.sourceBefore || original.before).trimEnd();
+          source += dependencyTools.closeScopes(source);
+          const earlier = await Promise.all(dependencies.map(item => snippet(item.snippet)));
+          source = dependencyTools.dependencyImports(original, earlier).join('\n') + '\n' + source;
+          for (const [index, item] of dependencies.entries()) source += dependencyTools.dependencySource(earlier[index], item.code, false);
+          source += dependencyTools.scopeSource(original).replace(/^register_expand_module[^\n]*\n?/gm, '') + '\n\n' + currentCode() + '\n';
+        }
         const scopes = [];
         for (const line of source.split('\n')) {
           const open = /^(namespace|section)(?:\s+(\S+))?\s*$/.exec(line);
@@ -585,7 +614,8 @@
           name: part.name, reference: part.name,
           statement: part.header.trim().replace(/^theorem\s+\S+\s*/, '').replace(/\s*:=\s*by$/, ''),
         }));
-        const available = [...earlier, ...original.theorems];
+        const previous = dependencyTools.earlierTheorems(exerciseIndex, exerciseIndex[key]);
+        const available = [...earlier, ...previous, ...original.theorems];
         const query = search.value.trim().toLocaleLowerCase();
         const words = query.split(/\s+/).filter(Boolean);
         const found = available.filter(item => words.every(word =>
@@ -620,6 +650,7 @@
     let session;
     let version;
     let checkedCode;
+    let checkedDependencies = [];
     let busy = false;
     let timer;
     let compileTimer;
@@ -654,8 +685,10 @@
     function documentCall(path, code, payload) {
       const task = documentQueue.catch(() => {}).then(async () => {
         if (currentCode() !== code || !root.isConnected) return null;
+        const dependencies = path === '/api/lean/check' ? await exerciseDependencies(original, key, code) : [];
         const result = await call(path, {snippet: key, code, session: session || tabSession(),
-          proofRange: proofRange(), proofNames: exercise?.parts.map(part => part.name), ...payload});
+          proofRange: proofRange(), proofNames: exercise?.parts.map(part => part.name), dependencies, ...payload});
+        if (!dependenciesCurrent(result.dependencies)) { checkedCode = undefined; scheduleCheck(250); return null; }
         session = result.session;
         tabSession(session);
         version = result.version;
@@ -723,6 +756,7 @@
         const result = await documentCall('/api/lean/check', code, {position: position()});
         if (!result || disposed || epoch !== progressEpoch()) return;
         checkedCode = code;
+        checkedDependencies = result.dependencies || [];
         if (code !== currentCode()) return;
         showGoal(result.goal, result.goalNote);
         diagnostics.replaceChildren();
@@ -837,6 +871,7 @@
     lines();
     function activate() {
       lines();
+      if (!dependenciesCurrent(checkedDependencies)) checkedCode = undefined;
       if (!activated) {
         const hole = input.value.search(/\bsorry\b/);
         const position = hole < 0 ? input.value.length : hole;

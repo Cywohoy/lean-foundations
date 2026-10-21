@@ -37,8 +37,9 @@ assert "def cardinality_fin_three_last" not in sets
 sizes=(root/"AlgebraBook/CardinalityChapter.lean").read_text(encoding="utf-8")
 assert sizes.index('theorem finite_cardinal_unique') < sizes.index('def cardinalityData') < sizes.index('def cardinality (')
 assert sizes.index('theorem fin_injective_le') < sizes.index('theorem finite_injective_iff_surjective')
-assert sizes.index('theorem finite_injective_iff_surjective') < sizes.index('namespace Cardinal\n\nnoncomputable def binaryData')
-assert sizes.index('theorem cardinal_nat_add') < sizes.index('theorem cardinal_finiteSigma') < sizes.index('theorem cardinal_set')
+assert sizes.index('theorem finite_injective_iff_surjective') < sizes.index('namespace Cardinal\n\nnoncomputable def add')
+assert sizes.index('theorem cardinal_nat_add') < sizes.index('theorem cardinal_fin_arrow') < sizes.index('theorem cardinal_set')
+assert not any(name in sizes for name in ['Σ', 'cardinal_finiteSigma', 'cardinal_finitePi', 'Nat → Type'])
 assert sets.index('def productMap') < sets.index('theorem productMap_bijective')
 assert 'def productMap' not in sizes
 relations=(root/"AlgebraBook/NumbersRelations.lean").read_text(encoding="utf-8")
@@ -53,7 +54,8 @@ assert [sizes.index(s) for s in deletion_steps] == sorted(sizes.index(s) for s i
 for flags,code in re.findall(r'```savedLean([^\n]*)\n(.*?)```', sizes, re.S):
     if any(re.search(r'^' + re.escape(step) + r'\b', code, re.M) for step in deletion_steps):
         assert '-show' not in flags, 'The finite counting proof must expose the mathematical steps it uses'
-assert sizes.index('def finSum') < sizes.index('def finProduct') < sizes.index('noncomputable def binaryData')
+assert sizes.index('def finSum') < sizes.index('def finProduct') < sizes.index('noncomputable def add')
+assert 'binaryData' not in sizes
 assert "Advanced:" not in source
 assert sizes.count("# 크기 비교의 자동화")==1
 appendix=(root/"AlgebraBook/Tactics.lean").read_text(encoding="utf-8")

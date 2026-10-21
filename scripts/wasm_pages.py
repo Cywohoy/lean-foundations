@@ -41,7 +41,7 @@ def prepare(site, bundle=None, download=False, config=None):
     (site / 'assets/web').mkdir(parents=True, exist_ok=True)
     shutil.copyfile(ROOT / 'assets/web/reader.js', site / '-verso-data/reader.js')
     shutil.copyfile(ROOT / 'assets/web/reader.css', site / '-verso-data/reader.css')
-    for name in ['lean-wasm.js', 'wasm-reader.js', 'exercise-model.js', 'unicode-input.js', 'lean-unicode.js']:
+    for name in ['lean-wasm.js', 'wasm-reader.js', 'exercise-model.js', 'exercise-context.js', 'unicode-input.js', 'lean-unicode.js']:
         shutil.copyfile(ROOT / 'assets/web' / name, site / 'assets/web' / name)
     shutil.copytree(ROOT / 'assets/web/vendor/lean-unicode-input', site / 'assets/web/vendor/lean-unicode-input', dirs_exist_ok=True)
     loader = importlib.util.spec_from_file_location('book_math_export', ROOT / 'scripts/book_code.py')
@@ -126,11 +126,19 @@ def prepare(site, bundle=None, download=False, config=None):
             snippet['theorems'].sort(key=lambda item: (not item['preferred'], -positions.get(item['name'], -1)))
             snippet['before'] = ('import ' + context['module'] + '\nimport Ample.Tactic.Unfold\nimport AmpleBrowserContext.LearningGuard\n\n'
                 'register_expand_module AmpleBrowserContext\n' + context['scope'] + '\n')
+            scopes = []
+            for line in context['scope'].splitlines():
+                opening = re.fullmatch(r'(namespace|section)(?:\s+(\S+))?\s*', line)
+                if opening:
+                    scopes.append((opening[1], opening[2]))
+                elif re.fullmatch(r'end(?:\s+\S+)?\s*', line) and scopes:
+                    scopes.pop()
+            snippet['exerciseNamespace'] = '.'.join(name for kind, name in scopes if kind == 'namespace' and name)
         if snippet.get('exercise'):
             # Reading progress needs identities and versions, not every worked
             # example, import prefix, runtime file URL, or dependency source.
             fields = ['exercise', 'code', 'storageKey', 'legacyKeys', 'allowedTactics',
-                      'exerciseChapter', 'exerciseSection', 'exerciseNumber', 'exerciseOrder']
+                      'exerciseChapter', 'exerciseSection', 'exerciseNumber', 'exerciseOrder', 'exerciseNamespace']
             exercise_index[key] = {field: snippet[field] for field in fields}
             exercise_index[key]['contextFiles'] = [{'sha256': item['sha256']}
                                                     for item in snippet['contextFiles']]

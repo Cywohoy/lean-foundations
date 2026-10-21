@@ -52,8 +52,10 @@ jobs:
         env:
           NODE_PATH: ${{ runner.temp }}/book-browser/node_modules
         run: |
+          node tests/ExerciseContext.Tests.cjs
           npm install --prefix "$RUNNER_TEMP/book-browser" playwright@1.62.1
           "$RUNNER_TEMP/book-browser/node_modules/.bin/playwright" install --with-deps chrome
+          node tests/MobileLayout.Tests.cjs
           node tests/BrowserReader.Tests.cjs
       - uses: actions/upload-pages-artifact@v4
         with:

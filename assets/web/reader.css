@@ -229,7 +229,8 @@
 
 /* Long formulas and reference tables scroll locally, without widening the page. */
 .katex-display { overflow-x: auto; overflow-y: hidden; padding-block: .2em; }
-.book-table-scroll { max-width: 100%; overflow-x: auto; margin-block: 1rem; }
+/* Contain KaTeX's absolutely positioned accessibility layer in this scroller. */
+.book-table-scroll { position: relative; max-width: 100%; overflow-x: auto; margin-block: 1rem; }
 .book-table-scroll:focus-visible { outline: 1px solid #777; outline-offset: 3px; }
 .book-table-scroll > table { min-width: 36rem; margin-block: 0; }
 .book-table-scroll th, .book-table-scroll td { word-break: keep-all; }

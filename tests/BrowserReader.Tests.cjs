@@ -40,7 +40,7 @@ async function main() {
     response.writeHead(200, {'Content-Type': mime[path.extname(file)] || 'application/octet-stream', 'Content-Length': fs.statSync(file).size});
     fs.createReadStream(file).pipe(response);
   });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  if (!process.env.BOOK_URL) await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = process.env.BOOK_URL || `http://127.0.0.1:${server.address().port}/lean-algebra/`;
   if (process.env.BOOK_URL) manifest = await (await fetch(new URL('playground.json', base))).json();
   const browser = await playwright.chromium.launch({channel: 'chrome', headless: true});
@@ -306,6 +306,52 @@ contradiction`);
     await page.keyboard.press('Escape');
     console.log('PASS: independent subproof progress survives errors in another subproblem');
 
+    const noInjection = example(code => code.startsWith('theorem exercise_fin_succ_not_injective'));
+    const collision = example(code => code.startsWith('theorem exercise_fin_collision'));
+    const noInjectionProof = `intro hf
+have hle : n + 1 ≤ n := by
+  apply fin_injective_le f
+  exact hf
+arith`;
+    wrapper = await open(noInjection);
+    await wrapper.locator('textarea').fill(noInjectionProof);
+    await status(wrapper, '풀이 완료');
+    await page.keyboard.press('Escape');
+    wrapper = await open(collision);
+    await wrapper.locator('.book-theorems-search').fill('exercise_fin_succ_not_injective');
+    assert.equal(await wrapper.locator('.book-theorem').count(), 1);
+    await wrapper.locator('textarea').fill(`by_contra h
+apply exercise_fin_succ_not_injective n f
+intro i j hij
+by_contra hne
+apply h
+exists i, j`);
+    await status(wrapper, '증명 완료 (1/2 완료)');
+    assert(!(await wrapper.locator('.book-diagnostics').innerText()).includes('Unknown identifier'));
+    await wrapper.getByRole('button', {name: '(2)', exact: true}).click();
+    await wrapper.locator('textarea').fill('apply exercise_fin_collision 12 month');
+    await status(wrapper, '풀이 완료');
+    await page.keyboard.press('Escape');
+    wrapper = await open(noInjection);
+    await wrapper.getByRole('button', {name: '초기화', exact: true}).click();
+    await status(wrapper, '증명 중');
+    await page.keyboard.press('Escape');
+    assert(!(await page.locator(`[data-snippet="${collision.key}"]`).locator('..')
+      .locator('.book-exercise-result').innerText()).includes('✓ 완료'));
+    wrapper = await open(collision);
+    await status(wrapper, '증명 중');
+    assert((await wrapper.locator('.book-diagnostics').innerText()).includes('미완성 정리'));
+    assert(!await wrapper.locator('.book-run-status').evaluate(node => node.classList.contains('book-success')));
+    await page.keyboard.press('Escape');
+    wrapper = await open(noInjection);
+    await wrapper.locator('textarea').fill(noInjectionProof);
+    await status(wrapper, '풀이 완료');
+    await page.keyboard.press('Escape');
+    wrapper = await open(collision);
+    await status(wrapper, '풀이 완료');
+    await page.keyboard.press('Escape');
+    console.log('PASS: earlier exercise proofs, theorem lookup, dependent completion, prerequisite reset, and reopening');
+
     const repeated = example(code => code.startsWith('theorem exercise_from_two_countably_infinite '));
     wrapper = await open(repeated);
     await status(wrapper, '증명 중');
@@ -408,13 +454,44 @@ example (k : Int) : ¬ (2 ∣ 2 * k + 1) := by arith`},
     }
     const state = checks[1].goal.join('\n');
     assert(state.includes('n : Nat') && !/\b[A-C] : Type|\bm : Nat/.test(state), state);
+    const firstProblem = example(code => code.startsWith('theorem exercise_four_square'));
+    const dependencyChecks = await page.evaluate(async ({base, current, manifest, firstProblem}) => {
+      const {createBrowserBackend} = await import(new URL('assets/web/wasm-reader.js', base));
+      const {selectDependencies} = await import(new URL('assets/web/exercise-context.js', base));
+      const backend = createBrowserBackend(new URL(base));
+      const codes = [
+        'theorem cross_problem_probe (month : Fin 13 → Fin 12) :\n    ∃ i j, i ≠ j ∧ month i = month j := by\n  apply exercise_birth_month_collision month',
+        'theorem cross_namespace_probe : 4 * 4 = 16 := by\n  exact IntroExamples.exercise_four_square',
+      ];
+      const result = [];
+      for (const [i, code] of codes.entries()) {
+        const dependencies = selectDependencies(manifest, manifest[current.key], code, (item, key) =>
+          key === firstProblem.key ? item.code.replace('  sorry', '  decide')
+            : localStorage.getItem('lean-algebra.code.' + item.storageKey));
+        result.push(await backend.call('/api/lean/check', {snippet:current.key, code, dependencies,
+          proofNames:[i ? 'cross_namespace_probe' : 'cross_problem_probe']}));
+      }
+      return result;
+    }, {base, current:runtimeContext, manifest, firstProblem});
+    for (const check of dependencyChecks) {
+      assert.deepEqual(check.contextErrors, []);
+      assert(!check.diagnostics.some(item => item.severity === 1), JSON.stringify(check));
+      assert.equal(check.proofs.length,1);
+      assert(!check.proofs[0].axioms.includes('sorryAx'));
+    }
+    assert.equal(dependencyChecks[0].dependencies.length,2,'A reference to problem 4 must also carry its proof from problem 3');
+    assert.equal(dependencyChecks[1].dependencies.length,1,'An earlier namespace is recreated without importing other unfinished problems');
     assert.deepEqual(uploads, [], 'Proof text must stay in the browser');
     assert.deepEqual(errors, []);
     console.log('PASS: diagonal argument, cardinality context, concise accessors, inverse identities, and browser-only compilation');
+    console.log('PASS: transitive exercise reuse and earlier namespaces, with independent axiom audits');
 
   } finally {
-    await browser.close(); server.closeAllConnections();
-    await new Promise(resolve => server.close(resolve));
+    await browser.close();
+    if (server.listening) {
+      server.closeAllConnections();
+      await new Promise(resolve => server.close(resolve));
+    }
   }
 }
 main().catch(error => {console.error(error); process.exitCode = 1;});

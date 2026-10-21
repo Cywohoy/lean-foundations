@@ -8,6 +8,12 @@ EXTERNAL = re.compile(r'\b(?:Nat|Int|Fin|Eq|Iff|And|Or|True|False|Classical)\.[A
 def chapter_names(chapter):
     source = (ROOT / 'AlgebraBook' / (chapter + '.lean')).read_text(encoding='utf-8')
     names, scopes = [], []
+    prose = re.sub(r'^```[^\n]*\n.*?^```[^\n]*',
+                   lambda match: ''.join('\n' if c == '\n' else ' ' for c in match[0]),
+                   source, flags=re.M | re.S)
+    introduced = {}
+    for mention in re.finditer(r'`([A-Za-z_][A-Za-z0-9_.]*)`', prose):
+        introduced.setdefault(mention[1], mention.start())
     visible = list(source)
     for match in re.finditer(r'^```(\w+)([^\n]*)\n(.*?)^```[^\n]*', source, re.M | re.S):
         kind, flags, body = match.group(1, 2, 3)
@@ -25,11 +31,20 @@ def chapter_names(chapter):
             elif re.match(r'^end(?:\s+\S+)?\s*$', line):
                 if scopes:
                     scopes.pop()
-            elif shown:
+            else:
                 declaration = re.match(r'^(?:@\[[^\]]+\]\s*)?(?:protected\s+)?(?:theorem|lemma)\s+([^\s:(]+)', line)
                 if declaration:
                     prefix = [name for kind, name in scopes if kind == 'namespace' and name]
-                    names.append((offset, '.'.join([*prefix, declaration[1]])))
+                    full_name = '.'.join([*prefix, declaration[1]])
+                    if shown:
+                        names.append((offset, full_name))
+                    else:
+                        # A repeated proof may be omitted after its result is
+                        # stated in prose. Both introduction and declaration
+                        # must precede an exercise that suggests the theorem.
+                        positions = [introduced[name] for name in (declaration[1], full_name) if name in introduced]
+                        if positions:
+                            names.append((max(offset, min(positions)), full_name))
             offset += len(line)
     names.extend((m.start(), m.group().rstrip('.')) for m in EXTERNAL.finditer(''.join(visible)))
     return source, sorted(names)

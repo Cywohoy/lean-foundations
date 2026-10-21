@@ -16,11 +16,13 @@ After compiling and staging the current browser contexts as described in
 python tests/Pages.Tests.py
 python tests/Preview.Tests.py
 node tests/ExerciseModel.Tests.cjs
+node tests/ExerciseContext.Tests.cjs
 node tests/UnicodeTable.Tests.cjs
 node tests/UnicodeInput.Tests.cjs
 node tests/PagesReader.Tests.cjs
 node tests/ExerciseCoverage.Tests.cjs
 node tests/BrowserReader.Tests.cjs
+node tests/MobileLayout.Tests.cjs
 ```
 
 The browser tests require Playwright and Chrome. Do not regenerate the staged

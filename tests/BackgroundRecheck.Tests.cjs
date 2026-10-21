@@ -11,8 +11,10 @@ const fs = require('node:fs');
     compile:async code=>{compiled.push(code);return {success:true,output:[]};},
     goalsAt:async()=>({found:true,goals:['current goal']})
   };
+  const contextUrl = 'data:text/javascript;base64,' + Buffer.from(fs.readFileSync('assets/web/exercise-context.js','utf8')).toString('base64');
   const source = fs.readFileSync('assets/web/wasm-reader.js','utf8')
-    .replace("import {createLeanRuntime} from './lean-wasm.js';", 'const createLeanRuntime = () => globalThis.fixtureRuntime;');
+    .replace("import {createLeanRuntime} from './lean-wasm.js';", 'const createLeanRuntime = () => globalThis.fixtureRuntime;')
+    .replace("'./exercise-context.js'", JSON.stringify(contextUrl));
   const {createBrowserBackend} = await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
   const backend = createBrowserBackend(new URL('https://book.test/'));
   const foreground = await backend.call('/api/lean/check',{snippet:'first',code:'example : True := by trivial'});

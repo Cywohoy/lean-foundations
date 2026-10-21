@@ -916,6 +916,7 @@ theorem exercise_fin_succ_not_injective
 
 (1) $`n+1`개의 번호를 $`n`개의 번호로 보내는 함수에서는
 서로 다른 두 번호의 함수값이 같음을 증명하라.
+문제 3의 `exercise_fin_succ_not_injective`를 사용하라.
 
 (2) 열세 사람에게 태어난 달을 대응시키면 같은 달에 태어난 두 사람이 있음을 첫 결과로 보이라.
 사람과 달을 각각 `Fin 13`, `Fin 12`로 나타낸다.
@@ -1542,7 +1543,9 @@ theorem sameCardinality_sum {A B C D : Type}
   unpack hBD with ⟨g, hg⟩
   exists sumMap f g
   apply sumMap_bijective f g hf hg
+```
 
+```savedLean -show
 theorem sameCardinality_product {A B C D : Type}
     (hAC : SameCardinality A C)
     (hBD : SameCardinality B D) :
@@ -1553,12 +1556,14 @@ theorem sameCardinality_product {A B C D : Type}
   apply productMap_bijective f g hf hg
 ```
 
+곱에서도 각 성분에 전단사를 적용하면 같은 크기의 곱을 얻는다.
 함수 공간에서는 정의역을 바꾸는 방향에 주의해야 한다.
 전단사 $`f:A\to C`, $`g:B\to D`가 있고 함수 $`u:A\to B`가 주어지면,
 $`c\in C`를 먼저 $`f^{-1}(c)\in A`로 옮긴 뒤 $`u`와 $`g`를 적용한다.
 따라서 $`u`에 함수 $`g\circ u\circ f^{-1}:C\to D`를 대응시킨다.
+역방향은 $`v:C\to D`를 $`g^{-1}\circ v\circ f`로 보내므로 이 대응도 전단사이다.
 
-```savedLean
+```savedLean -show
 noncomputable def functionMap {A B C D : Type}
     (f : A → C)
     (hf : Bijective f)
@@ -1594,91 +1599,92 @@ theorem sameCardinality_arrow {A B C D : Type}
   apply functionMap_bijective f g hf hg
 ```
 
-`functionMap_bijective`의 역방향은 $`v`에 $`g^{-1}\circ v\circ f`를 대응시키는 것이다.
-두 합성에서 역함수의 법칙을 사용하면 각각 원래 함수로 돌아온다.
-
-앞 장의 몫 위 함수와 마찬가지로, 이러한 전단사 보존 성질을 사용하여 대표 타입의 선택에 무관한 연산을 만든다.
-앞의 합·곱·함수 공간은 모두 타입 두 개로 새 타입을 만드는 함수이다.
-이를 `F : Type → Type → Type`이라고 쓰자.
-대표 타입 `A`, `B`를 같은 크기의 다른 타입으로 바꾸어도 `F A B`의 크기가 같다는 사실을 `hF`로 받는다.
-그러면 기수 `a`, `b`에서 대표 타입을 하나씩 택하고 `cardinal (F A B)`를 연산의 값으로 삼을 수 있다.
-
-이 구성에는 원래 타입 `A`, `B`를 넣었을 때 원하는 기수를 얻는다는 계산 성질도 필요하다.
-`Cardinal.binaryData F hF`에는 그 연산과
-`op (cardinal A) (cardinal B) = cardinal (F A B)`의 증명을 함께 담는다.
-증명에서는 선택한 대표 타입을 원래 타입으로 바꾸는 데 `hF`를 사용한다.
+덧셈의 구성을 직접 살펴보자. 기수 `a`, `b`에서 대표 타입을 하나씩 택하고,
+두 타입의 서로소인 합의 기수를 `a + b`로 정의한다.
+앞 장의 `quotientRepr`가 각 기수를 나타내는 타입을 택한다.
 
 ```savedLean
 namespace Cardinal
 
-noncomputable def binaryData (F : Type → Type → Type)
-    (hF : ∀ {A B C D},
-      SameCardinality A C → SameCardinality B D →
-        SameCardinality (F A B) (F C D)) :
-    { op : Cardinal → Cardinal → Cardinal //
-      ∀ A B, op (cardinal A) (cardinal B) =
-        cardinal (F A B) } :=
-  { val := fun a b => cardinal
-      (F (quotientRepr SameCardinality a)
-        (quotientRepr SameCardinality b))
-    property := by
-      intro A B
-      apply cardinal_eq_of_sameCardinality
-      apply hF
-      · apply sameCardinality_of_cardinal_eq
-        symm
-        exact quotientRepr_spec (cardinal A)
-
-      · apply sameCardinality_of_cardinal_eq
-        symm
-        exact quotientRepr_spec (cardinal B) }
-
-end Cardinal
-```
-
-```savedLean
-namespace Cardinal
-
-noncomputable def add : Cardinal → Cardinal → Cardinal :=
-  (binaryData Sum sameCardinality_sum).val
-
-noncomputable def mul : Cardinal → Cardinal → Cardinal :=
-  (binaryData Prod sameCardinality_product).val
-
-noncomputable def power : Cardinal → Cardinal → Cardinal :=
-  (binaryData (fun B A => A → B)
-    (fun hB hA => sameCardinality_arrow hA hB)).val
+noncomputable def add (a b : Cardinal) : Cardinal :=
+  cardinal (quotientRepr SameCardinality a ⊕
+    quotientRepr SameCardinality b)
 
 noncomputable instance : Add Cardinal := ⟨add⟩
-noncomputable instance : Mul Cardinal := ⟨mul⟩
-noncomputable instance : Pow Cardinal Cardinal := ⟨power⟩
+
 end Cardinal
 ```
 
-여기서 `Sum A B`는 `A ⊕ B`, `Prod A B`는 `A × B`이므로
-`binaryData`에 각각 `Sum`, `Prod`를 전달했다.
-`+`, `*`, `^`는 이 세 정의에 연결한 표기이다. 거듭제곱에서는 `power b a`가 $`b^a`이므로
-구성할 함수 타입의 방향을 `A → B`로 두었다. 다음 계산 정리로 이 관계를 사용할 수 있다.
+대표 타입이 원래의 `A`, `B`와 다르더라도 각각 같은 크기이다.
+`sameCardinality_sum`에 따라 서로소인 합도 같은 크기이므로
+`cardinal (A ⊕ B) = cardinal A + cardinal B`가 성립한다.
+Lean에서는 `expand`로 덧셈의 정의를 펼친 뒤 이 전단사 보존 성질을 적용한다.
 
 ```savedLean
 theorem cardinal_sum (A B : Type) :
     cardinal (A ⊕ B) = cardinal A + cardinal B := by
-  symm
-  exact (Cardinal.binaryData Sum
-    sameCardinality_sum).property A B
+  expand
+  apply cardinal_eq_of_sameCardinality
+  apply sameCardinality_sum
+  · apply sameCardinality_of_cardinal_eq
+    exact quotientRepr_spec (cardinal A)
+
+  · apply sameCardinality_of_cardinal_eq
+    exact quotientRepr_spec (cardinal B)
+```
+
+`quotientRepr_spec (cardinal A)`는 `cardinal A`와 선택한 대표 타입의 기수가 같다는 증명이다.
+두 타입의 크기가 같음을 각각 보이면 합에 관한 증명이 끝난다.
+
+곱과 거듭제곱도 같은 방식으로 정의한다.
+대표 타입을 `A`, `B`라고 할 때 곱은 `A × B`의 기수이고,
+$`|B|^{|A|}`는 함수 공간 `A → B`의 기수이다.
+앞의 `sameCardinality_product`, `sameCardinality_arrow`를 사용하면
+각각 `cardinal_product`, `cardinal_arrow`라는 계산 정리를 얻는다.
+
+```savedLean -show
+namespace Cardinal
+
+noncomputable def mul (a b : Cardinal) : Cardinal :=
+  cardinal (quotientRepr SameCardinality a ×
+    quotientRepr SameCardinality b)
+
+noncomputable def power (b a : Cardinal) : Cardinal :=
+  cardinal (quotientRepr SameCardinality a →
+    quotientRepr SameCardinality b)
+
+noncomputable instance : Mul Cardinal := ⟨mul⟩
+noncomputable instance : Pow Cardinal Cardinal := ⟨power⟩
+end Cardinal
 
 theorem cardinal_product (A B : Type) :
     cardinal (A × B) = cardinal A * cardinal B := by
-  symm
-  exact (Cardinal.binaryData Prod
-    sameCardinality_product).property A B
+  expand
+  apply cardinal_eq_of_sameCardinality
+  apply sameCardinality_product
+  · apply sameCardinality_of_cardinal_eq
+    exact quotientRepr_spec (cardinal A)
+
+  · apply sameCardinality_of_cardinal_eq
+    exact quotientRepr_spec (cardinal B)
 
 theorem cardinal_arrow (A B : Type) :
     cardinal (A → B) = cardinal B ^ cardinal A := by
-  symm
-  exact (Cardinal.binaryData (fun B A => A → B)
-    (fun hB hA => sameCardinality_arrow hA hB)).property B A
+  expand
+  apply cardinal_eq_of_sameCardinality
+  apply sameCardinality_arrow
+  · apply sameCardinality_of_cardinal_eq
+    exact quotientRepr_spec (cardinal A)
+
+  · apply sameCardinality_of_cardinal_eq
+    exact quotientRepr_spec (cardinal B)
 ```
+
+이후에는 다음 세 식으로 집합의 구성과 기수의 계산을 연결한다.
+
+$$`|A\oplus B|=|A|+|B|,\qquad
+|A\times B|=|A|\,|B|,\qquad
+|A\to B|=|B|^{|A|}.`
 
 ## 유한기수의 계산
 %%%
@@ -1840,165 +1846,20 @@ theorem exercise_cardinal_power_sum (A B C : Type) :
   sorry
 ```
 
-## 첨자가 있는 합과 곱
+## 유한한 합과 곱
 %%%
 tag := "cardinality-indexed-arithmetic"
 %%%
 
 
-크기가 서로 다른 상자 세 개에 원소가 각각 $`1`, $`2`, $`3`개 들어 있다고 하자.
-모든 원소를 출처와 함께 모으면 $`1+2+3=6`개이고,
-각 상자에서 하나씩 고르는 방법은 $`1\cdot2\cdot3=6`가지이다.
-첨자 $`i`에 따라 원소의 타입이 달라지는 집합족을 사용하면 이 두 구성을 일반화할 수 있다.
+앞에서는 두 집합을 합치거나 원소를 하나씩 고르는 경우를 다루었다.
+집합이 세 개라면 `A ⊕ (B ⊕ C)`와 `A × (B × C)`로 같은 구성을 반복할 수 있다.
+각 집합의 원소 수가 $`1`, $`2`, $`3`이면 원소를 출처와 함께 모은 경우는 $`1+(2+3)=6`개이고,
+각 집합에서 하나씩 고른 경우는 $`1\cdot(2\cdot3)=6`가지이다.
 
-`F : I → Type`은 첨자 `i`마다 원소 타입 `F i`를 정한다.
-이들의 합에는 첨자 `i : I`와 원소 `x : F i`를 묶어 넣는다.
-Lean의 `Σ i : I, F i`가 이러한 *종속합* 타입이며 `⟨i, x⟩`로 원소를 만든다.
-부분타입에서는 원소와 그 원소에 관한 증명을 묶었고, 여기서는 첨자와 해당 타입의 원소를 묶는다.
-
-예를 들어 $`i`번째 상자의 원소를 `Fin (i + 1)`로 나타내면 다음 순서쌍을 만들 수 있다.
-
-```savedLean
-def boxChoice : Σ i : Nat, Fin (i + 1) :=
-  ⟨2, { val := 1, isLt := by decide }⟩
-```
-
-첫 성분 $`2`가 두 번째 성분의 타입 `Fin 3`을 정한다.
-`Σ`는 `\Sigma`로 입력하며, 수를 더하는 기호 `∑`와 구별한다.
-
-한편 모든 상자에서 원소를 하나씩 고른 결과는 함수로 나타낸다.
-첨자 `i`에서의 값이 `F i`에 속해야 하므로 함수 타입은 `(i : I) → F i`이다.
-이를 *종속곱*이라고 하며 수학에서는 $`\prod_{i\in I}F_i`로 쓴다.
-Lean에서는 이 함수 타입 표기를 사용한다. `F i`가 모두 같은 타입 `A`이면 앞에서 본 `I → A`가 된다.
-
-```savedLean
-def firstInEachBox : (i : Nat) → Fin (i + 1) :=
-  fun i => { val := 0, isLt := by arith }
-```
-
-유한한 개수의 합과 곱은 첨자를 `Fin n`으로 제한하여 만든다.
-$`n+1`개의 합에서는 마지막 상자의 원소를 분리하고,
-곱에서는 처음 $`n`개를 고른 결과와 마지막 선택을 분리할 수 있다.
-다음 두 전단사는 이 분리에 대응한다.
-
-- `sigmaAppend F n`: 처음 $`n`개 상자의 합과 마지막 상자의 서로소인 합을 $`n+1`개 상자의 합으로 보낸다.
-- `piAppend F n`: 처음 $`n`개 상자의 선택과 마지막 선택을 묶어 $`n+1`개 상자의 선택을 만든다.
-
-합에서는 마지막 첨자에 속하는지에 따라 출처를 나누고,
-곱에서는 함수를 처음 $`n`개에 제한한 뒤 마지막 함수값을 별도로 꺼내면 역방향을 얻는다.
-
-
-여기서는 `Fin (n + 1)`의 마지막 번호를 구별하는 `Fin.lastCases`를 사용한다.
-`Fin.lastCases last rest i`는 `i`가 `Fin.last n`이면 `last`를,
-어떤 `j : Fin n`의 `j.castSucc`이면 `rest j`를 값으로 갖는다.
-첨자에 따라 결과의 타입이 달라지는 함수도 이 방식으로 정의할 수 있다.
-증명에서 `induction i using Fin.lastCases`를 쓰면 같은 두 경우가 생긴다.
-마지막 번호인 `last` 경우와 나머지 번호인 `cast i` 경우를 각각 증명하면 된다.
-
-```savedLean
-def sigmaAppend (F : Nat → Type) (n : Nat) :
-    (Σ i : Fin n, F i.val) ⊕ F n →
-      (Σ i : Fin (n + 1), F i.val)
-  | .inl ⟨i, x⟩ => ⟨i.castSucc, x⟩
-  | .inr x => ⟨Fin.last n, x⟩
-
-def sigmaSplit (F : Nat → Type) (n : Nat)
-    (p : Σ i : Fin (n + 1), F i.val) :
-    (Σ i : Fin n, F i.val) ⊕ F n :=
-  Fin.lastCases (fun x => Sum.inr x)
-    (fun i x => Sum.inl ⟨i, x⟩) p.1 p.2
-
-theorem sigmaAppend_bijective (F : Nat → Type) (n : Nat) :
-    Bijective (sigmaAppend F n) := by
-  apply bijective_of_inverse _ (sigmaSplit F n)
-  · intro p
-    rcases p with ⟨i, x⟩ | x
-    · simp [sigmaAppend, sigmaSplit]
-    · simp [sigmaAppend, sigmaSplit]
-
-  · intro p
-    rcases p with ⟨i, x⟩
-    induction i using Fin.lastCases with
-    | last => simp [sigmaAppend, sigmaSplit]
-    | cast i => simp [sigmaAppend, sigmaSplit]
-
-def piAppend (F : Nat → Type) (n : Nat)
-    (p : ((i : Fin n) → F i.val) × F n) :
-    (i : Fin (n + 1)) → F i.val :=
-  Fin.lastCases p.2 p.1
-
-def piSplit (F : Nat → Type) (n : Nat)
-    (f : (i : Fin (n + 1)) → F i.val) :
-    ((i : Fin n) → F i.val) × F n :=
-  (fun i => f i.castSucc, f (Fin.last n))
-
-theorem piAppend_bijective (F : Nat → Type) (n : Nat) :
-    Bijective (piAppend F n) := by
-  apply bijective_of_inverse _ (piSplit F n)
-  · intro p
-    simp [piAppend, piSplit]
-
-  · intro f
-    ext i
-    induction i using Fin.lastCases with
-    | last => simp [piAppend, piSplit]
-    | cast i => simp [piAppend, piSplit]
-```
-
-이제 기수의 합·곱과 유한합·유한곱의 정의를 사용하여 귀납법으로 원소 수를 구한다.
-빈 종속합에는 원소가 없고, 빈 종속곱에는 빈 함수 하나가 있으므로 시작값도 각각 $`0`, $`1`이다.
-
-```savedLean
-theorem cardinal_finiteSigma (F : Nat → Type) (n : Nat) :
-    cardinal (Σ i : Fin n, F i.val) =
-      (∑ i < n, cardinal (F i)) := by
-  induction n with
-  | zero =>
-    apply cardinal_eq_of_sameCardinality
-    exists fun p => Fin.elim0 p.1
-    apply bijective_of_inverse _ (fun i => Fin.elim0 i)
-    · intro p
-      exact Fin.elim0 p.1
-
-    · intro i
-      exact Fin.elim0 i
-
-  | succ n ih =>
-    rw [finiteSum_succ, ← ih, ← cardinal_sum]
-    apply cardinal_eq_of_sameCardinality
-    apply sameCardinality_symm
-    exists sigmaAppend F n
-    exact sigmaAppend_bijective F n
-
-theorem cardinal_finitePi (F : Nat → Type) (n : Nat) :
-    cardinal ((i : Fin n) → F i.val) =
-      (∏ i < n, cardinal (F i)) := by
-  induction n with
-  | zero =>
-    apply cardinal_eq_of_sameCardinality
-    exists fun _ => (0 : Fin 1)
-    apply bijective_of_inverse _ (fun _ i => Fin.elim0 i)
-    · intro f
-      ext i
-      exact Fin.elim0 i
-
-    · intro i
-      ext
-      arith
-
-  | succ n ih =>
-    rw [finiteProd_succ, ← ih, ← cardinal_product]
-    apply cardinal_eq_of_sameCardinality
-    apply sameCardinality_symm
-    exists piAppend F n
-    exact piAppend_bijective F n
-```
-
-귀납 단계에서는 마지막 상자를 분리한 전단사와 귀납 가정을 연결한다.
-왼쪽은 타입의 기수이고 오른쪽은 기수들을 더하거나 곱한 값이라는 점에 주의하라.
-
-각 상자의 원소 수를 자연수로 알고 있다면 자연수의 유한합·유한곱으로 계산할 수 있다.
-이때 형변환과 합·곱의 순서를 바꾸는 다음 성질을 사용한다.
+기수들을 여러 번 더하거나 곱할 때도 앞 장의 유한합·유한곱 표기를 사용할 수 있다.
+자연수의 원소 수를 먼저 합산한 뒤 기수로 바꾸어도 같은 결과를 얻으며,
+곱에서도 이 순서를 바꿀 수 있다.
 
 ```savedLean
 theorem finiteSum_nat_cast (f : Nat → Nat) (n : Nat) :
@@ -2020,18 +1881,105 @@ theorem finiteProd_nat_cast (f : Nat → Nat) (n : Nat) :
     rfl
 ```
 
-*보기* $`m`개의 원소에 각각 $`n`개의 값 중 하나를 대응시키는 함수는 $`n^m`개이다.
-모든 상자의 타입을 `Fin n`으로 두면 종속곱이 `Fin m → Fin n`이 되고,
-그 원소 수는 같은 값 $`n`을 $`m`번 곱한 결과이다.
-여기서 `simp only [cardinal_fin]`은 지정한 정리만 사용하여 각 상자의 기수 `cardinal (Fin n)`을 `n`으로 바꾼다.
+*문제 12* (크기가 다른 세 상자)
+
+세 상자의 원소 수가 각각 $`1`, $`2`, $`3`이다.
+원소를 출처와 함께 모두 모은 경우와 각 상자에서 하나씩 고른 경우의 원소 수가 모두 $`6`임을 보이라.
+
+```savedLean -keep
+theorem exercise_three_boxes_sum :
+    cardinal (Fin 1 ⊕ (Fin 2 ⊕ Fin 3)) = 6 := by
+  sorry
+
+theorem exercise_three_boxes_product :
+    cardinal (Fin 1 × (Fin 2 × Fin 3)) = 6 := by
+  sorry
+```
+
+## 함수의 개수
+%%%
+tag := "cardinality-finite-functions"
+%%%
+
+$`m`개의 칸을 각각 $`n`가지 색 중 하나로 칠하는 방법은 함수 `Fin m → Fin n`으로 나타낸다.
+각 칸에서 고를 수 있는 색이 $`n`가지이므로 전체 방법의 수는 $`n^m`이다.
+이를 귀납법으로 확인하자. 칸이 없을 때는 빈 함수 하나가 있고,
+칸이 하나 늘면 기존 색칠 방법마다 마지막 칸의 색을 $`n`가지로 고를 수 있다.
+
+먼저 공역이 `B`인 함수에서 마지막 값을 분리하자.
+`Fin (m + 1) → B`인 함수는 앞의 $`m`개 값과 마지막 값으로 결정되므로,
+`(Fin m → B) × B`와 전단사를 이룬다.
+`Fin.lastCases last rest i`는 번호 `i`가 마지막 번호이면 `last`를,
+`j.castSucc` 꼴의 앞 번호이면 `rest j`를 값으로 갖는다.
+
+```savedLean
+def finFunctionAppend (B : Type) (m : Nat)
+    (p : (Fin m → B) × B) : Fin (m + 1) → B :=
+  Fin.lastCases p.2 p.1
+
+def finFunctionSplit (B : Type) (m : Nat)
+    (f : Fin (m + 1) → B) : (Fin m → B) × B :=
+  (fun i => f i.castSucc, f (Fin.last m))
+```
+
+`finFunctionAppend`는 앞의 함수에 마지막 값을 붙이고,
+`finFunctionSplit`는 함수에서 이 둘을 꺼낸다.
+붙였다가 꺼내거나 꺼냈다가 붙이면 원래 자료로 돌아온다.
+마지막 증명의 `induction i using Fin.lastCases`는 번호를 마지막 번호인 `last`와
+앞 번호인 `cast i`의 두 경우로 나누며, 각 경우에는 정의를 계산하면 된다.
+
+```savedLean
+theorem finFunctionAppend_bijective (B : Type) (m : Nat) :
+    Bijective (finFunctionAppend B m) := by
+  apply bijective_of_inverse _ (finFunctionSplit B m)
+  · intro p
+    simp [finFunctionAppend, finFunctionSplit]
+
+  · intro f
+    ext i
+    induction i using Fin.lastCases with
+    | last => simp [finFunctionAppend, finFunctionSplit]
+    | cast i => simp [finFunctionAppend, finFunctionSplit]
+```
+
+이제 공역을 `Fin n`으로 두고 칸의 수 $`m`에 대하여 귀납법을 사용한다.
+귀납 단계에서는 방금 만든 전단사로 마지막 칸을 분리한 뒤,
+앞의 함수 개수와 $`n`을 곱한다. 마지막 등식은 자연수 거듭제곱의 법칙 `Nat.pow_succ`이다.
 
 ```savedLean
 theorem cardinal_fin_arrow (m n : Nat) :
     cardinal (Fin m → Fin n) =
       ((n ^ m : Nat) : Cardinal) := by
-  rw [cardinal_finitePi (fun _ => Fin n) m]
-  simp only [cardinal_fin]
-  rw [finiteProd_nat_cast, finiteProd_constant]
+  induction m with
+  | zero =>
+    apply cardinal_eq_of_sameCardinality
+    exists fun _ => (0 : Fin 1)
+    apply bijective_of_inverse _ (fun _ i => Fin.elim0 i)
+    · intro f
+      ext i
+      exact Fin.elim0 i
+
+    · intro i
+      ext
+      arith
+
+  | succ m ih =>
+    calc
+      cardinal (Fin (m + 1) → Fin n) =
+          cardinal ((Fin m → Fin n) × Fin n) := by
+        apply cardinal_eq_of_sameCardinality
+        apply sameCardinality_symm
+        exists finFunctionAppend (Fin n) m
+        exact finFunctionAppend_bijective (Fin n) m
+
+      _ = cardinal (Fin m → Fin n) * cardinal (Fin n) := by
+        rw [cardinal_product]
+      _ = ((n ^ m : Nat) : Cardinal) * n := by
+        rw [ih, cardinal_fin]
+      _ = ((n ^ m * n : Nat) : Cardinal) := by
+        rw [cardinal_nat_mul]
+      _ = ((n ^ (m + 1) : Nat) : Cardinal) := by
+        rw [Nat.pow_succ]
 
 theorem cardinal_nat_pow (m n : Nat) :
     (n : Cardinal) ^ (m : Cardinal) =
@@ -2044,21 +1992,6 @@ theorem cardinal_nat_pow (m n : Nat) :
 example : cardinal (Fin 2 → Fin 3) = 9 := by
   rw [cardinal_fin_arrow]
   rfl
-```
-
-*문제 12* (크기가 다른 세 상자)
-
-$`i`번째 상자에는 $`i+1`개의 원소가 있다. 처음 세 상자의 원소를 모두 모은 경우와,
-각 상자에서 하나씩 고른 경우의 원소 수가 모두 $`6`임을 보이라.
-
-```savedLean -keep
-theorem exercise_three_boxes_sum :
-    cardinal (Σ i : Fin 3, Fin (i.val + 1)) = 6 := by
-  sorry
-
-theorem exercise_three_boxes_product :
-    cardinal ((i : Fin 3) → Fin (i.val + 1)) = 6 := by
-  sorry
 ```
 
 # 무한집합과 크기 비교

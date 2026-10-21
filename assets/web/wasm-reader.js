@@ -1,4 +1,5 @@
 import {createLeanRuntime} from './lean-wasm.js';
+import {closeScopes, scopeSource, guardedCode, dependencySource, dependencyImports} from './exercise-context.js';
 
 // Keep the reader's request/response contract; execution stays in one Worker.
 export function createBrowserBackend(siteRoot) {
@@ -44,14 +45,13 @@ export function createBrowserBackend(siteRoot) {
       setTimeout(() => reject(new Error('Lean 실행 환경을 준비하지 못했습니다. 페이지를 새로고침해 주세요.')), 30000);
     });
   }
-  function closeScopes(source) {
-    const scopes = [];
-    for (const line of source.split('\n')) {
-      const open = /^(?:namespace|section)(?:\s+(\S+))?\s*$/.exec(line);
-      if (open) scopes.push(open[1] || '');
-      else if (/^end(?:\s+\S+)?\s*$/.test(line)) scopes.pop();
+  async function snippetData(key) {
+    if (!snippets.has(key)) {
+      const response = await fetch(new URL(`playground/${key}.json`, assetsRoot));
+      if (!response.ok) throw new Error('예제의 실행 환경을 불러오지 못했습니다.');
+      snippets.set(key, await response.json());
     }
-    return '\n' + scopes.reverse().map(name => `end${name ? ' ' + name : ''}\n`).join('');
+    return snippets.get(key);
   }
   async function compile(document) {
     if (currentSource === document.source) return currentResult;
@@ -84,12 +84,7 @@ export function createBrowserBackend(siteRoot) {
         return result;
       });
       await boot;
-      if (!snippets.has(payload.snippet)) {
-        const response = await fetch(new URL(`playground/${payload.snippet}.json`, assetsRoot));
-        if (!response.ok) throw new Error('예제의 실행 환경을 불러오지 못했습니다.');
-        snippets.set(payload.snippet, await response.json());
-      }
-      const snippet = snippets.get(payload.snippet);
+      const snippet = await snippetData(payload.snippet);
       const files = [];
       for (const item of snippet.contextFiles || []) {
         if (loadedContexts.has(item.sha256)) continue;
@@ -103,15 +98,35 @@ export function createBrowserBackend(siteRoot) {
       }
       await runtime.addFiles(files);
       for (const item of snippet.contextFiles || []) loadedContexts.add(item.sha256);
-      const prefix = snippet.before.trimEnd() + '\n\n';
+      const dependencies = [];
+      const dependencyRanges = [];
+      let prefix = snippet.before.trimEnd() + '\n\n';
+      if (payload.dependencies?.length) {
+        if (!snippet.exercise) throw new Error('Only exercises can use earlier solutions.');
+        const earlier = await Promise.all(payload.dependencies.map(item => snippetData(item.snippet)));
+        prefix = [...new Set([...snippet.before.matchAll(/^import [^\n]*$/gm)].map(match => match[0])
+          .concat(dependencyImports(snippet, earlier)))].join('\n') + '\n\n';
+        let lastOrder = -1;
+        for (const [index, item] of payload.dependencies.entries()) {
+          const previous = earlier[index];
+          if (!previous.exercise || previous.exerciseOrder >= snippet.exerciseOrder || previous.exerciseOrder <= lastOrder) {
+            throw new Error('Exercise dependencies must precede the current problem in reading order.');
+          }
+          lastOrder = previous.exerciseOrder;
+          const start = prefix.split('\n').length;
+          prefix += dependencySource(previous, item.code);
+          dependencyRanges.push({start, end: prefix.split('\n').length - 1,
+            label: `${previous.exerciseChapter} · 문제 ${previous.exerciseNumber}`});
+          dependencies.push({key: item.snippet, storageKey: previous.storageKey, legacyKeys: previous.legacyKeys,
+            originalCode: previous.code, code: item.code});
+        }
+        prefix += scopeSource(snippet) + '\n\n';
+      }
       const token = sessions.has(payload.session) ? payload.session : `wasm-${++serial}`;
       const previous = sessions.get(token);
       // Put the guard on the declaration's existing header line, preserving all
       // editable proof line/column positions for goals and diagnostics.
-      const checkedCode = snippet.exercise && snippet.allowedTactics
-        ? payload.code.replace(/^((?:theorem|lemma|example)\b[\s\S]*?:= by)\b/gm,
-            (_, header) => `${header} learning_guard ${JSON.stringify(snippet.allowedTactics.join(','))} in`)
-        : payload.code;
+      const checkedCode = guardedCode(snippet, payload.code);
       const source = prefix + checkedCode + (checkedCode.endsWith('\n') ? '' : '\n');
       // Ask Lean itself for transitive axiom dependencies, including dependencies
       // inherited from earlier unfinished lemmas. No source-text heuristic can
@@ -140,7 +155,10 @@ export function createBrowserBackend(siteRoot) {
           continue;
         }
         if (row < 1) {
-          if (item.severity === 'error') contextErrors.push(item.data);
+          if (item.severity === 'error') {
+            const dependency = dependencyRanges.find(range => item.pos?.line >= range.start && item.pos?.line <= range.end);
+            contextErrors.push((dependency ? dependency.label + '\n' : '') + item.data);
+          }
           continue;
         }
         const unfinished = item.kind === 'Tactic.unsolvedGoals' || item.kind === 'hasSorry'
@@ -151,7 +169,7 @@ export function createBrowserBackend(siteRoot) {
           severity: item.severity === 'error' ? 1 : item.severity === 'warning' ? 2 : 3,
           kind: unfinished ? 'unfinished' : 'diagnostic', message: item.data, isSilent: item.isSilent});
       }
-      return {session: token, version: document.version, diagnostics, contextErrors, proofs,
+      return {session: token, version: document.version, diagnostics, contextErrors, proofs, dependencies,
         ...(payload.background ? {} : await goals(document, payload.position || {line: 0, character: 0}, payload.proofRange))};
     }
     const document = sessions.get(payload.session);

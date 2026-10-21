@@ -202,11 +202,6 @@ number := false
   * 원소나 자연수를 다른 타입으로 옮기는 형변환
   * `\u` (`\coe`도 가능)
 *
-  * {ref "cardinality-indexed-arithmetic"}[집합의 크기: 첨자가 있는 합과 곱]
-  * `Σ`
-  * 첨자와 해당 타입의 원소를 묶는 종속합
-  * `\Sigma`
-*
   * {ref "cardinality-countable-sets"}[집합의 크기: 자연수와 같은 크기의 집합]
   * `ℵ₀`
   * 수학식에서 자연수의 기수
