@@ -81,16 +81,22 @@ for page in reading_pages:
     assets = re.search(r'<meta name="book-assets-base" content="([^"]+)">', html).group(1)
     assert assets.startswith('_reader/') and assets.endswith('/'), page
     for file in ('book.css', '-verso-data/typography.css', '-verso-data/reader.js',
+                 '-verso-search/search-init.js', '-verso-search/search-box.js',
                  'assets/web/wasm-reader.js', 'assets/web/lean-wasm.js',
                  'playground.json', 'exercises.json'):
         assert (book / assets / file).read_bytes() == (book / file).read_bytes(), file
     assert f'src="{assets}-verso-data/reader.js"' in html, page
+    assert f'src="{assets}-verso-search/search-init.js"' in html, page
     assert html.count('<ol class="book-toc-tree"') == 1, page
     assert 'class="split-tocs"' not in html, page
     for name in ('NanumSquareNeo-ExtraBold.woff2', 'PretendardVariable.woff2', 'CascadiaCode.woff2'):
         preload = f'<link rel="preload" href="{assets}-verso-data/{name}" as="font" type="font/woff2" crossorigin>'
         assert preload in html and html.index(preload) < html.index(f'href="{assets}book.css"'), (page, name)
 assert all(len(p.relative_to(book).parts) <= 2 for p in reading_pages)
+search_init = (book / '-verso-search/search-init.js').read_text(encoding='utf-8')
+assert 'input.dataset.searchReady = "true"' in search_init
+assert 'input.textContent = pendingQuery' in search_init
+assert 'fetch("xref.json")' not in search_init
 sections = json.loads((book / 'xref.json').read_text(encoding='utf-8'))[
     'Verso.Genre.Manual.section']['contents']
 for entries in sections.values():

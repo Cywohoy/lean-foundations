@@ -38,7 +38,8 @@ def main():
     from wasm_pages import prepare
     relative = prepare(book, args.wasm_bundle, download=not args.wasm_bundle,
                        config=args.runtime_config)
-    from reader_assets import stage_reader_assets, version_reader_links
+    from reader_assets import stage_reader_assets, version_reader_links, prepare_search
+    prepare_search(book)
     assets = stage_reader_assets(book)
     marker = ('<meta name="book-mode" content="wasm">'
               + f'<meta name="lean-wasm-base" content="{relative}">'

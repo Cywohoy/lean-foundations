@@ -939,6 +939,7 @@
     function prepareSearch() {
       const search = document.querySelector('#search-wrapper [role="searchbox"]');
       if (!search) return false;
+      if (document.querySelector('meta[name="book-assets-base"]') && search.dataset.searchReady !== 'true') return false;
       search.setAttribute('placeholder', '본문 검색');
       search.setAttribute('aria-label', '본문 검색');
       // Verso searches on keyup. Pasting and mobile composition also need to
@@ -952,7 +953,7 @@
     if (!prepareSearch()) {
       // Verso inserts its search widget asynchronously after the reader starts.
       const ready = new MutationObserver(() => { if (prepareSearch()) ready.disconnect(); });
-      ready.observe(document.querySelector('header') || document.body, {childList:true, subtree:true});
+      ready.observe(document.querySelector('header') || document.body, {childList:true, attributes:true, subtree:true});
     }
     const tocToggle = document.getElementById('toggle-toc');
     const tocButton = document.getElementById('toggle-toc-click');
