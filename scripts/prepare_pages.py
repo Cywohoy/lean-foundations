@@ -39,9 +39,17 @@ def main():
     relative = prepare(book, args.wasm_bundle, download=not args.wasm_bundle,
                        config=args.runtime_config)
     marker = '<meta name="book-mode" content="wasm">' + f'<meta name="lean-wasm-base" content="{relative}">'
+    from reader_navigation import render_navigation
     for page in book.rglob('*.html'):
         html = page.read_text(encoding='utf-8')
+        html = render_navigation(html)
         html = html.replace('https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js', '-verso-data/marked.min.js')
+        # Discover the reading fonts before downloading and parsing stylesheets.
+        preloads = '\n'.join(
+            f'<link rel="preload" href="-verso-data/{font}" as="font" type="font/woff2" crossorigin>'
+            for font in ('NanumSquareNeo-ExtraBold.woff2', 'PretendardVariable.woff2', 'CascadiaCode.woff2'))
+        html = html.replace('<link rel="stylesheet" href="book.css">',
+                            preloads + '\n<link rel="stylesheet" href="book.css">', 1)
         assert '</head>' in html, page
         page.write_text(html.replace('</head>', marker + '</head>', 1), encoding='utf-8')
     shutil.copyfile(ROOT / 'web/portal.html', destination / 'index.html')

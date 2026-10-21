@@ -1,5 +1,6 @@
 """Stage a checksum-pinned browser runtime and translate book-only imports."""
 import hashlib
+from html.parser import HTMLParser
 import importlib.util
 import json
 from pathlib import Path
@@ -50,16 +51,41 @@ def prepare(site, bundle=None, download=False, config=None):
 
     manifest_path = site / 'playground.json'
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    class ExerciseOrder(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.keys = []
+
+        def handle_starttag(self, tag, attrs):
+            key = dict(attrs).get('data-snippet')
+            if key in manifest and manifest[key].get('exercise'):
+                self.keys.append(key)
+
+    ordered = []
+    for chapter in ['proof', 'sets-functions', 'numbers-relations', 'sizes']:
+        reader = ExerciseOrder()
+        reader.feed((site / chapter / 'index.html').read_text(encoding='utf-8'))
+        for number, key in enumerate(reader.keys, 1):
+            manifest[key].update(exerciseChapter=chapter, exerciseNumber=number,
+                                 exerciseOrder=len(ordered))
+            ordered.append(key)
+    expected = {key for key, item in manifest.items() if item.get('exercise')}
+    if len(ordered) != len(expected) or set(ordered) != expected:
+        raise ValueError('Every exercise must appear exactly once in the reading order')
     contexts_path = target / 'contexts.json'
     contexts = json.loads(contexts_path.read_text()) if contexts_path.is_file() else {}
     historical_keys = json.loads((ROOT / 'web/exercise-storage.json').read_text(encoding='utf-8'))
     exercise_names = set()
+    exercise_index = {}
+    from learning_policy import exercise_policies
+    policies = exercise_policies()
     for key, snippet in manifest.items():
         if snippet.get('exercise'):
             name = re.search(r'^theorem\s+(\w+)', snippet['code'], re.M)
             if not name or name[1] in exercise_names:
                 raise ValueError('Exercises need distinct named declarations for stable saved work')
             exercise_names.add(name[1])
+            snippet['allowedTactics'] = policies[name[1]]
             snippet['storageKey'] = 'exercise:' + name[1]
             snippet['legacyKeys'] = list(dict.fromkeys([key, *historical_keys.get(name[1], [])]))
         snippet['before'] = translate(snippet['before'])
@@ -72,8 +98,17 @@ def prepare(site, bundle=None, download=False, config=None):
             snippet['sourceBefore'] = snippet['before']
             snippet['contextFiles'] = [dict(item, url=relative + 'contexts/' + item['name'])
                                        for item in context['files']]
-            snippet['before'] = ('import ' + context['module'] + '\nimport Ample.Tactic.Unfold\n\n'
+            snippet['before'] = ('import ' + context['module'] + '\nimport Ample.Tactic.Unfold\nimport AmpleBrowserContext.LearningGuard\n\n'
                 'register_expand_module AmpleBrowserContext\n' + context['scope'] + '\n')
+        if snippet.get('exercise'):
+            # Reading progress needs identities and versions, not every worked
+            # example, import prefix, runtime file URL, or dependency source.
+            fields = ['exercise', 'code', 'storageKey', 'legacyKeys', 'allowedTactics',
+                      'exerciseChapter', 'exerciseNumber', 'exerciseOrder']
+            exercise_index[key] = {field: snippet[field] for field in fields}
+            exercise_index[key]['contextFiles'] = [{'sha256': item['sha256']}
+                                                    for item in snippet['contextFiles']]
         (site / 'playground' / (key + '.json')).write_text(json.dumps(snippet, ensure_ascii=False), encoding='utf-8')
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding='utf-8')
+    (site / 'exercises.json').write_text(json.dumps(exercise_index, ensure_ascii=False), encoding='utf-8')
     return relative

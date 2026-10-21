@@ -76,6 +76,13 @@ reading_pages = [p for p in book.rglob('index.html')
                  if p.relative_to(book).as_posix() not in ('find/index.html', 'search/index.html')
                  and '<main>' in p.read_text(encoding='utf-8')]
 assert len(reading_pages) == 7, reading_pages  # cover, four chapters, two appendices
+for page in reading_pages:
+    html = page.read_text(encoding='utf-8')
+    assert html.count('<ol class="book-toc-tree"') == 1, page
+    assert 'class="split-tocs"' not in html, page
+    for name in ('NanumSquareNeo-ExtraBold.woff2', 'PretendardVariable.woff2', 'CascadiaCode.woff2'):
+        preload = f'<link rel="preload" href="-verso-data/{name}" as="font" type="font/woff2" crossorigin>'
+        assert preload in html and html.index(preload) < html.index('href="book.css"'), (page, name)
 assert all(len(p.relative_to(book).parts) <= 2 for p in reading_pages)
 sections = json.loads((book / 'xref.json').read_text(encoding='utf-8'))[
     'Verso.Genre.Manual.section']['contents']
@@ -87,4 +94,19 @@ for entries in sections.values():
         assert address in ('', 'proof', 'sets-functions', 'numbers-relations', 'sizes', 'tactics', 'symbols'),address
         if len(entry['data']['context']) > 2:
             assert f'id="{entry["id"]}"' in page.read_text(encoding='utf-8'), entry
+exercise_items = sorted((v for v in json.loads((book / 'playground.json').read_text(encoding='utf-8')).values()
+                         if v.get('exercise')), key=lambda v: v['exerciseOrder'])
+assert [v['exerciseOrder'] for v in exercise_items] == list(range(63))
+for chapter, count in [('proof', 9), ('sets-functions', 22), ('numbers-relations', 17), ('sizes', 15)]:
+    numbers = [v['exerciseNumber'] for v in exercise_items if v['exerciseChapter'] == chapter]
+    assert numbers == list(range(1, count + 1)), (chapter, numbers)
+progress_index = json.loads((book / 'exercises.json').read_text(encoding='utf-8'))
+full_manifest = json.loads((book / 'playground.json').read_text(encoding='utf-8'))
+assert len(progress_index) == len(exercise_items)
+for key, item in progress_index.items():
+    full = full_manifest[key]
+    assert item['code'] == full['code']
+    assert [f['sha256'] for f in item['contextFiles']] == [f['sha256'] for f in full['contextFiles']]
+    assert not {'before', 'sourceBefore'} & item.keys()
+    assert all(set(f) == {'sha256'} for f in item['contextFiles'])
 print(f'PASS: {len(pages)} static pages and {checked} local links work below {prefix}')

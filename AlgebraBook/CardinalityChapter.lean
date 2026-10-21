@@ -384,6 +384,16 @@ theorem singleton_cardinal {A : Type} (a : A) :
 전사성에서는 번호 $`0`을 택하고 `ext`로 집합의 원소 값을 비교한다.
 이때 `x.property`는 `x.val = a`의 증명이므로 `.symm`으로 양변의 순서를 바꾼다.
 
+*문제 1* 원소가 하나씩 있는 두 집합은 크기가 같음을 증명하라.
+
+```savedLean -keep
+theorem exercise_singletons_same_cardinal {A B : Type}
+    (a : A) (b : B) :
+    cardinal (Elem (singleton a)) =
+      cardinal (Elem (singleton b)) := by
+  sorry
+```
+
 ## 세 원소 집합의 원소 수
 %%%
 tag := "cardinality-counting-three-elements"
@@ -459,7 +469,7 @@ tag := "cardinality-counting-practice"
 
 앞의 세 원소 집합에서 사용한 번호 붙이기를 두 원소 집합에 적용해 보자.
 
-*문제 1* (두 원소 집합의 번호)
+*문제 2* (두 원소 집합의 번호)
 
 집합 $`\{2,3\}`의 두 원소에 각각 번호 $`0`, $`1`을 붙인다.
 아래 함수가 전단사임을 증명한 뒤 그 결과로 집합의 원소 수가 $`2`임을 보이라.
@@ -925,6 +935,37 @@ theorem three_into_two_collision (f : Fin 3 → Fin 2) :
 `hne`와 `hij`가 처음의 존재명제에 필요한 두 조건을 모두 제공한다.
 이처럼 단사가 될 수 없다는 일반적인 결론으로 실제로 겹치는 한 쌍의 존재를 얻는다.
 
+*문제 3* $`n+1`개의 번호를 $`n`개의 번호에 단사로 대응시킬 수 없음을 증명하라.
+
+```savedLean -keep
+theorem exercise_fin_succ_not_injective
+    (n : Nat) (f : Fin (n + 1) → Fin n) :
+    ¬ Injective f := by
+  sorry
+```
+
+*문제 4* (같은 달에 태어난 두 사람)
+
+(1) $`n+1`개의 번호를 $`n`개의 번호로 보내는 함수에서는
+서로 다른 두 번호의 함수값이 같음을 증명하라.
+
+(2) 열세 사람에게 태어난 달을 대응시키면 같은 달에 태어난 두 사람이 있음을 첫 결과로 보이라.
+사람과 달을 각각 `Fin 13`, `Fin 12`로 나타낸다.
+
+```savedLean -keep
+theorem exercise_fin_collision (n : Nat)
+    (f : Fin (n + 1) → Fin n) :
+    ∃ i j, i ≠ j ∧ f i = f j := by
+  sorry
+
+theorem exercise_birth_month_collision
+    (month : Fin 13 → Fin 12) :
+    ∃ i j, i ≠ j ∧ month i = month j := by
+  sorry
+```
+
+*힌트* 첫 문제에서 같은 함수값을 갖는 서로 다른 두 번호가 없다고 가정하면 함수가 단사임을 보일 수 있다.
+
 ## 세는 방법과 원소 수
 %%%
 tag := "cardinality-number-unique"
@@ -1067,6 +1108,23 @@ example :
   exact cardinality_eq (fin_isFinite 3) (cardinal_fin 3)
 ```
 
+*문제 5* (서로 다른 원소 수)
+
+(1) `Fin 2`와 `Fin 3` 사이에는 전단사가 존재하지 않음을 증명하라.
+
+(2) 본문에서 센 집합 $`\{10,11,12\}`의 원소 수가 $`4`일 수 없음을 보이라.
+원소 수의 유일성에 관한 정리들을 사용하라.
+
+```savedLean -keep
+theorem exercise_fin_two_three_not_same :
+    ¬ SameCardinality (Fin 2) (Fin 3) := by
+  sorry
+
+theorem exercise_threeNumbers_not_four :
+    cardinal (Elem threeNumbers) ≠ 4 := by
+  sorry
+```
+
 ## 유한성의 전달
 
 기수가 같은 집합에는 같은 수의 번호를 붙일 수 있으므로 유한성이 유지된다.
@@ -1085,6 +1143,17 @@ theorem isFinite_transport {A B : Type}
   exists n
   rw [← hAB]
   exact hn
+```
+
+*문제 6* 크기가 같은 두 집합 $`A`, $`B`에 대하여
+$`A`의 원소 수가 $`n`이라는 명제와 $`B`의 원소 수가 $`n`이라는 명제가 동치임을 증명하라.
+
+```savedLean -keep
+theorem exercise_finite_cardinal_transport
+    {A B : Type} {n : Nat}
+    (hAB : cardinal A = cardinal B) :
+    cardinal A = n ↔ cardinal B = n := by
+  sorry
 ```
 
 # 유한집합의 곱
@@ -1243,7 +1312,7 @@ theorem finProduct_bijective (m n : Nat) :
 `productMap_bijective`를 합성하면 임의의 두 유한집합의 곱을 셀 수 있다.
 이 연결은 다음 연습문제에서 증명한다.
 
-# 연습문제
+## 연습문제: 유한집합의 곱
 %%%
 tag := "cardinality-exercises"
 file := "exercises"
@@ -1251,37 +1320,7 @@ file := "exercises"
 
 각 문제의 `sorry`를 증명으로 바꾸어 완성하라.
 
-*문제 2* 원소가 하나씩 있는 두 집합은 크기가 같음을 증명하라.
-
-```savedLean -keep
-theorem exercise_singletons_same_cardinal {A B : Type}
-    (a : A) (b : B) :
-    cardinal (Elem (singleton a)) =
-      cardinal (Elem (singleton b)) := by
-  sorry
-```
-
-*문제 3* 크기가 같은 두 집합 $`A`, $`B`에 대하여
-$`A`의 원소 수가 $`n`이라는 명제와 $`B`의 원소 수가 $`n`이라는 명제가 동치임을 증명하라.
-
-```savedLean -keep
-theorem exercise_finite_cardinal_transport
-    {A B : Type} {n : Nat}
-    (hAB : cardinal A = cardinal B) :
-    cardinal A = n ↔ cardinal B = n := by
-  sorry
-```
-
-*문제 4* $`n+1`개의 번호를 $`n`개의 번호에 단사로 대응시킬 수 없음을 증명하라.
-
-```savedLean -keep
-theorem exercise_fin_succ_not_injective
-    (n : Nat) (f : Fin (n + 1) → Fin n) :
-    ¬ Injective f := by
-  sorry
-```
-
-*문제 5* 유한집합 $`A`, $`B`의 원소 수가 각각 $`m`, $`n`이면
+*문제 7* 유한집합 $`A`, $`B`의 원소 수가 각각 $`m`, $`n`이면
 집합의 곱 $`A\times B`의 원소 수가 $`mn`임을 증명하라.
 즉 $`|A\times B|=|A||B|`이다.
 앞에서 증명한 `productMap_bijective`를 사용하여 `Fin m × Fin n`에서 `A × B`로 가는 전단사를 구성하라.
@@ -1296,7 +1335,7 @@ theorem exercise_cardinal_product {A B : Type} {m n : Nat}
 
 *힌트* `finProduct_bijective`와 `productMap_bijective`를 합성하라. 기수의 등식에서 전단사를 꺼낼 때는 함수의 방향을 확인하라.
 
-*문제 6* (색과 번호의 조합)
+*문제 8* (색과 번호의 조합)
 
 (1) 두 성분을 바꾸는 함수를 사용하여 $`|A\times B|=|B\times A|`임을 증명하라.
 
@@ -1316,45 +1355,6 @@ theorem exercise_two_by_three_cardinal :
 
 theorem exercise_three_by_two_cardinal :
     cardinal (Fin 3 × Fin 2) = 6 := by
-  sorry
-```
-
-*문제 7* (같은 달에 태어난 두 사람)
-
-(1) $`n+1`개의 번호를 $`n`개의 번호로 보내는 함수에서는
-서로 다른 두 번호의 함수값이 같음을 증명하라.
-
-(2) 열세 사람에게 태어난 달을 대응시키면 같은 달에 태어난 두 사람이 있음을 첫 결과로 보이라.
-사람과 달을 각각 `Fin 13`, `Fin 12`로 나타낸다.
-
-```savedLean -keep
-theorem exercise_fin_collision (n : Nat)
-    (f : Fin (n + 1) → Fin n) :
-    ∃ i j, i ≠ j ∧ f i = f j := by
-  sorry
-
-theorem exercise_birth_month_collision
-    (month : Fin 13 → Fin 12) :
-    ∃ i j, i ≠ j ∧ month i = month j := by
-  sorry
-```
-
-*힌트* 첫 문제에서 같은 함수값을 갖는 서로 다른 두 번호가 없다고 가정하면 함수가 단사임을 보일 수 있다.
-
-*문제 8* (서로 다른 원소 수)
-
-(1) `Fin 2`와 `Fin 3` 사이에는 전단사가 존재하지 않음을 증명하라.
-
-(2) 본문에서 센 집합 $`\{10,11,12\}`의 원소 수가 $`4`일 수 없음을 보이라.
-원소 수의 유일성에 관한 정리들을 사용하라.
-
-```savedLean -keep
-theorem exercise_fin_two_three_not_same :
-    ¬ SameCardinality (Fin 2) (Fin 3) := by
-  sorry
-
-theorem exercise_threeNumbers_not_four :
-    cardinal (Elem threeNumbers) ≠ 4 := by
   sorry
 ```
 
@@ -1478,6 +1478,18 @@ open scoped Classical
 ```savedLean -show
 namespace Ample
 local infixr:90 (priority := high) " ∘ " => compose
+```
+
+*문제 10* (순서쌍 집합의 무한성)
+
+자연수의 순서쌍 전체가 무한집합임을 증명하라.
+자연수에서 오는 단사함수를 하나 구성하여 `infinite_of_nat_injection`을 사용하라.
+선택한 함수가 전사일 필요가 없는 이유도 설명하라.
+
+```savedLean -keep
+theorem exercise_nat_pairs_infinite :
+    IsInfinite (Nat × Nat) := by
+  sorry
 ```
 
 # 기수의 대소 관계
@@ -1759,12 +1771,44 @@ tag := "cardinality-countable-practice"
 
 양의 자연수에 사용한 대응을 바꾸어 다음 집합의 크기를 확인해 보자.
 
-*문제 10* $`\{n\in\mathbb{N}:2\leq n\}`이 가산무한집합임을 증명하라.
+*문제 11* $`\{n\in\mathbb{N}:2\leq n\}`이 가산무한집합임을 증명하라.
 
 ```savedLean -keep
 theorem exercise_from_two_countably_infinite {n : Nat} :
     IsCountablyInfinite
     (Elem (fun n : Nat => 2 ≤ n)) := by
+  sorry
+```
+
+*문제 12* (등차수열과 가산무한집합)
+
+집합 $`S=\{1,4,7,10,\ldots\}`을 $`3k+1` 꼴의 자연수로 정의한다.
+
+(1) 아래 함수가 자연수에서 $`S`의 원소 타입으로 가는 전단사임을 증명하라.
+
+(2) 첫 결과로 $`S`가 가산무한집합임을 보이라.
+
+(3) $`S`가 자연수 전체와 같은 집합은 아님을 보이라.
+집합의 같음과 크기의 같음을 구별하라.
+
+```savedLean -keep
+def practiceOneModThree : Set Nat :=
+  fun n => ∃ k, n = 3 * k + 1
+def practiceToOneModThree (n : Nat) :
+    Elem practiceOneModThree :=
+  { val := 3 * n + 1
+    property := by exists n }
+
+theorem exercise_oneModThree_bijective :
+    Bijective practiceToOneModThree := by
+  sorry
+
+theorem exercise_oneModThree_countable :
+    IsCountablyInfinite (Elem practiceOneModThree) := by
+  sorry
+
+theorem exercise_oneModThree_ne_whole :
+    practiceOneModThree ≠ whole Nat := by
   sorry
 ```
 
@@ -1826,6 +1870,14 @@ example {A : Type}
 첫 목표는 공집합이 `S`의 부분집합이라는 명제이고
 둘째 목표는 `S`가 자신의 부분집합이라는 명제이다.
 따라서 집합 절에서 증명한 `empty_subset`과 `subset_refl`을 그대로 사용할 수 있다.
+
+*문제 13* $`\mathcal{P}(S\cap T)=\mathcal{P}(S)\cap\mathcal{P}(T)`임을 증명하라.
+
+```savedLean -keep
+theorem exercise_powerSet_inter {A : Type} (S T : Set A) :
+    powerSet (S ∩ T) = powerSet S ∩ powerSet T := by
+  sorry
+```
 
 원소 타입 `A` 전체의 멱집합을 다룰 때는 `Set A`를 사용한다.
 모든 `T : Set A`가 `whole A`의 부분집합이므로
@@ -2047,58 +2099,6 @@ file := "exercises"
 %%%
 
 각 문제의 `sorry`를 증명으로 바꾸어 완성하라.
-
-*문제 11* $`\mathcal{P}(S\cap T)=\mathcal{P}(S)\cap\mathcal{P}(T)`임을 증명하라.
-
-```savedLean -keep
-theorem exercise_powerSet_inter {A : Type} (S T : Set A) :
-    powerSet (S ∩ T) = powerSet S ∩ powerSet T := by
-  sorry
-```
-
-*문제 12* (등차수열과 가산무한집합)
-
-집합 $`S=\{1,4,7,10,\ldots\}`을 $`3k+1` 꼴의 자연수로 정의한다.
-
-(1) 아래 함수가 자연수에서 $`S`의 원소 타입으로 가는 전단사임을 증명하라.
-
-(2) 첫 결과로 $`S`가 가산무한집합임을 보이라.
-
-(3) $`S`가 자연수 전체와 같은 집합은 아님을 보이라.
-집합의 같음과 크기의 같음을 구별하라.
-
-```savedLean -keep
-def practiceOneModThree : Set Nat :=
-  fun n => ∃ k, n = 3 * k + 1
-def practiceToOneModThree (n : Nat) :
-    Elem practiceOneModThree :=
-  { val := 3 * n + 1
-    property := by exists n }
-
-theorem exercise_oneModThree_bijective :
-    Bijective practiceToOneModThree := by
-  sorry
-
-theorem exercise_oneModThree_countable :
-    IsCountablyInfinite (Elem practiceOneModThree) := by
-  sorry
-
-theorem exercise_oneModThree_ne_whole :
-    practiceOneModThree ≠ whole Nat := by
-  sorry
-```
-
-*문제 13* (순서쌍 집합의 무한성)
-
-자연수의 순서쌍 전체가 무한집합임을 증명하라.
-자연수에서 오는 단사함수를 하나 구성하여 `infinite_of_nat_injection`을 사용하라.
-선택한 함수가 전사일 필요가 없는 이유도 설명하라.
-
-```savedLean -keep
-theorem exercise_nat_pairs_infinite :
-    IsInfinite (Nat × Nat) := by
-  sorry
-```
 
 *문제 14* (멱집합의 포함 관계)
 

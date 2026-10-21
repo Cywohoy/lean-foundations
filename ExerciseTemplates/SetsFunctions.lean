@@ -19,17 +19,6 @@ theorem exercise_inter_subset_right
     S ∩ T ⊆ T := by
   sorry
 
-theorem exercise_diff_self_subset_empty
-    {A : Type} (S : Set A) :
-    S \ S ⊆ ∅ := by
-  sorry
-
-theorem exercise_diff_antitone_right
-    {A : Type} (S T U : Set A)
-    (hTU : T ⊆ U) :
-    S \ U ⊆ S \ T := by
-  sorry
-
 theorem exercise_union_eq_right {A : Type} (S T : Set A)
     (hST : S ⊆ T) :
     S ∪ T = T := by
@@ -44,37 +33,34 @@ theorem exercise_inter_union_absorb {A : Type}
     S ∩ (S ∪ T) = S := by
   sorry
 
-def practiceThreeFour : Set Nat :=
-  fun n => n = 3 ∨ n = 4
-theorem exercise_twoThree_inter :
-    twoThree ∩ practiceThreeFour = (fun n => n = 3) := by
-  sorry
-
-theorem exercise_twoThree_diff :
-    twoThree \ practiceThreeFour = (fun n => n = 2) := by
-  sorry
-
-theorem exercise_positives_not_subset_twoThree :
-    ¬ positives ⊆ twoThree := by
-  sorry
-
-theorem exercise_positives_ne_twoThree :
-    positives ≠ twoThree := by
-  sorry
-
 theorem exercise_compl_union {A : Type} (S T : Set A) :
     (S ∪ T)ᶜ = Sᶜ ∩ Tᶜ := by
   sorry
 
-theorem exercise_diff_empty_iff {A : Type}
-    (S T : Set A) :
-    S \ T = ∅ ↔ S ⊆ T := by
+theorem exercise_diff_self_subset_empty
+    {A : Type} (S : Set A) :
+    S \ S ⊆ ∅ := by
+  sorry
+
+theorem exercise_image_union {A B : Type}
+    (f : A → B) (S T : Set A) :
+    image f (S ∪ T) = image f S ∪ image f T := by
   sorry
 
 theorem exercise_preimage_subset {A B : Type}
     (f : A → B) (S T : Set B)
     (hST : S ⊆ T) :
     preimage f S ⊆ preimage f T := by
+  sorry
+
+theorem exercise_preimage_inter {A B : Type} (f : A → B)
+    (S T : Set B) :
+    preimage f (S ∩ T) = preimage f S ∩ preimage f T := by
+  sorry
+
+theorem exercise_preimage_compl {A B : Type}
+    (f : A → B) (T : Set B) :
+    preimage f Tᶜ = (preimage f T)ᶜ := by
   sorry
 
 def practiceFourSix : Set Nat := fun n => n = 4 ∨ n = 6
@@ -99,12 +85,6 @@ theorem exercise_double_successor_noncommute :
     (fun n : Nat => n + 1) ∘ double := by
   sorry
 
-theorem exercise_setProduct_swap {A B : Type}
-    (S : Set A) (T : Set B) (a : A) (b : B)
-    (h : (a, b) ∈ setProduct S T) :
-    (b, a) ∈ setProduct T S := by
-  sorry
-
 theorem exercise_injective_of_compose {A B C : Type}
     (f : A → B) (g : B → C)
     (h : Injective (g ∘ f)) :
@@ -117,11 +97,10 @@ theorem exercise_surjective_of_compose {A B C : Type}
     Surjective g := by
   sorry
 
-theorem exercise_inverse_inverse {A B : Type}
-    (f : A → B)
-    (hf : Bijective f) :
-    inverseMap (inverseMap f hf)
-      (inverseMap_bijective f hf) = f := by
+theorem exercise_setProduct_swap {A B : Type}
+    (S : Set A) (T : Set B) (a : A) (b : B)
+    (h : (a, b) ∈ setProduct S T) :
+    (b, a) ∈ setProduct T S := by
   sorry
 
 def practiceFirst : Nat × Nat → Nat := fun p => p.1
@@ -142,19 +121,40 @@ theorem exercise_diagonal_not_surjective :
     ¬ Surjective practiceDiagonal := by
   sorry
 
-theorem exercise_preimage_inter {A B : Type} (f : A → B)
-    (S T : Set B) :
-    preimage f (S ∩ T) = preimage f S ∩ preimage f T := by
+theorem exercise_diff_antitone_right
+    {A : Type} (S T U : Set A)
+    (hTU : T ⊆ U) :
+    S \ U ⊆ S \ T := by
   sorry
 
-theorem exercise_preimage_compl {A B : Type}
-    (f : A → B) (T : Set B) :
-    preimage f Tᶜ = (preimage f T)ᶜ := by
+def practiceThreeFour : Set Nat :=
+  fun n => n = 3 ∨ n = 4
+theorem exercise_twoThree_inter :
+    twoThree ∩ practiceThreeFour = (fun n => n = 3) := by
   sorry
 
-theorem exercise_image_union {A B : Type}
-    (f : A → B) (S T : Set A) :
-    image f (S ∪ T) = image f S ∪ image f T := by
+theorem exercise_twoThree_diff :
+    twoThree \ practiceThreeFour = (fun n => n = 2) := by
+  sorry
+
+theorem exercise_positives_not_subset_twoThree :
+    ¬ positives ⊆ twoThree := by
+  sorry
+
+theorem exercise_positives_ne_twoThree :
+    positives ≠ twoThree := by
+  sorry
+
+theorem exercise_diff_empty_iff {A : Type}
+    (S T : Set A) :
+    S \ T = ∅ ↔ S ⊆ T := by
+  sorry
+
+theorem exercise_inverse_inverse {A B : Type}
+    (f : A → B)
+    (hf : Bijective f) :
+    inverseMap (inverseMap f hf)
+      (inverseMap_bijective f hf) = f := by
   sorry
 
 theorem exercise_cancel_injective {A B C : Type}

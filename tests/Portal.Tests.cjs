@@ -24,6 +24,12 @@ const prefix = '/lean-foundations/';
  try {
   const page=await browser.newPage();
   await page.goto(base);
+  await page.evaluate(()=>document.fonts.ready);
+  assert(await page.evaluate(()=>[...document.fonts].some(font=>font.family==='Pretendard' && font.status==='loaded')),
+    'The portal must load its Pretendard font rather than silently use a fallback');
+  assert(await page.evaluate(()=>[...document.fonts].some(font=>font.family==='NanumSquareNeo' && font.status==='loaded')),
+    'The portal should load NanumSquareNeo headings');
+  assert((await page.locator('h1').evaluate(node=>getComputedStyle(node).fontFamily)).startsWith('NanumSquareNeo'));
   assert.equal(await page.title(),'Lean으로 배우는 수학');
   assert.equal(await page.locator('meta[name="book-mode"]').count(),0);
   await page.getByRole('link',{name:'기초 수학',exact:true}).click();
@@ -36,6 +42,6 @@ const prefix = '/lean-foundations/';
   assert.equal(await page.evaluate(()=>localStorage.getItem('lean-algebra.code.portal-route-test')),'saved proof');
   await page.goto(base+'foundations/sets/subsets/');
   await page.waitForURL(/\/foundations\/sets-functions\/#sets-proving-universal-statements-and-implications$/);
-  console.log('PASS: portal, nested book, old bookmarks, query/hash preservation, and same-origin draft storage');
+  console.log('PASS: portal font, nested book, old bookmarks, query/hash preservation, and same-origin draft storage');
  } finally { await browser.close(); await new Promise(resolve=>server.close(resolve)); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -102,7 +102,13 @@ export function createBrowserBackend(siteRoot) {
       const prefix = snippet.before.trimEnd() + '\n\n';
       const token = sessions.has(payload.session) ? payload.session : `wasm-${++serial}`;
       const previous = sessions.get(token);
-      const source = prefix + payload.code + (payload.code.endsWith('\n') ? '' : '\n');
+      // Put the guard on the declaration's existing header line, preserving all
+      // editable proof line/column positions for goals and diagnostics.
+      const checkedCode = snippet.exercise && snippet.allowedTactics
+        ? payload.code.replace(/^((?:theorem|lemma|example)\b[\s\S]*?:= by)\b/gm,
+            (_, header) => `${header} learning_guard ${JSON.stringify(snippet.allowedTactics.join(','))} in`)
+        : payload.code;
+      const source = prefix + checkedCode + (checkedCode.endsWith('\n') ? '' : '\n');
       // Ask Lean itself for transitive axiom dependencies, including dependencies
       // inherited from earlier unfinished lemmas. No source-text heuristic can
       // distinguish a complete proof from one that uses an admitted theorem.

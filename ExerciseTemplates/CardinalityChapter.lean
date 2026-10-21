@@ -7,6 +7,12 @@ local infixr:90 (priority := high) " ∘ " => Ample.compose
 
 namespace Exercises.CardinalityChapter
 
+theorem exercise_singletons_same_cardinal {A B : Type}
+    (a : A) (b : B) :
+    cardinal (Elem (singleton a)) =
+      cardinal (Elem (singleton b)) := by
+  sorry
+
 def practiceIndexTwo (i : Fin 2) : Elem twoThree :=
   { val := i.val + 2
     property := by
@@ -21,39 +27,9 @@ theorem exercise_twoThree_cardinal :
     cardinal (Elem twoThree) = cardinal (Fin 2) := by
   sorry
 
-theorem exercise_singletons_same_cardinal {A B : Type}
-    (a : A) (b : B) :
-    cardinal (Elem (singleton a)) =
-      cardinal (Elem (singleton b)) := by
-  sorry
-
-theorem exercise_finite_cardinal_transport
-    {A B : Type} {n : Nat}
-    (hAB : cardinal A = cardinal B) :
-    cardinal A = n ↔ cardinal B = n := by
-  sorry
-
 theorem exercise_fin_succ_not_injective
     (n : Nat) (f : Fin (n + 1) → Fin n) :
     ¬ Injective f := by
-  sorry
-
-theorem exercise_cardinal_product {A B : Type} {m n : Nat}
-    (hA : cardinal A = m)
-    (hB : cardinal B = n) :
-    cardinal (A × B) = m * n := by
-  sorry
-
-theorem exercise_cardinal_swap (A B : Type) :
-    cardinal (A × B) = cardinal (B × A) := by
-  sorry
-
-theorem exercise_two_by_three_cardinal :
-    cardinal (Fin 2 × Fin 3) = 6 := by
-  sorry
-
-theorem exercise_three_by_two_cardinal :
-    cardinal (Fin 3 × Fin 2) = 6 := by
   sorry
 
 theorem exercise_fin_collision (n : Nat)
@@ -74,19 +50,43 @@ theorem exercise_threeNumbers_not_four :
     cardinal (Elem threeNumbers) ≠ 4 := by
   sorry
 
+theorem exercise_finite_cardinal_transport
+    {A B : Type} {n : Nat}
+    (hAB : cardinal A = cardinal B) :
+    cardinal A = n ↔ cardinal B = n := by
+  sorry
+
+theorem exercise_cardinal_product {A B : Type} {m n : Nat}
+    (hA : cardinal A = m)
+    (hB : cardinal B = n) :
+    cardinal (A × B) = m * n := by
+  sorry
+
+theorem exercise_cardinal_swap (A B : Type) :
+    cardinal (A × B) = cardinal (B × A) := by
+  sorry
+
+theorem exercise_two_by_three_cardinal :
+    cardinal (Fin 2 × Fin 3) = 6 := by
+  sorry
+
+theorem exercise_three_by_two_cardinal :
+    cardinal (Fin 3 × Fin 2) = 6 := by
+  sorry
+
 theorem exercise_infinite_transport {A B : Type}
     (hA : IsInfinite A)
     (hAB : cardinal A = cardinal B) :
     IsInfinite B := by
   sorry
 
+theorem exercise_nat_pairs_infinite :
+    IsInfinite (Nat × Nat) := by
+  sorry
+
 theorem exercise_from_two_countably_infinite {n : Nat} :
     IsCountablyInfinite
     (Elem (fun n : Nat => 2 ≤ n)) := by
-  sorry
-
-theorem exercise_powerSet_inter {A : Type} (S T : Set A) :
-    powerSet (S ∩ T) = powerSet S ∩ powerSet T := by
   sorry
 
 def practiceOneModThree : Set Nat :=
@@ -108,8 +108,8 @@ theorem exercise_oneModThree_ne_whole :
     practiceOneModThree ≠ whole Nat := by
   sorry
 
-theorem exercise_nat_pairs_infinite :
-    IsInfinite (Nat × Nat) := by
+theorem exercise_powerSet_inter {A : Type} (S T : Set A) :
+    powerSet (S ∩ T) = powerSet S ∩ powerSet T := by
   sorry
 
 theorem exercise_powerSet_mono {A : Type} (S T : Set A)

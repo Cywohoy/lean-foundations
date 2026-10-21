@@ -30,7 +30,8 @@ def compile_module(name, source):
              "sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
             for p in sorted(file.parent.glob(file.stem + ".*")) if p.suffix != ".lean"]
 
-book_files = []
+book_files = compile_module("AmpleBrowserContext.LearningGuard",
+    (ROOT / "web/lean/LearningGuard.lean").read_text(encoding="utf-8"))
 for chapter in CHAPTERS:
     book_files += compile_module("AmpleBrowserContext.Book." + chapter,
         export_module((ROOT / "AlgebraBook" / (chapter + ".lean")).read_text(encoding="utf-8")))

@@ -22,6 +22,16 @@ theorem exercise_add_three_preserves_lt (a b : Nat)
     a + 3 < b + 3 := by
   sorry
 
+theorem exercise_shift_lt (a b c : Nat)
+    (hab : a < b) :
+    a + c < b + c := by
+  sorry
+
+theorem exercise_two_shifts_lt (a b c d : Nat)
+    (hab : a < b) :
+    (a + c) + d < (b + c) + d := by
+  sorry
+
 theorem exercise_implication_chain
     (P Q R : Prop) :
     P → (P → Q) → (Q → R) → R := by
@@ -55,16 +65,6 @@ theorem exercise_function_bound (f g : Nat → Nat)
     (hfg : ∀ n, f n < g n)
     (hg : ∀ n, g n < n + 10) :
     f 3 < 13 := by
-  sorry
-
-theorem exercise_shift_lt (a b c : Nat)
-    (hab : a < b) :
-    a + c < b + c := by
-  sorry
-
-theorem exercise_two_shifts_lt (a b c d : Nat)
-    (hab : a < b) :
-    (a + c) + d < (b + c) + d := by
   sorry
 
 theorem exercise_property_twice (A : Type)

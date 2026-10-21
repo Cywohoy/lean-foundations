@@ -1,4 +1,64 @@
 /* The default reading view stays typographic; tools appear at the code margin. */
+:root {
+  --book-link: #315b78;
+  --book-link-hover: #193e58;
+  --book-link-line: #b8ccd9;
+  --book-link-surface: #edf3f7;
+  --verso-selected-color: #edf3f7;
+}
+@media screen {
+  main :is(h1, h2, h3, h4, h5), .toc-title h1 { font-weight: 800; }
+  main h6 { font-weight: 600; }
+  header .header-title { font-weight: 800; }
+  main :is(h1, h2, h3, h4, h5, h6), main .titlepage h1 { text-align: left; }
+  main a:any-link {
+    color: var(--book-link);
+    text-decoration: underline;
+    text-decoration-color: var(--book-link-line);
+    text-decoration-thickness: 1px;
+    text-underline-offset: .2em;
+    text-decoration-skip-ink: auto;
+    transition: color .15s, text-decoration-color .15s;
+  }
+  main a:any-link:hover { color: var(--book-link-hover); text-decoration-color: currentColor; }
+  a[href]:focus-visible { outline: 2px solid var(--book-link); outline-offset: 3px; border-radius: 2px; }
+  /* Lean diagnostics retain their separate wavy marks. Reference links are quiet. */
+  main .hl.lean a:any-link { color: inherit; text-decoration: none; }
+  main .hl.lean a:any-link:hover { color: var(--book-link-hover); text-decoration: underline; text-decoration-thickness: 1px; }
+  #toc .book-toc-tree a:any-link {
+    color: #4c5562;
+    text-decoration: none;
+    border-radius: 3px;
+    transition: color .15s, background-color .15s;
+  }
+  #toc .book-toc-tree a:any-link:hover { color: var(--book-link-hover); background: var(--book-link-surface); }
+  #toc .book-toc-tree a[aria-current="page"] { color: #253c50; }
+  #toc .book-toc-tree a[aria-current="location"] { color: #253c50; background: #e7eff4; box-shadow: inset 2px 0 #537b97; }
+  main .section-toc a:any-link, main .prev-next-buttons a:any-link { color: #3d4c59; text-decoration: none; }
+  main .section-toc a:any-link:hover, main .prev-next-buttons a:any-link:hover { color: var(--book-link-hover); text-decoration: underline; }
+  main .permalink-widget a:any-link { color: #7a8b98; text-decoration: none; }
+  main .permalink-widget a:any-link:hover { color: var(--book-link); text-decoration: none; }
+  main .permalink-widget.inline { display: inline-block; width: auto; margin-left: .35rem; vertical-align: baseline; }
+  main .permalink-widget.inline > a { position: static; font-size: .75rem; text-shadow: none; }
+  main .permalink-widget:focus-within { opacity: 1; }
+  #search-wrapper ul[role="listbox"] { border: 1px solid #d6dfe5; border-radius: 6px; box-shadow: 0 8px 24px rgb(30 50 65 / .12); }
+  #search-wrapper .search-result > a { color: #344b5c; }
+  #search-wrapper [role="listbox"].focus li[aria-selected="true"], #search-wrapper .search-result:hover {
+    background: var(--book-link-surface);
+    border-color: transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  main a:any-link, #toc .book-toc-tree a:any-link { transition: none; }
+}
+@media screen and (min-width: 1201px) {
+  /* The header brand belongs at the window's left edge, independently of
+     the centered book column and the width of its table of contents. */
+  header .header-logo-wrapper:empty { display: none; }
+  header .header-title-wrapper { min-width: 0; padding-inline: 1.5rem; }
+  header .header-title { margin: 0; max-width: none; text-align: left; }
+  header .header-title h1 { text-align: left; }
+}
 .book-example { position: relative; margin: 1.4rem 0 1.8rem; }
 @media screen {
   .book-example-body > .hl.lean.block {
@@ -79,6 +139,9 @@
 .book-problem-title > strong { font-size: 1.05rem; white-space: nowrap; }
 .book-problem-caption { font-size: 1rem; word-break: keep-all; }
 .book-exercise-card-heading .book-solve-button { flex: 0 0 auto; }
+.book-exercise-result { margin-left: auto; color: #777; font-size: .85rem; white-space: nowrap; }
+.book-exercise-complete { color: #386047; }
+.book-example-body > .book-draft-code { white-space: pre; font-style: normal; }
 .book-exercise-card-heading .book-solve-button { box-sizing: border-box; min-height: 44px; min-width: 56px; padding: .4rem .15rem; border: 0; border-bottom: 1px solid #aaa; background: transparent; color: #222; text-align: center; font-size: 1rem; text-decoration: none; }
 .book-exercise-card-heading .book-solve-button:hover { border-bottom-color: #222; }
 .book-exercise-card > p { margin: .5rem 0; }
@@ -86,18 +149,20 @@
 .book-solving { overflow: hidden; }
 .book-exercise-workspace { box-sizing: border-box; width: min(1280px, calc(100vw - 48px)); max-width: none; height: calc(100dvh - 48px); max-height: none; margin: auto; padding: 0 28px 20px; border: 1px solid #bbb; color: #171717; background: white; overflow: auto; font-family: var(--verso-text-font-family); }
 .book-exercise-workspace::backdrop { background: rgb(0 0 0 / .28); }
-.book-exercise-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 18px 0 14px; border-bottom: 1px solid #ddd; }
+.book-exercise-heading { position: sticky; top: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 18px 0 14px; border-bottom: 1px solid #ddd; background: white; }
 .book-exercise-heading strong { font-size: 1rem; font-weight: 500; }
-.book-exercise-heading .book-button { font-size: .9rem; }
+.book-exercise-heading .book-button { flex: 0 0 auto; min-height: 40px; font-size: .9rem; }
 .book-exercise-statement { max-width: 58rem; padding: 12px 0; font-size: 1rem; line-height: 1.85; }
 .book-exercise-statement p { margin: .35rem 0; }
 .book-exercise-workspace .book-reader-panel { padding: 0; border: 0; max-width: none; width: 100%; }
-.book-proof-controls { display: flex; gap: 1.2rem; margin: .3rem 0; }
+.book-proof-controls { display: flex; flex-wrap: wrap; gap: .25rem .75rem; margin: .3rem 0; }
+.book-proof-controls .book-button { min-width: 44px; min-height: 40px; text-align: center; }
 .book-exercise-support { margin: .6rem 0; }
 .book-exercise-support > summary { cursor: pointer; color: #666; font-size: .9rem; }
 .book-exercise-support[hidden] { display: none; }
 .book-proof-controls[hidden], .book-exercise-declaration[hidden] { display: none; }
 .book-proof-controls .book-button[aria-pressed="true"] { color: #111; text-decoration: underline; text-underline-offset: 4px; }
+.book-proof-controls .book-button[data-complete="true"]::after { content: ' ✓'; color: #386047; }
 .book-exercise-declaration { box-sizing: border-box; padding: 12px 0; margin: 0; border: 0; background: transparent; white-space: pre-wrap; overflow-wrap: anywhere; font: 16px/1.8 var(--verso-code-font-family); }
 .book-exercise-workspace .book-editor-columns { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); min-height: 300px; }
 .book-exercise-workspace .book-live-output { border-top: 0; border-left: 1px solid #ddd; padding: 16px 0 16px 24px; }
@@ -116,12 +181,28 @@
 @media print { .book-exercise-workspace { display: none !important; } }
 
 /* Both controls remain visible at the upper-right corner of the code. */
+@media screen {
+  #toc { box-sizing: border-box; padding-inline: 1rem; }
+  #toc .toc-title { padding-inline: .25rem; }
+}
 .book-toc-tree, .book-toc-tree ol { list-style: none; padding: 0; margin: 0; }
 .book-toc-tree { padding-block: .5rem 1rem; }
 .book-toc-tree > li { margin-block: .65rem; }
 .book-toc-tree ol { padding-left: 1rem; margin-block: .3rem; }
 .book-toc-tree a { display: block; padding: .15rem .25rem; line-height: 1.5; }
 .book-toc-tree [aria-current="page"] { font-weight: 700; }
+.book-toc-tree .book-chapter-link { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+.book-chapter-progress { flex: 0 0 auto; color: #777; font-size: .78rem; font-weight: 400; font-variant-numeric: tabular-nums; }
+.book-progress { margin: .5rem .25rem 1rem; padding-top: .8rem; border-top: 1px solid #e5e5e5; color: #777; }
+.book-progress-summary { display: flex; justify-content: space-between; gap: 1rem; font-size: .82rem; }
+.book-progress-total { font-variant-numeric: tabular-nums; }
+.book-progress-next { display: block; min-height: 36px; padding: .35rem 0; color: #555; font-size: .78rem; }
+.book-progress-next:not(:disabled) { text-decoration: underline; text-underline-offset: .2em; }
+.book-progress-storage { display: block; color: #888; font-size: .72rem; }
+.book-progress-storage:empty { display: none; }
+.book-progress-footer { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 .75rem; margin-top: .25rem; }
+.book-progress-reset { min-height: 36px; padding: .35rem 0; color: #777; font-size: .78rem; }
+.book-progress-reset:hover { text-decoration: underline; text-underline-offset: .2em; }
 .book-toc-tree [aria-current="location"] {
   font-weight: 700;
   background: rgb(127 127 127 / .12);
@@ -131,7 +212,21 @@
 .book-copy:hover { color: #222; }
 .book-proof-toolbar { position: absolute; top: .25rem; right: .3rem; gap: .85rem; }
 .book-proof-toolbar .book-step-button { color: #444; font-size: .875rem; min-height: 32px; }
-.book-example:has(> .book-proof-toolbar) > .book-example-body > .hl.lean.block { padding-right: 5rem; }
+.book-example:has(> .book-proof-toolbar) > .book-example-body > .hl.lean.block { padding-right: 8rem; }
+
+/* Long formulas and reference tables scroll locally, without widening the page. */
+.katex-display { overflow-x: auto; overflow-y: hidden; padding-block: .2em; }
+.book-table-scroll { max-width: 100%; overflow-x: auto; margin-block: 1rem; }
+.book-table-scroll:focus-visible { outline: 1px solid #777; outline-offset: 3px; }
+.book-table-scroll > table { min-width: 36rem; margin-block: 0; }
+.book-table-scroll th, .book-table-scroll td { word-break: keep-all; }
+.book-help, .book-run-status, .book-progress-storage { color: #666; }
+main :is(p, li) > code { overflow-wrap: anywhere; white-space: break-spaces; }
+@media screen and (max-width: 700px) {
+  main .katex:not(.katex-display > .katex) { display: inline-block; max-width: 100%; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+}
+#toggle-toc-click:focus-visible { outline: 2px solid #777; outline-offset: 3px; }
+#search-wrapper ul[role="listbox"] { right: 0; width: min(34rem, calc(100vw - 2rem)); max-height: min(28rem, calc(100dvh - 4rem)); }
 @media print {
   .book-example:has(> .book-proof-toolbar) > .book-example-body > .hl.lean.block { padding-top: .45rem; }
 }

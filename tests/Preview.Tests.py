@@ -1,5 +1,6 @@
 """The local preview must serve the public WASM files without a compiler API."""
 import importlib.util
+import io
 from pathlib import Path
 import sys
 import threading
@@ -14,20 +15,37 @@ spec.loader.exec_module(preview)
 
 
 class PreviewTests(unittest.TestCase):
+    def test_font_cache_without_server(self):
+        for path, policy in [('/foundations/', 'no-store'),
+                             ('/foundations/-verso-data/reader.css', 'no-store'),
+                             ('/foundations/-verso-data/NanumSquareNeo-ExtraBold.woff2?v=1', 'public, max-age=86400')]:
+            handler = object.__new__(preview.PreviewHandler)
+            handler.path = path
+            handler.request_version = 'HTTP/1.1'
+            handler.wfile = io.BytesIO()
+            handler.end_headers()
+            self.assertIn(f'Cache-Control: {policy}\r\n'.encode(), handler.wfile.getvalue())
+
     def test_wasm_files_and_no_native_api(self):
         self.assertNotIn('lean_rpc', sys.modules)
-        server = preview.ThreadingHTTPServer(('127.0.0.1', 0), preview.PreviewHandler)
+        server = preview.PreviewServer(('127.0.0.1', 0), preview.PreviewHandler)
         server.daemon_threads = True
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         base = f'http://127.0.0.1:{server.server_port}'
         try:
+            with self.assertRaises(OSError):
+                preview.PreviewServer(('127.0.0.1', server.server_port), preview.PreviewHandler)
             with urllib.request.urlopen(base + '/') as response:
                 self.assertIn(b'href="foundations/"', response.read())
             with urllib.request.urlopen(base + '/foundations/') as response:
                 self.assertIn(b'<meta name="book-mode" content="wasm">', response.read())
                 self.assertEqual(response.headers['Cross-Origin-Embedder-Policy'], 'require-corp')
                 self.assertEqual(response.headers['Cross-Origin-Opener-Policy'], 'same-origin')
+                self.assertEqual(response.headers['Cache-Control'], 'no-store')
+            with urllib.request.urlopen(base + '/foundations/-verso-data/reader.css') as response:
+                self.assertEqual(response.headers['Cache-Control'], 'no-store')
+                self.assertIn(b'main .titlepage h1 { text-align: left; }', response.read())
             with urllib.request.urlopen(base + '/foundations/assets/web/exercise-model.js') as response:
                 self.assertIn(b'exerciseModel', response.read())
             with self.assertRaises(urllib.error.HTTPError) as missing:

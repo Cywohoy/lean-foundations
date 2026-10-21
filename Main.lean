@@ -255,6 +255,10 @@ def config : RenderConfig where
   extraDataFiles := {
     { filename := "PretendardVariable.woff2",
       contents := include_bin "assets/fonts/PretendardVariable.woff2" },
+    { filename := "NanumSquareNeo-Bold.woff2",
+      contents := include_bin "assets/fonts/NanumSquareNeo-Bold.woff2" },
+    { filename := "NanumSquareNeo-ExtraBold.woff2",
+      contents := include_bin "assets/fonts/NanumSquareNeo-ExtraBold.woff2" },
     { filename := "CascadiaCode.woff2",
       contents := include_bin "assets/fonts/CascadiaCode.woff2" },
     { filename := "CascadiaCodeItalic.woff2",
@@ -273,6 +277,20 @@ def config : RenderConfig where
           font-weight: 45 920;
           font-display: swap;
           src: url("PretendardVariable.woff2") format("woff2");
+        }
+        @font-face {
+          font-family: "NanumSquareNeo";
+          font-style: normal;
+          font-weight: 700;
+          font-display: block;
+          src: url("NanumSquareNeo-Bold.woff2") format("woff2");
+        }
+        @font-face {
+          font-family: "NanumSquareNeo";
+          font-style: normal;
+          font-weight: 800;
+          font-display: block;
+          src: url("NanumSquareNeo-ExtraBold.woff2") format("woff2");
         }
         @font-face {
           font-family: "Cascadia Code";
@@ -315,6 +333,7 @@ def config : RenderConfig where
       --verso-code-font-family: "Book Quotient Symbols", "Noto Sans Math", "Cascadia Code", "Pretendard Variable", Consolas, monospace;
     }
     p, dt, dd, main li { line-height: 1.9; }
+    h1, h2, h3, h4, h5, h6 { font-family: "NanumSquareNeo", var(--verso-structure-font-family); }
     .hl.lean.block, pre, .lean-output { line-height: 1.85; }
     .hl.lean.block { padding-block: 0.45em; }
     .hl.lean .tactic > label[for]::after { display: none; }

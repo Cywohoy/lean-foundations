@@ -37,6 +37,35 @@
   }
   function stored(key) { try { return localStorage.getItem(key); } catch { return null; } }
   function store(key, value) { try { localStorage.setItem(key, value); } catch { /* Private browsing may disable storage. */ } }
+  function exerciseStorageId(original, key) { return original.storageKey || key; }
+  const progressEpochKey = 'lean-algebra.progress-reset';
+  function progressEpoch() { return stored(progressEpochKey); }
+  function exerciseDraft(original, key) {
+    return stored(`lean-algebra.code.${exerciseStorageId(original, key)}`)
+      ?? (original.legacyKeys || [key]).map(old => stored(`lean-algebra.code.${old}`)).find(value => value != null);
+  }
+  function exerciseVersion(original) {
+    return JSON.stringify([original.code, original.allowedTactics,
+      original.contextFiles?.map(file => file.sha256)]);
+  }
+  function checkedExercise(original, key, code) {
+    try {
+      const saved = JSON.parse(stored(`lean-algebra.result.${exerciseStorageId(original, key)}`));
+      return saved?.code === code && saved.version === exerciseVersion(original) ? saved : null;
+    } catch { return null; }
+  }
+  let draftManifest;
+  function exerciseManifest() {
+    draftManifest ||= fetch(new URL('exercises.json', siteRoot)).then(response => {
+      if (!response.ok) throw new Error('Exercise metadata is unavailable.');
+      return response.json();
+    }).catch(error => { draftManifest = undefined; throw error; });
+    return draftManifest;
+  }
+  function hasExerciseDrafts() {
+    try { return Object.keys(localStorage).some(key => key.startsWith('lean-algebra.code.')); }
+    catch { return false; }
+  }
   function tabSession(value) {
     try {
       if (value) sessionStorage.setItem('lean-algebra.session', value);
@@ -77,8 +106,13 @@
     wrapper.dataset.readerReady = 'true';
     const key = wrapper.dataset.snippet;
     const exercise = !!wrapper.dataset.exerciseUnit;
+    if (exercise) wrapper.id = `exercise-${key}`;
     wrapper.classList.toggle('book-exercise', exercise);
     const steps = proofSteps(source);
+    const originalNodes = exercise ? [...source.childNodes].map(node => node.cloneNode(true)) : [];
+    let inlineCode = null;
+    let exerciseResult;
+    let progressState;
     const toolbar = element('div', 'book-toolbar');
     toolbar.setAttribute('aria-label', '예제 도구');
     const body = element('div', 'book-example-body');
@@ -144,7 +178,8 @@
     if (editButton && browserLean) editButton.title = '브라우저에서 Lean을 실행합니다. 첫 실행 시 약 300 MB를 내려받습니다.';
     const copyButton = button('', async () => {
       try {
-        const text = mode === 'edit' && editor ? editor.code() : key ? (await snippet(key)).code : plain(source);
+        const text = exercise && inlineCode !== null ? inlineCode
+          : mode === 'edit' && editor ? editor.code() : key ? (await snippet(key)).code : plain(source);
         await navigator.clipboard.writeText(text);
         copyStatus('복사됨');
       } catch { copyStatus('복사 실패'); }
@@ -174,6 +209,9 @@
       problemTitle.append(element('strong', '', problemNumber));
       if (problemCaption) problemTitle.append(element('span', 'book-problem-caption', `(${problemCaption})`));
       heading.append(problemTitle);
+      exerciseResult = element('span', 'book-exercise-result');
+      exerciseResult.setAttribute('role', 'status');
+      heading.append(exerciseResult);
       editButton.classList.add('book-solve-button');
       if (!staticReading) heading.append(editButton);
       const disclosures = [];
@@ -186,6 +224,53 @@
     }
     toolbar.append(copyButton, status);
     if (exercise) openEditors.set(key, () => setMode('edit'));
+    function showDraft(data, code, verification = checkedExercise(data, key, code)) {
+      inlineCode = code;
+      const written = code.trimEnd() !== data.code.trimEnd();
+      source.classList.toggle('book-draft-code', written);
+      if (written) source.textContent = code.trimEnd();
+      else source.replaceChildren(...originalNodes.map(node => node.cloneNode(true)));
+      const done = verification?.done || 0;
+      const total = verification?.total || 0;
+      const complete = total > 0 && done === total;
+      const nextProgressState = `${done}/${total}/${written}`;
+      if (nextProgressState !== progressState) {
+        progressState = nextProgressState;
+        window.dispatchEvent(new Event('book-exercise-progress'));
+      }
+      const label = complete ? '✓ 완료' : done ? `${done}/${total} 완료` : written ? '작성 중' : '';
+      if (exerciseResult.textContent !== label) exerciseResult.textContent = label;
+      exerciseResult.classList.toggle('book-exercise-complete', complete);
+      editButton.textContent = complete ? '풀이 보기' : written ? '이어서 풀기' : '풀기';
+    }
+    if (exercise && hasExerciseDrafts()) {
+      exerciseManifest().then(manifest => {
+        if (editor) return;
+        const data = manifest[key];
+        if (!data) return;
+        const draft = exerciseDraft(data, key);
+        if (draft != null) showDraft(data, draft);
+      }).catch(() => { /* Keep the original problem readable if restoration fails. */ });
+    }
+    function refreshStoredExercise(event) {
+      const reset = event.type === 'book-exercise-reset' || event.key === progressEpochKey;
+      if (mode === 'edit' || (!reset && event.key && !/^lean-algebra\.(code|result)\./.test(event.key))) return;
+      exerciseManifest().then(manifest => {
+        if (mode === 'edit') return;
+        const data = manifest[key];
+        if (!data) return;
+        const id = exerciseStorageId(data, key);
+        if (!reset && event.key && ![`lean-algebra.code.${id}`, `lean-algebra.result.${id}`].includes(event.key)) return;
+        editor?.dispose();
+        editor = undefined;
+        const draft = exerciseDraft(data, key) ?? data.code.trimEnd();
+        showDraft(data, draft);
+      }).catch(() => {});
+    }
+    if (exercise) {
+      window.addEventListener('storage', refreshStoredExercise);
+      window.addEventListener('book-exercise-reset', refreshStoredExercise);
+    }
     for (const control of [stepButton, editButton].filter(Boolean)) {
       control.setAttribute('aria-controls', panel.id);
       control.setAttribute('aria-expanded', 'false');
@@ -230,6 +315,7 @@
     }
 
     async function setMode(next) {
+      if (mode === 'edit' && next !== 'edit' && editor) editor.snapshot();
       if (next === 'edit') {
         if (activeEditor && activeEditor.wrapper !== wrapper) activeEditor.close();
         activeEditor = {wrapper, close: () => setMode(null)};
@@ -259,7 +345,8 @@
             const model = exercise ? await import(new URL('assets/web/exercise-model.js', siteRoot)) : null;
             const unicode = await import(new URL('assets/web/unicode-input.js', siteRoot));
             if (mode !== 'edit') return;
-            editor = createEditor(key, data, model?.exerciseModel, unicode.attachUnicodeInput);
+            editor = createEditor(key, data, model?.exerciseModel, unicode.attachUnicodeInput,
+              (code, verification) => showDraft(data, code, verification));
           }
           panel.append(editor.root);
           editor.input.focus();
@@ -292,7 +379,7 @@
     }
   }
 
-  function createEditor(key, original, makeExercise, attachUnicodeInput) {
+  function createEditor(key, original, makeExercise, attachUnicodeInput, onDraft) {
     const root = element('div', 'book-live-editor');
     const controls = element('div', 'book-editor-controls');
     const input = element('textarea', 'book-code-input');
@@ -301,12 +388,11 @@
     input.autocapitalize = 'off';
     input.autocomplete = 'off';
     input.wrap = 'off';
-    const storageKey = `lean-algebra.code.${original.storageKey || key}`;
-    const legacyDraft = (original.legacyKeys || [key])
-      .map(oldKey => stored(`lean-algebra.code.${oldKey}`)).find(value => value != null);
-    const draft = stored(storageKey) ?? legacyDraft ?? original.code.trimEnd();
+    const storageKey = `lean-algebra.code.${exerciseStorageId(original, key)}`;
+    const draft = exerciseDraft(original, key) ?? original.code.trimEnd();
     const exercise = makeExercise?.(original.code, draft);
     let fullCode = exercise?.full || false;
+    let toggleCode;
     let selectedProof = 0;
     let unicodeInput;
     const declaration = element('pre', 'book-exercise-declaration');
@@ -331,6 +417,17 @@
       proofControls.hidden = fullCode || exercise.parts.length === 1;
       input.setAttribute('aria-label', fullCode ? '연습문제 전체 코드' : `풀이 ${selectedProof + 1}`);
       [...proofControls.children].forEach((node, i) => node.setAttribute('aria-pressed', String(i === selectedProof)));
+      showSubproofs(checkedExercise(original, key, currentCode()));
+    }
+    function showSubproofs(verification) {
+      [...proofControls.children].forEach((control, index) => {
+        const complete = verification?.parts?.[index]
+          ?? (verification?.total > 0 && verification.done === verification.total);
+        control.dataset.complete = String(!!complete);
+        control.setAttribute('aria-label', `(${index + 1})`);
+        control.setAttribute('aria-description', complete ? '완료' : '미완료');
+        control.title = `소문제 ${index + 1}${complete ? ' · 완료' : ''}`;
+      });
     }
     if (exercise) {
       for (const [index] of exercise.parts.entries()) proofControls.append(button(`(${index + 1})`, () => {
@@ -354,7 +451,7 @@
     });
     controls.append(run, reset, message);
     if (exercise) {
-      const toggle = button(fullCode ? '증명만 편집' : '전체 코드', () => {
+      toggleCode = button(fullCode ? '증명만 편집' : '전체 코드', () => {
         const source = currentCode();
         if (fullCode) {
           const bodies = exercise.parse(source);
@@ -371,7 +468,7 @@
         declaration.hidden = fullCode;
         support.hidden = fullCode || !supportCode.textContent;
         proofControls.hidden = fullCode || exercise.parts.length === 1;
-        toggle.textContent = fullCode ? '증명만 편집' : '전체 코드';
+        toggleCode.textContent = fullCode ? '증명만 편집' : '전체 코드';
         input.setAttribute('aria-label', fullCode ? '연습문제 전체 코드' : `풀이 ${selectedProof + 1}`);
         input.focus(); changed();
       });
@@ -388,7 +485,7 @@
         const link = element('a'); link.href = url; link.download = exercise.parts[0].name + '.lean';
         link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
       });
-      controls.insertBefore(toggle, message);
+      controls.insertBefore(toggleCode, message);
       controls.insertBefore(download, message);
       root.append(proofControls, support, declaration);
       declaration.hidden = fullCode;
@@ -419,8 +516,31 @@
     let timer;
     let compileTimer;
     let activated = false;
+    let disposed = false;
     let requestNumber = 0;
     let documentQueue = Promise.resolve();
+    function resetProgress(event) {
+      if (event.type === 'storage' && event.key !== progressEpochKey) return;
+      if (!exercise) return;
+      clearTimeout(compileTimer);
+      clearTimeout(timer);
+      checkedCode = undefined;
+      ++requestNumber;
+      exercise.bodies = exercise.parts.map(part => part.body);
+      fullCode = false;
+      toggleCode.textContent = '전체 코드';
+      loadProof();
+      showSubproofs(null);
+      onDraft?.(currentCode(), null);
+      diagnostics.replaceChildren();
+      outputHeading.textContent = '가정과 목표';
+      goal.textContent = '풀이를 작성하면 가정과 목표가 표시됩니다.';
+      lines();
+      message.textContent = '풀이가 초기화되었습니다.';
+      message.className = 'book-run-status';
+    }
+    window.addEventListener('book-exercise-reset', resetProgress);
+    window.addEventListener('storage', resetProgress);
     // Serialize edits to the same LSP document. Skip queued requests for text
     // that has already changed instead of sending an older document to Lean.
     function documentCall(path, code, payload) {
@@ -463,7 +583,11 @@
       compileTimer = setTimeout(check, delay);
     }
     function changed() {
+      if (disposed) return;
       store(storageKey, currentCode());
+      const verification = checkedExercise(original, key, currentCode());
+      showSubproofs(verification);
+      onDraft?.(currentCode(), verification);
       message.textContent = '수정됨';
       message.className = 'book-run-status';
       outputHeading.textContent = '이전 검사 결과 · 수정 내용 검사 대기 중';
@@ -479,16 +603,17 @@
     }
     async function check() {
       clearTimeout(compileTimer);
-      if (busy || !root.isConnected) return;
+      if (disposed || busy || !root.isConnected) return;
       busy = true;
       run.disabled = true;
       message.textContent = '실행 중…';
       message.className = 'book-run-status';
       const code = currentCode();
+      const epoch = progressEpoch();
       ++requestNumber;
       try {
         const result = await documentCall('/api/lean/check', code, {position: position()});
-        if (!result) return;
+        if (!result || disposed || epoch !== progressEpoch()) return;
         checkedCode = code;
         if (code !== currentCode()) return;
         showGoal(result.goal, result.goalNote);
@@ -526,8 +651,19 @@
         const audited = exercise?.parts.map(part => result.proofs?.find(proof =>
           proof.name === part.name || proof.name.endsWith('.' + part.name)));
         const forbidden = proof => proof?.axioms.filter(name => !allowed.has(name)) || [];
-        const complete = audited?.map(proof => !!proof && !forbidden(proof).length) || [];
+        const complete = audited?.map((proof, index) => {
+          if (!bodies || !proof || forbidden(proof).length) return false;
+          const start = exercise.start(bodies, index);
+          const startLine = code.slice(0, start).split('\n').length;
+          const endLine = code.slice(0, start + bodies[index].length).split('\n').length;
+          return !errors.some(error => error.line >= startLine && error.line <= endLine);
+        }) || [];
         const count = complete.filter(Boolean).length;
+        const verification = {code, version: exerciseVersion(original),
+          done: count, total: exercise?.parts.length || 0, parts: complete};
+        store(`lean-algebra.result.${exerciseStorageId(original, key)}`, JSON.stringify(verification));
+        showSubproofs(verification);
+        onDraft?.(code, verification);
         const selected = audited?.[selectedProof];
         const blocked = forbidden(selected);
         let success = false;
@@ -548,20 +684,22 @@
         message.classList.toggle('book-error', !!errors.length);
         message.classList.toggle('book-success', success);
       } catch (error) {
-        if (code === currentCode()) {
+        if (!disposed && code === currentCode()) {
           message.textContent = '실행 실패';
           diagnostics.replaceChildren(element('p', 'book-error', error.message));
         }
       } finally {
         busy = false;
         run.disabled = false;
-        if (currentCode() !== code) scheduleCheck(250);
-        else if (checkedCode === code) updateGoal();
+        if (!disposed && epoch === progressEpoch()) {
+          if (currentCode() !== code) scheduleCheck(250);
+          else if (checkedCode === code) updateGoal();
+        }
       }
     }
     async function updateGoal() {
       clearTimeout(timer);
-      if (busy || !root.isConnected || !session || checkedCode !== currentCode()) return;
+      if (disposed || busy || !root.isConnected || !session || checkedCode !== currentCode()) return;
       const current = ++requestNumber;
       timer = setTimeout(async () => {
         try {
@@ -615,8 +753,26 @@
       if (checkedCode !== currentCode()) scheduleCheck(50);
       else updateGoal();
     }
-    window.addEventListener('resize', () => { if (root.isConnected) { lines(); } });
-    return {root, input, activate, code: currentCode};
+    const resize = () => { if (root.isConnected) lines(); };
+    window.addEventListener('resize', resize);
+    function snapshot() {
+      const code = currentCode();
+      store(storageKey, code);
+      const verification = checkedExercise(original, key, code);
+      showSubproofs(verification);
+      onDraft?.(code, verification);
+    }
+    snapshot();
+    function dispose() {
+      window.removeEventListener('book-exercise-reset', resetProgress);
+      window.removeEventListener('storage', resetProgress);
+      disposed = true;
+      clearTimeout(compileTimer);
+      clearTimeout(timer);
+      ++requestNumber;
+      window.removeEventListener('resize', resize);
+    }
+    return {root, input, activate, code: currentCode, snapshot, dispose};
   }
 
   function foldLegacyHints() {
@@ -666,7 +822,179 @@
     schedule();
   }
 
+  function openLinkedExercise() {
+    const match = /^#exercise-(\d+)$/.exec(location.hash);
+    if (!match || !openEditors.has(match[1])) return false;
+    document.getElementById(`exercise-${match[1]}`)?.scrollIntoView({block: 'start'});
+    openEditors.get(match[1])();
+    return true;
+  }
+
+  async function startExerciseProgress(tree) {
+    try {
+      const manifest = await exerciseManifest();
+      const exercises = Object.entries(manifest).filter(([, data]) =>
+        data.exercise && data.exerciseChapter && Number.isInteger(data.exerciseOrder))
+        .sort((a, b) => a[1].exerciseOrder - b[1].exerciseOrder);
+      if (!exercises.length) return;
+      const panel = element('section', 'book-progress');
+      panel.setAttribute('aria-label', '연습문제 진행도');
+      const summary = element('div', 'book-progress-summary');
+      const total = element('span', 'book-progress-total');
+      total.setAttribute('role', 'status');
+      summary.append(element('span', '', '연습문제'), total);
+      const next = button('미완료 문제로 이동', () => {
+        const remaining = exercises.filter(([key]) => !completed.has(key));
+        const selected = remaining.find(([, data]) => data.exerciseChapter === currentChapter) || remaining[0];
+        if (!selected) return;
+        const [key, data] = selected;
+        const target = new URL(`${data.exerciseChapter}/#exercise-${key}`, siteRoot);
+        if (target.pathname === location.pathname) {
+          history.replaceState(null, '', target);
+          openLinkedExercise();
+        } else location.assign(target.href);
+      }, 'book-progress-next');
+      const note = element('small', 'book-progress-storage');
+      note.setAttribute('role', 'status');
+      const reset = button('진행 상황 초기화', () => {
+        if (!window.confirm('이 책에 저장한 풀이와 완료 기록을 모두 지웁니다. 초기화할까요?')) return;
+        try {
+          for (const [key, data] of exercises) {
+            const ids = new Set([exerciseStorageId(data, key), key, ...(data.legacyKeys || [])]);
+            for (const id of ids) {
+              localStorage.removeItem(`lean-algebra.code.${id}`);
+              localStorage.removeItem(`lean-algebra.result.${id}`);
+            }
+          }
+          localStorage.setItem(progressEpochKey, `${Date.now()}-${Math.random()}`);
+        } catch {
+          note.textContent = '초기화하지 못했습니다.';
+          return;
+        }
+        window.dispatchEvent(new Event('book-exercise-reset'));
+        refresh();
+        note.textContent = '초기화됨';
+      }, 'book-progress-reset');
+      reset.title = '이 책에 저장한 풀이와 완료 기록을 모두 지웁니다.';
+      const footer = element('div', 'book-progress-footer');
+      footer.append(next, reset);
+      panel.append(summary, footer, note);
+      tree.after(panel);
+      const chapters = new Map();
+      for (const anchor of tree.querySelectorAll(':scope > li > a')) {
+        const chapter = exercises.find(([, data]) =>
+          new URL(`${data.exerciseChapter}/`, siteRoot).pathname === new URL(anchor.href).pathname)?.[1].exerciseChapter;
+        if (!chapter) continue;
+        const count = element('span', 'book-chapter-progress');
+        anchor.classList.add('book-chapter-link');
+        anchor.append(count);
+        chapters.set(chapter, count);
+      }
+      const currentChapter = [...chapters.keys()].find(chapter =>
+        new URL(`${chapter}/`, siteRoot).pathname === location.pathname);
+      let completed = new Set();
+      let pending = false;
+      function refresh() {
+        pending = false;
+        completed = new Set(exercises.filter(([key, data]) => {
+          const code = exerciseDraft(data, key);
+          if (code == null) return false;
+          const checked = checkedExercise(data, key, code);
+          const parts = (data.code.match(/^theorem\s+/gm) || []).length;
+          return parts > 0 && checked?.total === parts && checked.done === parts;
+        }).map(([key]) => key));
+        const label = `${completed.size} / ${exercises.length}`;
+        if (total.textContent !== label) total.textContent = label;
+        for (const [chapter, count] of chapters) {
+          const items = exercises.filter(([, data]) => data.exerciseChapter === chapter);
+          const done = items.filter(([key]) => completed.has(key)).length;
+          count.textContent = `${done}/${items.length}`;
+          count.setAttribute('aria-label', `연습문제 ${items.length}개 중 ${done}개 완료`);
+        }
+        next.disabled = completed.size === exercises.length;
+        next.textContent = next.disabled ? '모든 문제 완료' : '미완료 문제로 이동';
+      }
+      function schedule() {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(refresh);
+      }
+      window.addEventListener('book-exercise-progress', schedule);
+      window.addEventListener('book-exercise-reset', schedule);
+      window.addEventListener('storage', event => {
+        if (!event.key || /^lean-algebra\.(code|result)\./.test(event.key)) schedule();
+      });
+      window.addEventListener('pageshow', schedule);
+      refresh();
+    } catch { /* Reading remains available without local progress metadata. */ }
+  }
+
   function start() {
+    for (const link of document.querySelectorAll('main .permalink-widget a')) {
+      link.textContent = '#';
+      link.title = '이 절의 링크';
+      link.setAttribute('aria-label', '이 절의 링크');
+    }
+    function prepareSearch() {
+      const search = document.querySelector('#search-wrapper [role="searchbox"]');
+      if (!search) return false;
+      search.setAttribute('placeholder', '본문 검색');
+      search.setAttribute('aria-label', '본문 검색');
+      // Verso searches on keyup. Pasting and mobile composition also need to
+      // refresh results, even when they produce no physical keyboard event.
+      const refreshSearch = () => queueMicrotask(() =>
+        search.dispatchEvent(new KeyboardEvent('keyup', {key: 'Process', bubbles: true})));
+      search.addEventListener('input', event => { if (!event.isComposing) refreshSearch(); });
+      search.addEventListener('compositionend', refreshSearch);
+      return true;
+    }
+    if (!prepareSearch()) {
+      // Verso inserts its search widget asynchronously after the reader starts.
+      const ready = new MutationObserver(() => { if (prepareSearch()) ready.disconnect(); });
+      ready.observe(document.querySelector('header') || document.body, {childList:true, subtree:true});
+    }
+    const tocToggle = document.getElementById('toggle-toc');
+    const tocButton = document.getElementById('toggle-toc-click');
+    if (tocToggle && tocButton) {
+      tocButton.tabIndex = 0;
+      tocButton.setAttribute('role', 'button');
+      tocButton.setAttribute('aria-label', '목차');
+      tocButton.setAttribute('aria-controls', 'toc');
+      const mobile = window.matchMedia('(max-width: 700px)');
+      const update = () => {
+        tocButton.setAttribute('aria-expanded', String(tocToggle.checked));
+        // Hidden mobile navigation must not receive keyboard focus.
+        for (const content of document.querySelectorAll('#toc > :not(input)')) {
+          content.inert = mobile.matches && !tocToggle.checked;
+        }
+      };
+      const close = () => { tocToggle.checked = false; update(); };
+      tocToggle.addEventListener('change', update);
+      mobile.addEventListener('change', update);
+      tocButton.addEventListener('keydown', event => {
+        if (!['Enter', ' '].includes(event.key)) return;
+        event.preventDefault();
+        tocButton.click();
+      });
+      document.addEventListener('click', event => {
+        if (event.target.closest('#toc a, #toc .book-progress-next')) close();
+      });
+      document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape' || !mobile.matches || !tocToggle.checked) return;
+        close();
+        tocButton.focus();
+      });
+      update();
+    }
+    for (const table of document.querySelectorAll('main table')) {
+      if (table.closest('.book-table-scroll')) continue;
+      const scroll = element('div', 'book-table-scroll');
+      scroll.tabIndex = 0;
+      scroll.setAttribute('role', 'region');
+      scroll.setAttribute('aria-label', '표 · 가로로 스크롤할 수 있습니다.');
+      table.before(scroll);
+      scroll.append(table);
+    }
     // Keep the chapter list and current chapter's sections in one navigation tree.
     const splitTocs = document.querySelector('#toc .split-tocs');
     const bookTable = splitTocs?.querySelector('.split-toc.book table');
@@ -708,6 +1036,12 @@
       }
       splitTocs.replaceWith(tree);
       trackReadingPosition(readingSections);
+    } else {
+      // Prepared pages already contain this tree, including when JS is delayed.
+      const sections = [...document.querySelectorAll('.book-toc-tree [aria-current="page"] + ol a')]
+        .map(link => ({link, heading: document.getElementById(decodeURIComponent(new URL(link.href).hash.slice(1)))}))
+        .filter(section => section.heading);
+      trackReadingPosition(sections);
     }
     foldLegacyHints();
     // Plain Verso `lean` blocks have checked tactic states too, but no playground key.
@@ -720,9 +1054,12 @@
     });
     document.querySelectorAll('.book-example').forEach(decorate);
     if (browserLean) {
+      const tree = document.querySelector('.book-toc-tree');
+      if (tree) startExerciseProgress(tree);
+      window.addEventListener('hashchange', openLinkedExercise);
       const reopen = sessionStorage.getItem('lean-algebra.reopen');
       sessionStorage.removeItem('lean-algebra.reopen');
-      if (reopen) openEditors.get(reopen)?.();
+      if (!openLinkedExercise() && reopen) openEditors.get(reopen)?.();
     }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);

@@ -254,6 +254,44 @@ theorem double_not_surjective : ¬ Surjective double := by
 함수값은 똑같이 $`2n`이어도 공역을 자연수 전체로 정하면 전사가 아니고,
 짝수의 집합으로 정하면 전단사이다.
 
+*문제 2* (짝수의 합)
+
+(1) 짝수 두 개의 합은 짝수임을 정의로 증명하라.
+
+(2) 첫 결과와 `double_is_even`을 사용하여 $`a`가 짝수이면
+$`a+\operatorname{double}(7)`도 짝수임을 보이라.
+분배법칙은 `Nat.mul_add`로 사용할 수 있다.
+
+```savedLean -keep
+theorem exercise_even_add (a b : Nat)
+    (ha : IsEvenNat a)
+    (hb : IsEvenNat b) :
+    IsEvenNat (a + b) := by
+  sorry
+
+theorem exercise_even_add_double (a : Nat)
+    (ha : IsEvenNat a) :
+    IsEvenNat (a + double 7) := by
+  sorry
+```
+
+*문제 3* (짝수의 배수)
+
+$`a`가 짝수이면 모든 자연수 $`b`에 대하여 $`ab`도 짝수임을 증명하라.
+곱셈의 결합법칙 `Nat.mul_assoc`을 사용할 수 있다.
+이 결과로 $`\operatorname{double}(3)\cdot b`가 짝수임을 보이라.
+
+```savedLean -keep
+theorem exercise_even_mul (a b : Nat)
+    (ha : IsEvenNat a) :
+    IsEvenNat (a * b) := by
+  sorry
+
+theorem exercise_double_mul_even (b : Nat) :
+    IsEvenNat (double 3 * b) := by
+  sorry
+```
+
 # 정수와 나누어떨어짐
 %%%
 tag := "preliminaries-divisibility"
@@ -314,6 +352,13 @@ theorem divides_refl (a : Int) : a ∣ a := by
 
 {anchor "preliminaries-simp"}[]{ref "proofs-simp"}[앞에서 배운 `simp`]는 정수에서도
 `Int.mul_one`, `Int.add_zero`, `Int.zero_mul` 같은 기본 법칙을 사용하여 식을 정리한다.
+
+*문제 4* 모든 정수 $`a`에 대하여 $`a\mid0`임을 증명하라.
+
+```savedLean -keep
+theorem exercise_divides_zero (a : Int) : a ∣ 0 := by
+  sorry
+```
 
 ## 배수의 합과 등식의 계산
 %%%
@@ -397,6 +442,22 @@ example (a b : Int)
 수를 직접 택하는 부분은 $`6=2\cdot3`과 $`10=2\cdot5`를 확인하는 두 줄이다.
 $`a`, $`b`가 어떤 수인지는 몰라도 `divides_trans`와 `divides_add`에
 주어진 나누어떨어짐을 사용하면 합에 관한 결론을 얻는다.
+
+*문제 5* (서로를 나누는 정수)
+
+$`3\mid-3`과 $`-3\mid3`을 각각 증명하라.
+이어서 $`3\ne-3`을 확인하여 정수에서는 $`a\mid b`이고 $`b\mid a`여도
+$`a=b`를 결론지을 수 없음을 보이라.
+
+```savedLean -keep
+theorem exercise_divisibility_sign :
+    (3 ∣ -3) ∧ ((-3) ∣ 3) := by
+  sorry
+
+theorem exercise_three_ne_negative_three :
+    (3 : Int) ≠ -3 := by
+  sorry
+```
 
 # 나머지와 합동
 %%%
@@ -519,15 +580,7 @@ theorem congruent_twenty_three_neg_five :
 두 번째 목표는 `2 ≡ -5 [ZMOD 7]`이므로 방금 얻은 합동에 대칭성을 사용한다.
 따라서 두 정수의 차이를 새로 계산하지 않고 앞의 합동들을 이어서 결론을 얻는다.
 
-# 연습문제
-%%%
-tag := "preliminaries-exercises"
-file := "exercises"
-%%%
-
-각 문제의 `sorry`를 증명으로 바꾸어 완성하라.
-
-{anchor "preliminaries-congruence-zero-and-one"}[]*문제 2* (법이 0이나 1인 합동)
+{anchor "preliminaries-congruence-zero-and-one"}[]*문제 6* (법이 0이나 1인 합동)
 합동의 정의는 법이 $`0`이나 $`1`인 경우도 포함한다.
 (1) 법이 $`0`이면 합동과 등식이 같음을 보이라.
 (2) 법이 $`1`이면 모든 정수가 서로 합동임을 보이라.
@@ -542,14 +595,7 @@ theorem exercise_congruent_one (a b : Int) :
   sorry
 ```
 
-*문제 3* 모든 정수 $`a`에 대하여 $`a\mid0`임을 증명하라.
-
-```savedLean -keep
-theorem exercise_divides_zero (a : Int) : a ∣ 0 := by
-  sorry
-```
-
-*문제 4* $`a\equiv b\pmod n`이면 $`a+t\equiv b+t\pmod n`임을 증명하라.
+*문제 7* $`a\equiv b\pmod n`이면 $`a+t\equiv b+t\pmod n`임을 증명하라.
 
 ```savedLean -keep
 theorem exercise_congruent_add_right
@@ -559,7 +605,15 @@ theorem exercise_congruent_add_right
   sorry
 ```
 
-*문제 5* $`37\equiv2\pmod7`을 증명한 뒤,
+# 산술 연습문제
+%%%
+tag := "preliminaries-exercises"
+file := "exercises"
+%%%
+
+각 문제의 `sorry`를 증명으로 바꾸어 완성하라.
+
+*문제 8* $`37\equiv2\pmod7`을 증명한 뒤,
 이 결과와 본문의 `preliminaries_congruent_twenty_three_two`를 사용하여
 $`37\equiv23\pmod7`을 증명하라.
 
@@ -570,60 +624,6 @@ theorem exercise_congruent_thirty_seven_two :
 
 theorem exercise_congruent_thirty_seven_twenty_three :
     37 ≡ 23 [ZMOD 7] := by
-  sorry
-```
-
-*문제 6* (짝수의 합)
-
-(1) 짝수 두 개의 합은 짝수임을 정의로 증명하라.
-
-(2) 첫 결과와 `double_is_even`을 사용하여 $`a`가 짝수이면
-$`a+\operatorname{double}(7)`도 짝수임을 보이라.
-분배법칙은 `Nat.mul_add`로 사용할 수 있다.
-
-```savedLean -keep
-theorem exercise_even_add (a b : Nat)
-    (ha : IsEvenNat a)
-    (hb : IsEvenNat b) :
-    IsEvenNat (a + b) := by
-  sorry
-
-theorem exercise_even_add_double (a : Nat)
-    (ha : IsEvenNat a) :
-    IsEvenNat (a + double 7) := by
-  sorry
-```
-
-*문제 7* (짝수의 배수)
-
-$`a`가 짝수이면 모든 자연수 $`b`에 대하여 $`ab`도 짝수임을 증명하라.
-곱셈의 결합법칙 `Nat.mul_assoc`을 사용할 수 있다.
-이 결과로 $`\operatorname{double}(3)\cdot b`가 짝수임을 보이라.
-
-```savedLean -keep
-theorem exercise_even_mul (a b : Nat)
-    (ha : IsEvenNat a) :
-    IsEvenNat (a * b) := by
-  sorry
-
-theorem exercise_double_mul_even (b : Nat) :
-    IsEvenNat (double 3 * b) := by
-  sorry
-```
-
-*문제 8* (서로를 나누는 정수)
-
-$`3\mid-3`과 $`-3\mid3`을 각각 증명하라.
-이어서 $`3\ne-3`을 확인하여 정수에서는 $`a\mid b`이고 $`b\mid a`여도
-$`a=b`를 결론지을 수 없음을 보이라.
-
-```savedLean -keep
-theorem exercise_divisibility_sign :
-    (3 ∣ -3) ∧ ((-3) ∣ 3) := by
-  sorry
-
-theorem exercise_three_ne_negative_three :
-    (3 : Int) ≠ -3 := by
   sorry
 ```
 
@@ -814,6 +814,15 @@ example :
 `h.symm h01`은 대칭성을 사용하여 $`0\leq1`에서 $`1\leq0`을 얻는다.
 `decide`로 확인한 그 부정 `hNot10`에 `h10`을 적용하면 모순이다.
 
+*문제 10* 함수 $`f:A\to B`에 대하여 $`f(x)=f(y)`로 정한 관계가 동치관계임을 증명하라.
+
+```savedLean -keep
+theorem exercise_equal_values_equivalence {A B : Type}
+    (f : A → B) :
+    IsEquivalence (fun x y : A => f x = f y) := by
+  sorry
+```
+
 # 동치류와 대표원
 %%%
 tag := "preliminaries-equivalence-classes"
@@ -887,6 +896,31 @@ example :
 남은 목표는 `23 ≡ -5 [ZMOD 7]`이다.
 이는 앞의 보기 `congruent_twenty_three_neg_five`에서 증명한 합동이므로
 그 결과를 사용하면 두 동치류의 등식을 얻는다.
+
+*문제 11* 모든 원소는 자신의 동치류에 속함을 증명하라.
+
+```savedLean -keep
+theorem exercise_mem_own_equivalenceClass {A : Type}
+    (R : Relation A)
+    (hR : IsEquivalence R)
+    (a : A) :
+    a ∈ equivalenceClass R a := by
+  sorry
+```
+
+*문제 12* 동치관계 $`R`에 대하여 $`[a]_R=[b]_R`이면 $`R(a,b)`임을 증명하라.
+
+```savedLean -keep
+theorem exercise_relation_of_classes_equal {A : Type}
+    (R : Relation A)
+    (hR : IsEquivalence R)
+    (a b : A)
+    (h : equivalenceClass R a = equivalenceClass R b) :
+    R a b := by
+  sorry
+```
+
+*힌트* 반사성으로 $`a\in[a]_R`를 얻은 뒤 두 동치류가 같다는 가정을 사용하라.
 
 # 몫집합과 몫타입
 %%%
@@ -1096,6 +1130,19 @@ example (a b : Int)
 ```
 
 두 명령 모두 방금 증명한 `parityClass_eq_iff`를 사용한다.
+
+*문제 13* $`3`과 $`1`이 같은 홀수 동치류를 나타냄을 증명하라.
+이 결과와 `parityClass_zero_ne_one`을 사용하여 $`3`의 동치류와 $`0`의 동치류가 다름을 보이라.
+
+```savedLean -keep
+theorem exercise_parityClass_three_one :
+    parityClass 3 = parityClass 1 := by
+  sorry
+
+theorem exercise_parityClass_three_ne_zero :
+    parityClass 3 ≠ parityClass 0 := by
+  sorry
+```
 
 ## 대표원의 선택
 %%%
@@ -1383,53 +1430,6 @@ file := "exercises"
 %%%
 
 각 문제의 `sorry`를 증명으로 바꾸어 완성하라.
-
-*문제 10* 모든 원소는 자신의 동치류에 속함을 증명하라.
-
-```savedLean -keep
-theorem exercise_mem_own_equivalenceClass {A : Type}
-    (R : Relation A)
-    (hR : IsEquivalence R)
-    (a : A) :
-    a ∈ equivalenceClass R a := by
-  sorry
-```
-
-*문제 11* 함수 $`f:A\to B`에 대하여 $`f(x)=f(y)`로 정한 관계가 동치관계임을 증명하라.
-
-```savedLean -keep
-theorem exercise_equal_values_equivalence {A B : Type}
-    (f : A → B) :
-    IsEquivalence (fun x y : A => f x = f y) := by
-  sorry
-```
-
-*문제 12* 동치관계 $`R`에 대하여 $`[a]_R=[b]_R`이면 $`R(a,b)`임을 증명하라.
-
-```savedLean -keep
-theorem exercise_relation_of_classes_equal {A : Type}
-    (R : Relation A)
-    (hR : IsEquivalence R)
-    (a b : A)
-    (h : equivalenceClass R a = equivalenceClass R b) :
-    R a b := by
-  sorry
-```
-
-*힌트* 반사성으로 $`a\in[a]_R`를 얻은 뒤 두 동치류가 같다는 가정을 사용하라.
-
-*문제 13* $`3`과 $`1`이 같은 홀수 동치류를 나타냄을 증명하라.
-이 결과와 `parityClass_zero_ne_one`을 사용하여 $`3`의 동치류와 $`0`의 동치류가 다름을 보이라.
-
-```savedLean -keep
-theorem exercise_parityClass_three_one :
-    parityClass 3 = parityClass 1 := by
-  sorry
-
-theorem exercise_parityClass_three_ne_zero :
-    parityClass 3 ≠ parityClass 0 := by
-  sorry
-```
 
 *문제 14* (첫 좌표가 같은 점들)
 

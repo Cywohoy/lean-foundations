@@ -32,6 +32,7 @@ jobs:
           lake exe textbook
           python tests/check_book.py
           python tests/check_lean.py
+          python tests/LearningPolicy.Tests.py
       - uses: actions/cache@v4
         with:
           path: tmp/wasm/downloads

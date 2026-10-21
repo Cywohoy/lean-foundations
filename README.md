@@ -29,7 +29,12 @@ python tests/check_lean.py
 
 ## 브라우저 풀이
 
-풀이 편집기는 WASM Lean을 사용한다. 본문을 수정하면 문제 이전의 문맥도 달라지므로
+풀이 편집기는 WASM Lean을 사용하며, 각 문제까지 본문에서 소개한 전술만 허용한다.
+도입 위치는 `web/learning-tactics.json`, 구문 검사는 `web/lean/LearningGuard.lean`에서 관리한다.
+작성한 풀이는 본문과 브라우저 저장소에 남으며, 목차에서 장별·전체 진행도를 확인하고 미완료 문제로 이동할 수 있다.
+진행도는 현재 문제와 일치하는 검사 결과만 사용하고 문제 묶음 단위로 집계한다.
+
+본문을 수정하면 문제 이전의 문맥도 달라지므로
 기존 실행기만 복사하지 말고 새 문맥을 컴파일해야 한다.
 `scripts/build_browser_book.py`에 일치하는 wasm32용 네이티브 Lean과 Ample 라이브러리를 지정하고,
 `scripts/bundle_book_contexts.py`로 고정된 실행기에 검증된 문맥을 추가한다.

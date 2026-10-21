@@ -201,6 +201,8 @@ h : 0 < n
 먼저 $`4\cdot4=16`을 증명하고 그 결과로 $`4`가 방정식 $`n^2=16`의 해임을 보이라.
 마지막으로 수의 값이 주어지지 않은 경우에도 해라는 가정에서 등식을 얻으라.
 아래의 `sorry`는 미완성 증명의 자리이며 실제 증명으로 바꾸어야 한다.
+웹의 풀이 편집기에서는 해당 문제까지 소개한 전술만 사용할 수 있다.
+아직 배우지 않은 전술을 쓰면 그 위치에 오류가 표시된다.
 
 ```savedLean -keep
 theorem exercise_four_square : 4 * 4 = 16 := by
@@ -444,6 +446,24 @@ theorem hypotenuse_eq_five
 end Pythagoras
 ```
 
+*문제 3* (부등식과 연속된 덧셈)
+
+(1) $`a<b`이면 임의의 자연수 $`c`에 대하여 $`a+c<b+c`임을 증명하라.
+
+(2) 첫 결과를 두 번 사용하여 $`(a+c)+d<(b+c)+d`를 보이라.
+
+```savedLean -keep
+theorem exercise_shift_lt (a b c : Nat)
+    (hab : a < b) :
+    a + c < b + c := by
+  sorry
+
+theorem exercise_two_shifts_lt (a b c d : Nat)
+    (hab : a < b) :
+    (a + c) + d < (b + c) + d := by
+  sorry
+```
+
 # 함의의 증명과 사용
 %%%
 tag := "proofs-proving-implications"
@@ -618,7 +638,7 @@ example
 앞에서 배운 증명항의 적용을 사용하면 이 중간 증명을
 `have hQ : Q := hPQ hP`로 짧게 적을 수도 있다.
 
-*문제 3* $`P`, $`P \Rightarrow Q`, $`Q \Rightarrow R`을 차례로 가정하여 $`R`을 얻으라.
+*문제 4* $`P`, $`P \Rightarrow Q`, $`Q \Rightarrow R`을 차례로 가정하여 $`R`을 얻으라.
 
 ```savedLean -keep
 theorem exercise_implication_chain
@@ -740,6 +760,29 @@ example (A : Type) : ∀ x : A, x = x :=
 `fun x => ...`는 원소 `x`를 받고, `by rfl`은 그 원소에 관한 `x = x`의 증명을 만든다.
 어느 원소를 넣어도 이 논증을 사용할 수 있으므로 전칭명제의 증명이 된다.
 
+*문제 5* 두 원소에 관한 술어 `R : A → A → Prop`를 생각하자.
+모든 원소 `x`, `y`에서 `R x y`가 성립한다는 사실을 주어진 원소 `a`, `b`에서 사용하라.
+이 문제에서는 `apply`를 사용하는 증명과 `exact h a b`처럼 인수를 직접 넣는 증명을 각각 적으라.
+
+```savedLean -keep
+theorem exercise_relation_specialization
+    (A : Type) (R : A → A → Prop) (a b : A) :
+    (∀ x : A, ∀ y : A, R x y) → R a b := by
+  sorry
+```
+
+:::solution
+전칭명제의 증명에 첫 원소 `a`를 넣으면 `∀ y, R a y`의 증명을 얻는다.
+여기에 두 번째 원소 `b`를 넣으면 목표의 증명이 된다.
+
+```tryLean -keep
+example (A : Type) (R : A → A → Prop) (a b : A) :
+    (∀ x : A, ∀ y : A, R x y) → R a b := by
+  intro h
+  exact h a b
+```
+:::
+
 ## 전칭명제와 함의의 결합
 %%%
 tag := "proofs-successive-application"
@@ -828,33 +871,10 @@ tag := "proofs-exercises"
 file := "exercises"
 %%%
 
-앞의 확인 문제에 이어 전칭명제와 여러 정리의 사용을 연습하자.
+전칭명제와 함의를 사용하여 여러 단계의 추론을 연결하라.
 다음 코드의 `sorry`를 증명으로 바꾸어 완성하라.
 
-*문제 4* 두 원소에 관한 술어 `R : A → A → Prop`를 생각하자.
-모든 원소 `x`, `y`에서 `R x y`가 성립한다는 사실을 주어진 원소 `a`, `b`에서 사용하라.
-이 문제에서는 `apply`를 사용하는 증명과 `exact h a b`처럼 인수를 직접 넣는 증명을 각각 적으라.
-
-```savedLean -keep
-theorem exercise_relation_specialization
-    (A : Type) (R : A → A → Prop) (a b : A) :
-    (∀ x : A, ∀ y : A, R x y) → R a b := by
-  sorry
-```
-
-:::solution
-전칭명제의 증명에 첫 원소 `a`를 넣으면 `∀ y, R a y`의 증명을 얻는다.
-여기에 두 번째 원소 `b`를 넣으면 목표의 증명이 된다.
-
-```tryLean -keep
-example (A : Type) (R : A → A → Prop) (a b : A) :
-    (∀ x : A, ∀ y : A, R x y) → R a b := by
-  intro h
-  exact h a b
-```
-:::
-
-*문제 5* 모든 원소 $`x`에서 $`P(x)\Rightarrow Q(x)`가 성립한다고 하자.
+*문제 6* 모든 원소 $`x`에서 $`P(x)\Rightarrow Q(x)`가 성립한다고 하자.
 또한 모든 원소에서 $`P(x)`가 성립하면 모든 원소에서 $`Q(x)`도 성립함을 보이라.
 
 ```savedLean -keep
@@ -880,7 +900,7 @@ example (A : Type) (P Q : A → Prop) :
 ```
 :::
 
-*문제 6* (대소 관계를 보존하는 함수)
+*문제 7* (대소 관계를 보존하는 함수)
 
 자연수 함수 $`f`, $`g`가 각각 $`a<b`이면 $`f(a)<f(b)`, $`g(a)<g(b)`를 만족한다고 하자.
 
@@ -903,7 +923,7 @@ theorem exercise_increasing_at_three_five
   sorry
 ```
 
-*문제 7* (함수값의 범위)
+*문제 8* (함수값의 범위)
 
 모든 자연수 $`n`에 대하여 $`f(n)<g(n)`이고 $`g(n)<n+10`이라고 하자.
 $`f(3)<13`임을 증명하라.
@@ -915,24 +935,6 @@ theorem exercise_function_bound (f g : Nat → Nat)
     (hfg : ∀ n, f n < g n)
     (hg : ∀ n, g n < n + 10) :
     f 3 < 13 := by
-  sorry
-```
-
-*문제 8* (부등식과 연속된 덧셈)
-
-(1) $`a<b`이면 임의의 자연수 $`c`에 대하여 $`a+c<b+c`임을 증명하라.
-
-(2) 첫 결과를 두 번 사용하여 $`(a+c)+d<(b+c)+d`를 보이라.
-
-```savedLean -keep
-theorem exercise_shift_lt (a b c : Nat)
-    (hab : a < b) :
-    a + c < b + c := by
-  sorry
-
-theorem exercise_two_shifts_lt (a b c d : Nat)
-    (hab : a < b) :
-    (a + c) + d < (b + c) + d := by
   sorry
 ```
 

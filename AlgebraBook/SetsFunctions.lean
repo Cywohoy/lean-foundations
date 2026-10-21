@@ -786,6 +786,36 @@ example : twoThree ∩ positives = twoThree := by
 이로써 포함 관계를 얻었으므로 둘째 증명에서는 `inter_eq_left_of_subset`에
 두 집합과 포함 관계의 증명을 넣어 교집합을 구한다.
 
+*문제 3* (포함 관계와 합집합)
+
+(1) $`S\subseteq T`이면 $`S\cup T=T`임을 증명하라.
+
+(2) 첫 결과와 본문의 `twoThree_subset_positives`를 사용하여
+$`\{2,3\}\cup\mathbb{N}_{>0}=\mathbb{N}_{>0}`임을 보이라.
+
+```savedLean -keep
+theorem exercise_union_eq_right {A : Type} (S T : Set A)
+    (hST : S ⊆ T) :
+    S ∪ T = T := by
+  sorry
+
+theorem exercise_twoThree_union_positives :
+    twoThree ∪ positives = positives := by
+  sorry
+```
+
+*문제 4* (흡수법칙)
+
+$`S\cap(S\cup T)=S`임을 증명하라.
+원소별로 두 방향을 보인 뒤, 본문의 `inter_eq_left_of_subset`을 사용한 증명도 작성하라.
+
+```savedLean -keep
+theorem exercise_inter_union_absorb {A : Type}
+    (S T : Set A) :
+    S ∩ (S ∪ T) = S := by
+  sorry
+```
+
 ## 교집합의 분배법칙
 %%%
 tag := "sets-intersection-distributes-over-union"
@@ -965,6 +995,17 @@ Lean에서도 같은 순서로 가정을 도입하고 모순을 얻으며, 각 �
 2. `intro hxS`: 목표는 `x ∈ S → False`이므로 `x ∈ S`를 가정하며 이제 보일 것은 `False`이다.
 3. `have hxT : x ∈ T := by`: 포함 관계의 증명 `hST`를 사용하여 `x ∈ T`를 보이고, 그 증명에 `hxT`라는 이름을 붙인다.
 4. `exact hxTc hxT`: `hxTc`는 `x ∈ T → False`의 증명이므로 여기에 `hxT`를 적용하여 `False`를 얻는다.
+
+*문제 5* (드모르간 법칙)
+
+$`(S\cup T)^{\mathsf c}=S^{\mathsf c}\cap T^{\mathsf c}`임을 증명하라.
+원소 조건을 이용하여 합집합에 속하지 않는다는 말이 두 집합 각각에 속하지 않는다는 말과 동치임을 보이라.
+
+```savedLean -keep
+theorem exercise_compl_union {A : Type} (S T : Set A) :
+    (S ∪ T)ᶜ = Sᶜ ∩ Tᶜ := by
+  sorry
+```
 
 ## 이중 여집합
 %%%
@@ -1189,6 +1230,15 @@ theorem diff_eq_inter_compl {A : Type} (S T : Set A) :
 `expand`로 차집합과 교집합, 여집합의 정의를 차례로 펼치면 양쪽이 모두 `x ∈ S ∧ x ∉ T`이므로
 동치의 반사성으로 증명이 자동으로 끝난다.
 
+*문제 6* $`S \setminus S`가 공집합의 부분집합임을 증명하라.
+
+```savedLean -keep
+theorem exercise_diff_self_subset_empty
+    {A : Type} (S : Set A) :
+    S \ S ⊆ ∅ := by
+  sorry
+```
+
 ## 원소의 타입과 러셀의 역설
 %%%
 tag := "advanced-set-types"
@@ -1222,124 +1272,6 @@ $$`R = \{S \in U : S \notin S\}.`
 집합을 원소로 갖는 집합을 만들 때는 원소의 타입도 집합의 타입으로 정한다.
 예를 들어 `U : Set (Set Nat)`라고 하면 `U`의 원소는 `Set Nat` 타입의 집합, 곧 자연수의 집합이다.
 이렇게 원소와 집합의 타입을 구별하므로 러셀의 역설에 등장한 `S ∈ S`를 그대로 만들 수 없다.
-
-# 연습문제
-%%%
-tag := "sets-exercises"
-file := "exercises"
-%%%
-
-앞의 확인 문제에 이어 여러 집합 연산을 함께 사용하는 문제를 풀어 보자.
-각 문제의 `sorry`를 증명으로 바꾸어 완성하라. 앞에서 증명한 정리는 이름으로 사용할 수 있다.
-
-*문제 3* $`S \setminus S`가 공집합의 부분집합임을 증명하라.
-
-```savedLean -keep
-theorem exercise_diff_self_subset_empty
-    {A : Type} (S : Set A) :
-    S \ S ⊆ ∅ := by
-  sorry
-```
-
-*문제 4* $`T \subseteq U`이면 $`S \setminus U \subseteq S \setminus T`임을 보이라.
-
-```savedLean -keep
-theorem exercise_diff_antitone_right
-    {A : Type} (S T U : Set A)
-    (hTU : T ⊆ U) :
-    S \ U ⊆ S \ T := by
-  sorry
-```
-
-*문제 5* (포함 관계와 합집합)
-
-(1) $`S\subseteq T`이면 $`S\cup T=T`임을 증명하라.
-
-(2) 첫 결과와 본문의 `twoThree_subset_positives`를 사용하여
-$`\{2,3\}\cup\mathbb{N}_{>0}=\mathbb{N}_{>0}`임을 보이라.
-
-```savedLean -keep
-theorem exercise_union_eq_right {A : Type} (S T : Set A)
-    (hST : S ⊆ T) :
-    S ∪ T = T := by
-  sorry
-
-theorem exercise_twoThree_union_positives :
-    twoThree ∪ positives = positives := by
-  sorry
-```
-
-*문제 6* (흡수법칙)
-
-$`S\cap(S\cup T)=S`임을 증명하라.
-원소별로 두 방향을 보인 뒤, 본문의 `inter_eq_left_of_subset`을 사용한 증명도 작성하라.
-
-```savedLean -keep
-theorem exercise_inter_union_absorb {A : Type}
-    (S T : Set A) :
-    S ∩ (S ∪ T) = S := by
-  sorry
-```
-
-*문제 7* (구체적인 교집합과 차집합)
-
-$`T=\{3,4\}`라 하자. 앞에서 정의한 `twoThree`를 사용하여
-$`\{2,3\}\cap T=\{3\}`과 $`\{2,3\}\setminus T=\{2\}`를 각각 증명하라.
-두 증명에서 $`3`을 다루는 방식이 어떻게 다른지 비교하라.
-
-```savedLean -keep
-def practiceThreeFour : Set Nat :=
-  fun n => n = 3 ∨ n = 4
-theorem exercise_twoThree_inter :
-    twoThree ∩ practiceThreeFour = (fun n => n = 3) := by
-  sorry
-
-theorem exercise_twoThree_diff :
-    twoThree \ practiceThreeFour = (fun n => n = 2) := by
-  sorry
-```
-
-*문제 8* (포함 관계의 반례)
-
-(1) $`\mathbb{N}_{>0}\not\subseteq\{2,3\}`임을 증명하라.
-
-(2) 첫 결과를 사용하여 두 집합이 서로 다름을 보이라.
-
-```savedLean -keep
-theorem exercise_positives_not_subset_twoThree :
-    ¬ positives ⊆ twoThree := by
-  sorry
-
-theorem exercise_positives_ne_twoThree :
-    positives ≠ twoThree := by
-  sorry
-```
-
-*힌트* (1)에서는 양수이면서 $`2`도 $`3`도 아닌 자연수를 하나 택하라.
-
-*문제 9* (드모르간 법칙)
-
-$`(S\cup T)^{\mathsf c}=S^{\mathsf c}\cap T^{\mathsf c}`임을 증명하라.
-원소 조건을 이용하여 합집합에 속하지 않는다는 말이 두 집합 각각에 속하지 않는다는 말과 동치임을 보이라.
-
-```savedLean -keep
-theorem exercise_compl_union {A : Type} (S T : Set A) :
-    (S ∪ T)ᶜ = Sᶜ ∩ Tᶜ := by
-  sorry
-```
-
-*문제 10* (공집합인 차집합)
-
-$`S\setminus T=\varnothing`일 필요충분조건이 $`S\subseteq T`임을 증명하라.
-
-```savedLean -keep
-theorem exercise_diff_empty_iff {A : Type}
-    (S T : Set A) :
-    S \ T = ∅ ↔ S ⊆ T := by
-  sorry
-```
-
-*힌트* $`S\setminus T=\varnothing`에서 $`S\subseteq T`를 보일 때는 원소 $`x\in S`를 택하라. $`x\notin T`라고 가정하면 $`x`가 차집합에 속하여 모순이 생긴다.
 
 ```savedLean -show
 end Ample
@@ -1549,6 +1481,17 @@ example :
 앞의 `double`에서도 $`5`가 상에 속한다고 가정하면 $`2n=5`인 자연수 $`n`을 얻게 된다.
 이 등식에서 모순을 얻는 방법은 {ref "preliminaries-double-image"}[짝수와 함수의 상]에서 다룬다.
 
+*문제 7* (합집합의 상)
+
+$`f(S\cup T)=f(S)\cup f(T)`임을 증명하라.
+
+```savedLean -keep
+theorem exercise_image_union {A B : Type}
+    (f : A → B) (S T : Set A) :
+    image f (S ∪ T) = image f S ∪ image f T := by
+  sorry
+```
+
 ## 역상
 %%%
 tag := "functions-preimage"
@@ -1621,13 +1564,30 @@ $`f(1)`이 $`f(S)`에 속함을 보이려면 $`S` 안에서 같은 함수값을 
 그 원소로 $`0`을 택하면 $`0\in S`이고 $`f(0)=f(1)`이다.
 원래 집합 밖의 원소도 집합 안의 원소와 같은 함수값을 가지면 이 역상에 들어간다.
 
-*문제 11* $`S \subseteq T`이면 $`f^{-1}(S) \subseteq f^{-1}(T)`임을 증명하라.
+*문제 8* $`S \subseteq T`이면 $`f^{-1}(S) \subseteq f^{-1}(T)`임을 증명하라.
 
 ```savedLean -keep
 theorem exercise_preimage_subset {A B : Type}
     (f : A → B) (S T : Set B)
     (hST : S ⊆ T) :
     preimage f S ⊆ preimage f T := by
+  sorry
+```
+
+*문제 9* (역상과 집합 연산)
+
+역상은 교집합과 여집합을 보존한다. 다음 두 등식을 증명하라.
+함수의 단사성이나 전사성을 가정하지 않고 증명하라.
+
+```savedLean -keep
+theorem exercise_preimage_inter {A B : Type} (f : A → B)
+    (S T : Set B) :
+    preimage f (S ∩ T) = preimage f S ∩ preimage f T := by
+  sorry
+
+theorem exercise_preimage_compl {A B : Type}
+    (f : A → B) (T : Set B) :
+    preimage f Tᶜ = (preimage f T)ᶜ := by
   sorry
 ```
 
@@ -1837,7 +1797,7 @@ theorem identity_bijective (A : Type) :
   · exact identity_surjective A
 ```
 
-*문제 12* (두 원소 집합의 상과 역상)
+*문제 10* (두 원소 집합의 상과 역상)
 
 (1) $`\operatorname{double}(\{2,3\})=\{4,6\}`임을 증명하라.
 
@@ -2267,7 +2227,7 @@ theorem compose_of_pointwise_equal {A B C : Type}
   exact functions_compose_of_pointwise_equal f g h hgh x
 ```
 
-*문제 13* $`f(n) = n + 1`, $`g(n) = 2n`인 두 자연수 함수에 대하여
+*문제 11* $`f(n) = n + 1`, $`g(n) = 2n`인 두 자연수 함수에 대하여
 $`(g \circ f)(3)`과 $`(f \circ g)(3)`을 계산하고 두 합성함수가 서로 다름을 증명하라.
 세 번째 증명에서는 앞의 두 계산 결과를 사용하라.
 
@@ -2424,6 +2384,26 @@ theorem bijective_compose {A B C : Type}
   · exact surjective_compose f g hf.surj hg.surj
 ```
 
+*문제 12* 합성함수 $`g \circ f`가 단사이면 $`f`도 단사임을 증명하라.
+
+```savedLean -keep
+theorem exercise_injective_of_compose {A B C : Type}
+    (f : A → B) (g : B → C)
+    (h : Injective (g ∘ f)) :
+    Injective f := by
+  sorry
+```
+
+*문제 13* 합성함수 $`g \circ f`가 전사이면 $`g`도 전사임을 증명하라.
+
+```savedLean -keep
+theorem exercise_surjective_of_compose {A B C : Type}
+    (f : A → B) (g : B → C)
+    (h : Surjective (g ∘ f)) :
+    Surjective g := by
+  sorry
+```
+
 # 집합의 곱과 함수
 %%%
 tag := "preliminaries-products"
@@ -2566,6 +2546,39 @@ theorem exercise_setProduct_swap {A B : Type}
     (S : Set A) (T : Set B) (a : A) (b : B)
     (h : (a, b) ∈ setProduct S T) :
     (b, a) ∈ setProduct T S := by
+  sorry
+```
+
+*문제 15* (좌표 함수)
+
+첫 좌표를 꺼내는 함수 $`p:\mathbb{N}\times\mathbb{N}\to\mathbb{N}`에 대하여
+전사성을 증명하고 단사성이 성립하지 않음을 보이라.
+단사성을 반박할 때에는 함수값이 같아지는 서로 다른 두 순서쌍을 찾으라.
+
+```savedLean -keep
+def practiceFirst : Nat × Nat → Nat := fun p => p.1
+theorem exercise_first_surjective :
+    Surjective practiceFirst := by
+  sorry
+
+theorem exercise_first_not_injective :
+    ¬ Injective practiceFirst := by
+  sorry
+```
+
+*문제 16* (대각선 함수)
+
+$`d(n)=(n,n)`으로 정한 함수 $`d:\mathbb{N}\to\mathbb{N}\times\mathbb{N}`의 단사성을 증명하라.
+또한 이 함수는 전사가 아님을 증명하라.
+
+```savedLean -keep
+def practiceDiagonal : Nat → Nat × Nat := fun n => (n, n)
+theorem exercise_diagonal_injective :
+    Injective practiceDiagonal := by
+  sorry
+
+theorem exercise_diagonal_not_surjective :
+    ¬ Surjective practiceDiagonal := by
   sorry
 ```
 
@@ -2926,30 +2939,69 @@ tag := "functions-exercises"
 file := "exercises"
 %%%
 
-앞에서 익힌 상과 역상, 합성함수, 역함수의 성질을 함께 사용하라.
+{anchor "sets-exercises"}[]집합 연산과 함수의 성질을 연결하여 다음 문제를 풀어 보자.
 각 문제의 `sorry`를 증명으로 바꾸어 완성하라.
 
-*문제 15* 합성함수 $`g \circ f`가 단사이면 $`f`도 단사임을 증명하라.
+*문제 17* $`T \subseteq U`이면 $`S \setminus U \subseteq S \setminus T`임을 보이라.
 
 ```savedLean -keep
-theorem exercise_injective_of_compose {A B C : Type}
-    (f : A → B) (g : B → C)
-    (h : Injective (g ∘ f)) :
-    Injective f := by
+theorem exercise_diff_antitone_right
+    {A : Type} (S T U : Set A)
+    (hTU : T ⊆ U) :
+    S \ U ⊆ S \ T := by
   sorry
 ```
 
-*문제 16* 합성함수 $`g \circ f`가 전사이면 $`g`도 전사임을 증명하라.
+*문제 18* (구체적인 교집합과 차집합)
+
+$`T=\{3,4\}`라 하자. 앞에서 정의한 `twoThree`를 사용하여
+$`\{2,3\}\cap T=\{3\}`과 $`\{2,3\}\setminus T=\{2\}`를 각각 증명하라.
+두 증명에서 $`3`을 다루는 방식이 어떻게 다른지 비교하라.
 
 ```savedLean -keep
-theorem exercise_surjective_of_compose {A B C : Type}
-    (f : A → B) (g : B → C)
-    (h : Surjective (g ∘ f)) :
-    Surjective g := by
+def practiceThreeFour : Set Nat :=
+  fun n => n = 3 ∨ n = 4
+theorem exercise_twoThree_inter :
+    twoThree ∩ practiceThreeFour = (fun n => n = 3) := by
+  sorry
+
+theorem exercise_twoThree_diff :
+    twoThree \ practiceThreeFour = (fun n => n = 2) := by
   sorry
 ```
 
-*문제 17* 전단사함수의 역함수에 다시 역함수를 취하면 원래 함수를 얻음을 증명하라.
+*문제 19* (포함 관계의 반례)
+
+(1) $`\mathbb{N}_{>0}\not\subseteq\{2,3\}`임을 증명하라.
+
+(2) 첫 결과를 사용하여 두 집합이 서로 다름을 보이라.
+
+```savedLean -keep
+theorem exercise_positives_not_subset_twoThree :
+    ¬ positives ⊆ twoThree := by
+  sorry
+
+theorem exercise_positives_ne_twoThree :
+    positives ≠ twoThree := by
+  sorry
+```
+
+*힌트* (1)에서는 양수이면서 $`2`도 $`3`도 아닌 자연수를 하나 택하라.
+
+*문제 20* (공집합인 차집합)
+
+$`S\setminus T=\varnothing`일 필요충분조건이 $`S\subseteq T`임을 증명하라.
+
+```savedLean -keep
+theorem exercise_diff_empty_iff {A : Type}
+    (S T : Set A) :
+    S \ T = ∅ ↔ S ⊆ T := by
+  sorry
+```
+
+*힌트* $`S\setminus T=\varnothing`에서 $`S\subseteq T`를 보일 때는 원소 $`x\in S`를 택하라. $`x\notin T`라고 가정하면 $`x`가 차집합에 속하여 모순이 생긴다.
+
+*문제 21* 전단사함수의 역함수에 다시 역함수를 취하면 원래 함수를 얻음을 증명하라.
 
 ```savedLean -keep
 theorem exercise_inverse_inverse {A B : Type}
@@ -2962,67 +3014,6 @@ theorem exercise_inverse_inverse {A B : Type}
 
 *힌트* `ext x`로 원소별 등식을 보인 뒤 역함수의 단사성을 사용하라.
 남은 두 함수값은 `inverseMap_right`과 `inverseMap_left`로 각각 `x`가 된다.
-
-*문제 18* (좌표 함수)
-
-첫 좌표를 꺼내는 함수 $`p:\mathbb{N}\times\mathbb{N}\to\mathbb{N}`에 대하여
-전사성을 증명하고 단사성이 성립하지 않음을 보이라.
-단사성을 반박할 때에는 함수값이 같아지는 서로 다른 두 순서쌍을 찾으라.
-
-```savedLean -keep
-def practiceFirst : Nat × Nat → Nat := fun p => p.1
-theorem exercise_first_surjective :
-    Surjective practiceFirst := by
-  sorry
-
-theorem exercise_first_not_injective :
-    ¬ Injective practiceFirst := by
-  sorry
-```
-
-*문제 19* (대각선 함수)
-
-$`d(n)=(n,n)`으로 정한 함수 $`d:\mathbb{N}\to\mathbb{N}\times\mathbb{N}`의 단사성을 증명하라.
-또한 이 함수는 전사가 아님을 증명하라.
-
-```savedLean -keep
-def practiceDiagonal : Nat → Nat × Nat := fun n => (n, n)
-theorem exercise_diagonal_injective :
-    Injective practiceDiagonal := by
-  sorry
-
-theorem exercise_diagonal_not_surjective :
-    ¬ Surjective practiceDiagonal := by
-  sorry
-```
-
-*문제 20* (역상과 집합 연산)
-
-역상은 교집합과 여집합을 보존한다. 다음 두 등식을 증명하라.
-함수의 단사성이나 전사성을 가정하지 않고 증명하라.
-
-```savedLean -keep
-theorem exercise_preimage_inter {A B : Type} (f : A → B)
-    (S T : Set B) :
-    preimage f (S ∩ T) = preimage f S ∩ preimage f T := by
-  sorry
-
-theorem exercise_preimage_compl {A B : Type}
-    (f : A → B) (T : Set B) :
-    preimage f Tᶜ = (preimage f T)ᶜ := by
-  sorry
-```
-
-*문제 21* (합집합의 상)
-
-$`f(S\cup T)=f(S)\cup f(T)`임을 증명하라.
-
-```savedLean -keep
-theorem exercise_image_union {A B : Type}
-    (f : A → B) (S T : Set A) :
-    image f (S ∪ T) = image f S ∪ image f T := by
-  sorry
-```
 
 *문제 22* (합성에서의 소거)
 

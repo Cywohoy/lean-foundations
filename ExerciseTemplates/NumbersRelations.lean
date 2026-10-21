@@ -14,31 +14,6 @@ theorem exercise_one_add_induction
     1 + n = n + 1 := by
   sorry
 
-theorem exercise_congruent_zero_iff (a b : Int) :
-    a ≡ b [ZMOD 0] ↔ a = b := by
-  sorry
-
-theorem exercise_congruent_one (a b : Int) :
-    a ≡ b [ZMOD 1] := by
-  sorry
-
-theorem exercise_divides_zero (a : Int) : a ∣ 0 := by
-  sorry
-
-theorem exercise_congruent_add_right
-    (n a b t : Int)
-    (h : a ≡ b [ZMOD n]) :
-    a + t ≡ b + t [ZMOD n] := by
-  sorry
-
-theorem exercise_congruent_thirty_seven_two :
-    37 ≡ 2 [ZMOD 7] := by
-  sorry
-
-theorem exercise_congruent_thirty_seven_twenty_three :
-    37 ≡ 23 [ZMOD 7] := by
-  sorry
-
 theorem exercise_even_add (a b : Nat)
     (ha : IsEvenNat a)
     (hb : IsEvenNat b) :
@@ -59,12 +34,37 @@ theorem exercise_double_mul_even (b : Nat) :
     IsEvenNat (double 3 * b) := by
   sorry
 
+theorem exercise_divides_zero (a : Int) : a ∣ 0 := by
+  sorry
+
 theorem exercise_divisibility_sign :
     (3 ∣ -3) ∧ ((-3) ∣ 3) := by
   sorry
 
 theorem exercise_three_ne_negative_three :
     (3 : Int) ≠ -3 := by
+  sorry
+
+theorem exercise_congruent_zero_iff (a b : Int) :
+    a ≡ b [ZMOD 0] ↔ a = b := by
+  sorry
+
+theorem exercise_congruent_one (a b : Int) :
+    a ≡ b [ZMOD 1] := by
+  sorry
+
+theorem exercise_congruent_add_right
+    (n a b t : Int)
+    (h : a ≡ b [ZMOD n]) :
+    a + t ≡ b + t [ZMOD n] := by
+  sorry
+
+theorem exercise_congruent_thirty_seven_two :
+    37 ≡ 2 [ZMOD 7] := by
+  sorry
+
+theorem exercise_congruent_thirty_seven_twenty_three :
+    37 ≡ 23 [ZMOD 7] := by
   sorry
 
 theorem exercise_congruent_divisor (n d a b : Int)
@@ -78,16 +78,16 @@ theorem exercise_twenty_mod_six : 20 ≡ 2 [ZMOD 6] := by
 theorem exercise_twenty_mod_three : 20 ≡ 2 [ZMOD 3] := by
   sorry
 
+theorem exercise_equal_values_equivalence {A B : Type}
+    (f : A → B) :
+    IsEquivalence (fun x y : A => f x = f y) := by
+  sorry
+
 theorem exercise_mem_own_equivalenceClass {A : Type}
     (R : Relation A)
     (hR : IsEquivalence R)
     (a : A) :
     a ∈ equivalenceClass R a := by
-  sorry
-
-theorem exercise_equal_values_equivalence {A B : Type}
-    (f : A → B) :
-    IsEquivalence (fun x y : A => f x = f y) := by
   sorry
 
 theorem exercise_relation_of_classes_equal {A : Type}

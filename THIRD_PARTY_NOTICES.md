@@ -24,6 +24,14 @@ Windows에서 필요한 함수 공개 표시만 수정했다.
 수정하지 않은 가변 글꼴이다. SIL Open Font License 1.1의 사본을
 `licenses/Pretendard-OFL.txt`에 보존한다.
 
+`assets/fonts/NanumSquareNeo-Bold.woff2`와 `NanumSquareNeo-ExtraBold.woff2`는
+[네이버 공식 나눔스퀘어 네오 배포본](https://campaign.naver.com/nanumsquare_neo/download/NaverNanumSquareNeo.zip)의
+각각 원본 `NanumSquareNeoTTF-cBd.woff2`와 `NanumSquareNeoTTF-dEb.woff2`를 파일명만 바꿔 포함한 웹폰트이다.
+Copyright © 2022 NAVER Corp. Font Designed by Sandoll Inc.
+[공식 라이선스 안내](https://help.naver.com/service/11029/contents/18088?lang=ko&osType=PC)에 따라
+저작권 표시와 SIL Open Font License 1.1을 `licenses/NanumSquareNeo-OFL.txt`에 보존한다.
+입구 페이지와 교재의 제목에 사용한다.
+
 `assets/fonts/CascadiaCode.woff2`와 `CascadiaCodeItalic.woff2`는
 [Microsoft Cascadia Code v2407.24](https://github.com/microsoft/cascadia-code/releases/tag/v2407.24)의
 수정하지 않은 가변 웹폰트이다. 원본 저작권 표시와 SIL Open Font License 1.1의 사본을

@@ -46,6 +46,7 @@ async function main() {
   const browser = await playwright.chromium.launch({channel: 'chrome', headless: true});
   try {
     const page = await browser.newPage({viewport: {width: 1360, height: 1000}});
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
     if (process.env.TRACE_WASM) await page.addInitScript(() => {
       const NativeWorker = Worker;
       window.Worker = class extends NativeWorker {
@@ -76,7 +77,7 @@ async function main() {
       await page.goto(new URL(selected.url, base).href);
       const wrapper = page.locator(`[data-snippet="${selected.key}"]`);
       await wrapper.hover();
-      await wrapper.locator('..').getByRole('button', {name: '풀기', exact: true}).click();
+      await wrapper.locator('..').getByRole('button', {name: /^(풀기|이어서 풀기|풀이 보기)$/, exact: true}).click();
       await wrapper.locator('textarea').waitFor();
       return wrapper;
     }
@@ -130,6 +131,13 @@ async function main() {
       await page.waitForFunction(() => document.querySelector('.book-live-goal')?.textContent.includes('⊢ a + 3 < b + 3'));
       if (malformed.includes('\n')) assert((await wrapper.locator('.book-live-output > .book-panel-heading').innerText()).includes('남은 목표'));
     }
+    for (const body of ['trivial', 'exact (by trivial)']) {
+      await wrapper.locator('textarea').fill(body);
+      await status(wrapper, '오류');
+      assert((await wrapper.locator('.book-diagnostics').innerText()).includes("Tactic 'trivial' has not been introduced"));
+      assert((await wrapper.locator('.book-live-goal').innerText()).includes('⊢ a + 3 < b + 3'));
+      assert(!await wrapper.locator('.book-run-status').evaluate(node => node.classList.contains('book-success')));
+    }
     await wrapper.locator('textarea').fill('');
     await page.waitForFunction(() => document.querySelector('.book-live-goal')?.textContent.includes('⊢ a + 3 < b + 3'), null, {timeout: 120000});
     const branchProof = 'expand; ext\nexists fun x => ⟨x+2, by arith⟩\nconstructor\n· intro x y hxy';
@@ -144,6 +152,11 @@ async function main() {
     assert((await wrapper.locator('textarea').inputValue()).endsWith('\n    '));
     await wrapper.locator('textarea').fill('apply Nat.add_lt_add_right (k := 3)\nexact h');
     await status(wrapper, '풀이 완료');
+    await wrapper.locator('textarea').fill('apply Nat.add_lt_add_right (k := 3)\nexact h\nrfl');
+    await status(wrapper, '오류');
+    assert(!await wrapper.locator('..').locator('.book-exercise-result').innerText().then(text=>text.includes('✓')));
+    await wrapper.locator('textarea').fill('apply Nat.add_lt_add_right (k := 3)\nexact h');
+    await status(wrapper, '풀이 완료');
     // Full-source mode preserves the proof, and changed statements are not marked solved.
     await wrapper.getByRole('button', {name: '전체 코드', exact: true}).click();
     assert((await wrapper.locator('textarea').inputValue()).startsWith('theorem exercise_'));
@@ -156,16 +169,20 @@ async function main() {
     await wrapper.locator('textarea').press('Enter');
     await wrapper.locator('textarea').pressSequentially('exact hQ');
     await wrapper.locator('textarea').press('Control+Enter');
-    await status(wrapper, '코드 검사 통과');
+    await status(wrapper, '오류');
+    assert((await wrapper.locator('.book-diagnostics').innerText()).includes('has not been introduced'));
     await wrapper.locator('textarea').fill('theorem exercise_add_three_preserves_lt : ');
     await wrapper.locator('textarea').pressSequentially('\\forall');
     const typedDeclaration = await wrapper.locator('textarea').inputValue();
     assert(typedDeclaration.endsWith('∀'), typedDeclaration);
     await wrapper.locator('textarea').fill(typedDeclaration + ' n : Nat, n = n := by\n  intro n\n  rfl');
     await wrapper.locator('textarea').press('Control+Enter');
-    await status(wrapper, '코드 검사 통과');
+    await status(wrapper, '오류');
     assert((await page.evaluate(key => localStorage.getItem('lean-algebra.code.' + key), exercise.data.storageKey)).includes('∀ n : Nat'));
     await wrapper.locator('textarea').fill('theorem exercise_add_three_preserves_lt : True := by\n  trivial');
+    await status(wrapper, '오류');
+    assert((await wrapper.locator('.book-diagnostics').innerText()).includes("Tactic 'trivial' has not been introduced"));
+    await wrapper.locator('textarea').fill('theorem exercise_add_three_preserves_lt : True := by\n  exact True.intro');
     await status(wrapper, '코드 검사 통과');
     await wrapper.locator('textarea').fill('axiom unproved : True\ntheorem exercise_add_three_preserves_lt : True := by\n  exact unproved');
     await status(wrapper, '미완성 · 허용되지 않은 공리');
@@ -183,6 +200,13 @@ async function main() {
     assert(downloaded.includes('import Ample.') && downloaded.includes('exact h'));
     await page.keyboard.press('Escape');
     assert.equal(await wrapper.locator('dialog').isVisible(), false);
+    assert((await wrapper.locator('.book-example-body > .hl.lean.block').innerText()).includes('exact h'));
+    assert.equal(await wrapper.locator('..').locator('.book-exercise-result').innerText(), '✓ 완료');
+    await page.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='1 / 63');
+    assert.equal(await page.locator('.book-toc-tree [aria-current="page"] .book-chapter-progress').innerText(),'1/9');
+    assert.equal(await wrapper.locator('..').getByRole('button', {name:'풀이 보기', exact:true}).count(), 1);
+    await wrapper.getByRole('button', {name:'복사',exact:true}).click({force:true});
+    assert((await page.evaluate(()=>navigator.clipboard.readText())).includes('exact h'));
     await wrapper.locator('.book-example-body > .hl.lean.block').click({position: {x: 8, y: 8}});
     assert((await wrapper.locator('textarea').inputValue()).includes('exact h'));
     await status(wrapper, '풀이 완료');
@@ -199,9 +223,24 @@ async function main() {
     await page.keyboard.press('Escape');
     await page.reload();
     wrapper = page.locator(`[data-snippet="${exercise.key}"]`);
-    await wrapper.locator('..').getByRole('button', {name: '풀기', exact: true}).click();
+    await page.waitForFunction(key=>document.querySelector(`[data-snippet="${key}"] .book-draft-code`)?.textContent.includes('exact h'),exercise.key);
+    assert.equal(await wrapper.locator('..').locator('.book-exercise-result').innerText(), '✓ 완료');
+    await wrapper.locator('..').getByRole('button', {name: /^(풀기|이어서 풀기|풀이 보기)$/, exact: true}).click();
     assert((await wrapper.locator('textarea').inputValue()).includes('exact h'));
     await status(wrapper, '풀이 완료');
+    await page.keyboard.press('Escape');
+    await wrapper.locator('..').getByRole('button', {name:'풀이 보기', exact:true}).click();
+    await wrapper.locator('textarea').fill('apply Nat.add_lt_add_right (k := 3)\nsorry');
+    await page.keyboard.press('Escape');
+    assert((await wrapper.locator('.book-example-body > .hl.lean.block').innerText()).includes('sorry'));
+    assert.equal(await wrapper.locator('..').locator('.book-exercise-result').innerText(),'작성 중');
+    await wrapper.locator('..').getByRole('button', {name:'이어서 풀기',exact:true}).click();
+    assert((await wrapper.locator('textarea').inputValue()).endsWith('sorry'));
+    await wrapper.getByRole('button', {name:'초기화',exact:true}).click();
+    assert.equal(await wrapper.locator('.book-draft-code').count(),0);
+    assert.equal(await wrapper.locator('..').locator('.book-exercise-result').innerText(),'');
+    await wrapper.locator('textarea').fill('apply Nat.add_lt_add_right (k := 3)\nexact h');
+    await status(wrapper,'풀이 완료');
     await page.keyboard.press('Escape');
     console.log('PASS: proof-only exercise workspace, draft, download, mode switch, and responsive layout');
 
@@ -210,9 +249,13 @@ async function main() {
     await status(wrapper, '증명 중');
     await wrapper.locator('textarea').fill('apply Nat.add_lt_add_right (k := c)\nexact hab');
     await status(wrapper, '증명 완료 (1/2 완료)');
+    assert.equal(await wrapper.getByRole('button',{name:'(1)',exact:true}).getAttribute('data-complete'),'true');
+    assert.equal(await wrapper.getByRole('button',{name:'(2)',exact:true}).getAttribute('data-complete'),'false');
+    assert.equal(await page.locator('.book-progress-total').innerText(),'1 / 63');
     await wrapper.getByRole('button', {name: '(2)', exact: true}).click();
     await wrapper.locator('textarea').fill('apply exercise_shift_lt\napply exercise_shift_lt\nexact hab');
     await status(wrapper, '풀이 완료');
+    await page.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='2 / 63');
     await wrapper.getByRole('button', {name: '(1)', exact: true}).click();
     assert((await wrapper.locator('textarea').inputValue()).includes('(k := c)'));
     await status(wrapper, '풀이 완료');
@@ -238,6 +281,26 @@ async function main() {
     await status(wrapper, '풀이 완료');
     await page.keyboard.press('Escape');
     console.log('PASS: dependent subproblems, transitive admission checks, and diagnostic cursor mapping');
+
+    const projection = example(code => code.includes('theorem exercise_first_surjective'));
+    wrapper = await open(projection);
+    await wrapper.locator('textarea').fill('intro n\nexists (n, 0)');
+    await status(wrapper, '증명 완료 (1/2 완료)');
+    await wrapper.getByRole('button',{name:'(2)',exact:true}).click();
+    await wrapper.locator('textarea').fill('rfl');
+    await status(wrapper, '오류');
+    assert.equal(await wrapper.getByRole('button',{name:'(1)',exact:true}).getAttribute('data-complete'),'true');
+    assert.equal(await wrapper.getByRole('button',{name:'(2)',exact:true}).getAttribute('data-complete'),'false');
+    assert.equal(await wrapper.locator('..').locator('.book-exercise-result').innerText(),'1/2 완료');
+    await wrapper.locator('textarea').fill(`intro h
+have heq : (0, 0) = (0, 1) := by
+  apply h
+  rfl
+indisc at heq with hfirst hsecond
+contradiction`);
+    await status(wrapper, '풀이 완료');
+    await page.keyboard.press('Escape');
+    console.log('PASS: independent subproof progress survives errors in another subproblem');
 
     const repeated = example(code => code.startsWith('theorem exercise_from_two_countably_infinite '));
     wrapper = await open(repeated);

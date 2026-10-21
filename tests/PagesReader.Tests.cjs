@@ -38,9 +38,17 @@ async function main() {
     page.on('request', request => { if (request.url().includes('/api/lean/')) apiRequests.push(request.url()); });
     await page.goto(base + 'sets-functions/');
     await page.evaluate(() => document.fonts.ready);
+    assert((await page.locator('main h1').first().evaluate(node=>getComputedStyle(node).fontFamily)).startsWith('NanumSquareNeo'),
+      'Book headings should use NanumSquareNeo');
+    assert(await page.evaluate(()=>[...document.fonts].some(font=>font.family==='NanumSquareNeo' && font.status==='loaded')),
+      'NanumSquareNeo must actually load, rather than silently fall back');
+    assert.equal(await page.locator('main h1').first().evaluate(node=>getComputedStyle(node).textAlign),'left');
     const proof = page.locator('.book-example').filter({hasText: '@[ext] theorem set_ext'});
     await proof.locator('.tactic > label').filter({hasText: /^funext x$/}).click();
     assert.ok((await proof.locator('.book-step-state').innerText()).includes('S x = T x'));
+    const reference = proof.locator('.hl.lean.block a[href]').first();
+    assert.equal(await reference.evaluate(node=>getComputedStyle(node).textDecorationLine),'none',
+      'Lean reference links should not underline every identifier');
     assert.ok(await proof.getByRole('button', {name: '단계 보기', exact: true}).isVisible());
     await page.evaluate(() => document.activeElement?.blur());
     await page.mouse.move(0, 0);
@@ -145,14 +153,72 @@ async function main() {
 
     }
     await page.goto(base + 'proof/');
+    for (const width of [1360, 1920]) {
+      await page.setViewportSize({width, height:1000});
+      const brand = await page.locator('header .header-title h1').boundingBox();
+      assert(brand && Math.abs(brand.x - 24) < 1,
+        `The header title must stay at the window's left margin at ${width}px`);
+    }
     await page.screenshot({path:'tmp/reading-desktop.png'});
     await page.setViewportSize({width:390,height:844});
     await page.screenshot({path:'tmp/reading-mobile.png'});
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Mobile body overflow');
 
+    // Audit every reading page at phone, tablet, and desktop widths. Formula
+    // and table overflow must stay inside their own scrollable containers.
+    for (const width of [320, 390, 768, 1360]) {
+      await page.setViewportSize({width, height:844});
+      for (const slug of ['proof','sets-functions','numbers-relations','sizes','tactics','symbols']) {
+        await page.goto(base + slug + '/');
+        await page.evaluate(() => document.fonts.ready);
+        assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),
+          `Page overflow: ${slug} at ${width}px`);
+        assert.equal(await page.locator('main .hl.lean.block').evaluateAll(nodes =>
+          nodes.filter(node=>!node.closest('.book-example')).length),0,
+          `Undecorated code: ${slug}`);
+      }
+    }
+    await page.setViewportSize({width:390,height:844});
+    await page.goto(base + 'symbols/');
+    const table = page.locator('.book-table-scroll').first();
+    assert(await table.evaluate(node=>node.scrollWidth>node.clientWidth),'The symbol table should scroll locally');
+    assert(await table.locator('th').first().evaluate(node=>node.getBoundingClientRect().width>100),
+      'Table headings must not collapse to single characters');
+    const link = table.locator('a[href]').first();
+    assert.equal(await link.evaluate(node=>getComputedStyle(node).color),'rgb(49, 91, 120)');
+    assert.equal(await link.evaluate(node=>getComputedStyle(node).textDecorationLine),'underline');
+    await link.focus();
+    assert.equal(await link.evaluate(node=>getComputedStyle(node).outlineStyle),'solid',
+      'Keyboard-selected links must have a visible focus indicator');
+    await page.goto(base + 'proof/');
+    const menu = page.locator('#toggle-toc-click');
+    assert.equal(await page.locator('#toc > .first').evaluate(node=>node.inert),true);
+    await menu.focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await menu.getAttribute('aria-expanded'),'true');
+    assert.equal(await page.locator('#toc > .first').evaluate(node=>node.inert),false);
+    await page.locator('.book-toc-tree ol a').nth(2).click();
+    assert.equal(await menu.getAttribute('aria-expanded'),'false','Section navigation must close the mobile TOC');
+    await menu.focus();
+    await page.keyboard.press('Space');
+    assert.equal(await menu.getAttribute('aria-expanded'),'true');
+    await page.keyboard.press('Escape');
+    assert.equal(await menu.getAttribute('aria-expanded'),'false');
+    assert(await menu.evaluate(node=>node===document.activeElement));
+    const search = page.getByRole('searchbox', {name:'본문 검색'});
+    // Filling fires input without keyup, as with mouse paste or mobile input.
+    await search.fill('subset_trans');
+    const results = page.locator('#search-wrapper [role="listbox"]');
+    await results.waitFor({state:'visible'});
+    assert((await results.innerText()).includes('subset_trans'));
+    const resultsBox = await results.boundingBox();
+    assert(resultsBox.x>=0 && resultsBox.x+resultsBox.width<=390 && resultsBox.width>=340,
+      'Mobile search results should use available screen width');
+    await page.keyboard.press('Escape');
+
     assert.deepEqual(apiRequests, []);
     assert.deepEqual(failures, []);
-    console.log('PASS: static proof steps, clipboard, assets, legacy redirects, and no Lean server requests.');
+    console.log('PASS: proof steps, clipboard, four-width layout audit, readable symbol tables, keyboard/mobile navigation, and legacy redirects.');
   } finally {
     await browser.close();
     server.closeAllConnections();
