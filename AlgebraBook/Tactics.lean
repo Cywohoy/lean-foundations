@@ -159,6 +159,8 @@ example (a b c : Nat)
 
 `simp`는 등록된 정리를 정해진 방향으로 사용하여 식을 정리한다.
 정의를 한 층 확인하려는 `expand`와 달리 이미 증명된 여러 성질이 적용될 수 있다.
+`simp only [h]`는 지정한 정리 `h`만 사용한다. 유한곱의 기수를 계산할 때처럼
+반복해서 나타나는 식을 한 가지 정리로 바꿀 때 사용할 수 있다.
 
 # 전체와 성분의 비교
 %%%
@@ -189,6 +191,8 @@ example {A B : Type} (a c : A) (b d : B)
 tag := "tactic-cases-and-induction"
 %%%
 
+`cases hx : f x with`처럼 등식의 이름을 붙이면 경우를 나눈 함수값이 무엇인지 `hx`에 남는다.
+
 `by_cases h : P`는 `h : P`인 경우와 `h : ¬ P`인 경우를 나눈다.
 `by_contra h`는 목표의 부정을 가정하고 `False`를 보이는 귀류법을 시작한다.
 `apply Classical.not_not.mp`는 목표 `P`를 이중 부정 `¬¬ P`로 바꾼다.
@@ -197,6 +201,9 @@ tag := "tactic-cases-and-induction"
 `induction n with`는 자연수의 `zero`, `succ n ih` 두 경우를 만든다.
 귀납 단계에서 다른 매개변수도 달라지면 `generalizing` 뒤에 그 이름을 적는다.
 이유와 실제 목표의 차이는 본문의 비둘기집 원리 증명에서 확인할 수 있다.
+`induction i using Fin.lastCases with`는 `Fin (n + 1)`의 원소를
+마지막 번호인 `last` 경우와 앞의 번호인 `cast i` 경우로 나눈다.
+유한한 집합족의 합과 곱에서 마지막 항을 구별할 때 이 방식을 사용한다.
 
 # 계산과 자동화
 %%%

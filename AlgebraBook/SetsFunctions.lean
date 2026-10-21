@@ -1615,6 +1615,102 @@ theorem exercise_preimage_compl {A B : Type}
   sorry
 ```
 
+
+# 집합족의 합집합과 교집합
+%%%
+tag := "sets-indexed-families"
+%%%
+
+
+$`S_0=\{0\}`, $`S_1=\{1\}`, $`S_2=\{2\}`, $`\ldots`처럼 집합마다 번호를 붙이면
+그 집합들을 모두 합쳐 자연수 전체를 얻는다. 이처럼 첨자 $`i`마다 집합 $`S_i`가 정해진 것을
+*집합족*이라고 한다. Lean에서는 첨자를 집합으로 보내는 함수 `S : I → Set A`로 나타낸다.
+첨자의 타입 `I`는 자연수일 수도 있고, 두 원소만 갖는 타입일 수도 있다.
+
+*정의* 집합족의 *합집합* $`\bigcup_{i\in I}S_i`는 어느 $`S_i`에 속하는 원소들의 집합이며,
+*교집합* $`\bigcap_{i\in I}S_i`는 모든 $`S_i`에 속하는 원소들의 집합이다.
+따라서 합집합의 원소 조건에는 존재명제, 교집합의 원소 조건에는 전칭명제를 사용한다.
+
+```savedLean
+def indexedUnion {I A : Type} (S : I → Set A) : Set A :=
+  fun x => ∃ i, x ∈ S i
+
+def indexedInter {I A : Type} (S : I → Set A) : Set A :=
+  fun x => ∀ i, x ∈ S i
+```
+
+```savedLean
+scoped syntax "⋃ " ident ", " term : term
+scoped syntax "⋂ " ident ", " term : term
+macro_rules
+  | `(⋃ $i:ident, $S) => `(indexedUnion (fun $i => $S))
+  | `(⋂ $i:ident, $S) => `(indexedInter (fun $i => $S))
+```
+
+`⋃ i, S i`와 `⋂ i, S i`는 각각 위의 두 정의에 연결한 표기이다.
+합집합에 속함을 보일 때는 첨자 하나와 그 집합에 속한다는 증명을 제시하고,
+교집합에 속함을 보일 때는 임의의 첨자에서 원소 조건을 증명한다.
+
+*보기* 자연수 $`i`마다 한 원소 집합 $`S_i=\{i\}`를 두면 그 합집합은 자연수 전체이다.
+임의의 자연수 $`x`는 $`S_x`에 속하므로 역방향 포함 관계에서는 첨자로 $`x`를 택하면 된다.
+
+```savedLean
+theorem union_singletons_nat :
+    (⋃ i, (fun x : Nat => x = i)) = whole Nat := by
+  ext x
+  constructor
+  · intro hx
+    trivial
+
+  · intro hx
+    exists x
+```
+
+앞에서 역상에 속한다는 것은 함수값이 주어진 집합에 속한다는 뜻이었다.
+따라서 $`x\in f^{-1}(\bigcup_i S_i)`는 어느 첨자 $`i`에 대해 $`f(x)\in S_i`라는 뜻이고,
+이는 $`x\in\bigcup_i f^{-1}(S_i)`의 원소 조건과 같다. 교집합에서도 같은 방식으로 모든 첨자를 비교한다.
+
+```savedLean
+theorem preimage_indexedUnion {I A B : Type}
+    (f : A → B) (S : I → Set B) :
+    preimage f (indexedUnion S) =
+      indexedUnion (fun i => preimage f (S i)) := by
+  ext x
+  rfl
+
+theorem preimage_indexedInter {I A B : Type}
+    (f : A → B) (S : I → Set B) :
+    preimage f (indexedInter S) =
+      indexedInter (fun i => preimage f (S i)) := by
+  ext x
+  rfl
+```
+
+두 증명에서 `ext x`로 얻은 동치의 양쪽은 정의를 계산하면 같은 명제이므로 `rfl`로 마친다.
+
+*문제 10* (집합족과 포함 관계)
+
+(1) 모든 첨자에서 $`S_i\subseteq T_i`이면 두 합집합도 같은 포함 관계를 가짐을 보이라.
+
+(2) 합집합의 여집합은 각 여집합의 교집합과 같음을 증명하라.
+
+```savedLean -keep
+theorem exercise_indexedUnion_mono {I A : Type}
+    (S T : I → Set A)
+    (h : ∀ i, S i ⊆ T i) :
+    indexedUnion S ⊆ indexedUnion T := by
+  sorry
+
+theorem exercise_indexedUnion_complement {I A : Type}
+    (S : I → Set A) :
+    (indexedUnion S)ᶜ = indexedInter (fun i => (S i)ᶜ) := by
+  sorry
+```
+
+첨자가 하나도 없으면 합집합에 속할 원소도 없다. 반면 교집합의 원소 조건은
+확인할 첨자가 없으므로 모든 원소가 만족한다. 따라서 빈 집합족의 합집합은 공집합이고
+교집합은 전체집합이다. 이 경우에도 위의 정의를 그대로 사용한다.
+
 # 단사, 전사, 전단사
 %%%
 tag := "functions-mapping-properties"
@@ -1822,7 +1918,7 @@ theorem identity_bijective (A : Type) :
   · exact identity_surjective A
 ```
 
-*문제 10* (두 원소 집합의 상과 역상)
+*문제 11* (두 원소 집합의 상과 역상)
 
 (1) $`\operatorname{double}(\{2,3\})=\{4,6\}`임을 증명하라.
 
@@ -1837,6 +1933,65 @@ theorem exercise_image_double_twoThree :
 
 theorem exercise_preimage_double_fourSix :
     preimage double practiceFourSix = twoThree := by
+  sorry
+```
+
+*문제 12* (교집합과 상의 반례)
+
+서로 겹치지 않는 집합이라도 그 상은 겹칠 수 있다.
+자연수의 집합 `practiceZeroOnly`, `practiceOneOnly`는 각각 $`\{0\}`, $`\{1\}`이며
+함수 `practiceConstant`는 모든 자연수를 $`0`으로 보낸다.
+
+(1) $`0`이 두 집합의 상에 모두 속함을 보이라.
+
+(2) $`0`이 두 집합의 교집합의 상에는 속하지 않음을 보이라.
+
+(3) 앞의 두 결과를 사용하여 교집합의 상과 상들의 교집합이 다름을 보이라.
+
+```savedLean -keep
+def practiceZeroOnly : Set Nat := fun n => n = 0
+def practiceOneOnly : Set Nat := fun n => n = 1
+def practiceConstant : Nat → Nat := fun _ => 0
+theorem exercise_constant_images_meet :
+    0 ∈ image practiceConstant practiceZeroOnly ∩
+      image practiceConstant practiceOneOnly := by
+  sorry
+
+theorem exercise_constant_inter_image_empty :
+    0 ∉ image practiceConstant
+      (practiceZeroOnly ∩ practiceOneOnly) := by
+  sorry
+
+theorem exercise_image_inter_not_equal :
+    image practiceConstant
+        (practiceZeroOnly ∩ practiceOneOnly) ≠
+      image practiceConstant practiceZeroOnly ∩
+        image practiceConstant practiceOneOnly := by
+  sorry
+```
+
+*문제 13* (단사성과 역상의 복원)
+
+단사함수에서는 집합의 상을 구한 뒤 다시 역상을 구하면 원래 집합을 얻는다.
+모든 집합에서 이 성질이 성립하면 함수가 단사임도 보이라.
+두 조건의 동치를 증명하되, 이미 증명한 방향에는 `preimage_image_of_injective`를 사용하라.
+
+```savedLean -keep
+theorem exercise_injective_preimage_image_iff
+    {A B : Type} (f : A → B) :
+    Injective f ↔
+      ∀ S : Set A, preimage f (image f S) = S := by
+  sorry
+```
+
+*문제 14* (전체집합의 상과 전사성)
+
+함수가 전사라는 조건과 정의역 전체의 상이 공역 전체라는 조건이 동치임을 증명하라.
+
+```savedLean -keep
+theorem exercise_surjective_image_whole_iff
+    {A B : Type} (f : A → B) :
+    Surjective f ↔ image f (whole A) = whole B := by
   sorry
 ```
 
@@ -1998,7 +2153,8 @@ def shiftTwoOnPositives (s : Elem positives) :
     Elem aboveTwo :=
   { val := shiftTwo s.val
     property := by
-      exact shiftTwo_mem_aboveTwo s.val s.property }
+      apply shiftTwo_mem_aboveTwo s.val
+      exact s.property }
 
 example :
     (shiftTwoOnPositives oneInPositives).val = 3 := by
@@ -2040,6 +2196,7 @@ Lean에서는 같은 명제의 증명들을 같게 취급한다.
   constructor
   · intro h
     rw [h]
+
   · intro h
     apply elem_ext
     exact h
@@ -2253,7 +2410,7 @@ theorem compose_of_pointwise_equal {A B C : Type}
   exact functions_compose_of_pointwise_equal f g h hgh x
 ```
 
-*문제 11* $`f(n) = n + 1`, $`g(n) = 2n`인 두 자연수 함수에 대하여
+*문제 15* $`f(n) = n + 1`, $`g(n) = 2n`인 두 자연수 함수에 대하여
 $`(g \circ f)(3)`과 $`(f \circ g)(3)`을 계산하고 두 합성함수가 서로 다름을 증명하라.
 세 번째 증명에서는 앞의 두 계산 결과를 사용하라.
 
@@ -2406,11 +2563,16 @@ theorem bijective_compose {A B C : Type}
     (hg : Bijective g) :
     Bijective (g ∘ f) := by
   constructor
-  · exact injective_compose f g hf.inj hg.inj
-  · exact surjective_compose f g hf.surj hg.surj
+  · apply injective_compose f g
+    · exact hf.inj
+    · exact hg.inj
+
+  · apply surjective_compose f g
+    · exact hf.surj
+    · exact hg.surj
 ```
 
-*문제 12* 합성함수 $`g \circ f`가 단사이면 $`f`도 단사임을 증명하라.
+*문제 16* 합성함수 $`g \circ f`가 단사이면 $`f`도 단사임을 증명하라.
 
 ```savedLean -keep
 theorem exercise_injective_of_compose {A B C : Type}
@@ -2420,7 +2582,7 @@ theorem exercise_injective_of_compose {A B C : Type}
   sorry
 ```
 
-*문제 13* 합성함수 $`g \circ f`가 전사이면 $`g`도 전사임을 증명하라.
+*문제 17* 합성함수 $`g \circ f`가 전사이면 $`g`도 전사임을 증명하라.
 
 ```savedLean -keep
 theorem exercise_surjective_of_compose {A B C : Type}
@@ -2451,8 +2613,28 @@ file := "pairs-and-currying"
 수학에서는 두 원소를 받는 함수를 $`f(x,y)`로 쓰기도 한다.
 Lean에서도 두 원소를 순서쌍 `(x, y)` 하나로 묶어 함수에 넣을 수 있으며,
 타입 `A`, `B`의 원소로 만든 순서쌍의 타입은 `A × B`이다.
-`p : A × B`일 때 첫 번째 원소는 `p.1`, 두 번째 원소는 `p.2`로 꺼내며,
 `×`는 `\times`로 입력한다.
+
+순서쌍에서 한 성분을 꺼내는 함수를 *사영*(projection)이라고 한다.
+Lean에서는 `Prod.fst`가 첫째 성분을, `Prod.snd`가 둘째 성분을 꺼낸다.
+`p : A × B`일 때 `Prod.fst p`는 `A`의 원소이고 `Prod.snd p`는 `B`의 원소이다.
+이들을 각각 `p.fst`, `p.snd` 또는 더 짧게 `p.1`, `p.2`로 쓸 수 있다.
+
+```lean (name := pairFirstProjection)
+#eval Prod.fst (2, 3)
+```
+
+```leanOutput pairFirstProjection
+2
+```
+
+```lean (name := pairSecondProjection)
+#eval Prod.snd (2, 3)
+```
+
+```leanOutput pairSecondProjection
+3
+```
 
 자연수의 순서쌍 하나를 받아 두 성분의 합을 구하는 함수 `addPair`를 정의하자.
 
@@ -2565,7 +2747,7 @@ example {A B : Type}
   · exact hb
 ```
 
-*문제 14* $`(a,b)\in S\times T`이면 $`(b,a)\in T\times S`임을 증명하라.
+*문제 18* $`(a,b)\in S\times T`이면 $`(b,a)\in T\times S`임을 증명하라.
 
 ```savedLean -keep
 theorem exercise_setProduct_swap {A B : Type}
@@ -2575,7 +2757,7 @@ theorem exercise_setProduct_swap {A B : Type}
   sorry
 ```
 
-*문제 15* (좌표 함수)
+*문제 19* (좌표 함수)
 
 첫 좌표를 꺼내는 함수 $`p:\mathbb{N}\times\mathbb{N}\to\mathbb{N}`에 대하여
 전사성을 증명하고 단사성이 성립하지 않음을 보이라.
@@ -2592,7 +2774,7 @@ theorem exercise_first_not_injective :
   sorry
 ```
 
-*문제 16* (대각선 함수)
+*문제 20* (대각선 함수)
 
 $`d(n)=(n,n)`으로 정한 함수 $`d:\mathbb{N}\to\mathbb{N}\times\mathbb{N}`의 단사성을 증명하라.
 또한 이 함수는 전사가 아님을 증명하라.
@@ -2607,6 +2789,179 @@ theorem exercise_diagonal_not_surjective :
     ¬ Surjective practiceDiagonal := by
   sorry
 ```
+
+## 성분별 함수의 단사·전사
+%%%
+tag := "functions-product-maps"
+file := "product-maps"
+%%%
+
+합성함수에서는 한 함수의 값을 다음 함수에 넣었다.
+집합의 곱에서는 두 성분에 서로 다른 함수를 적용하는 방식도 사용할 수 있다.
+함수 $`f:A\to C`와 $`g:B\to D`가 주어지면
+$`(a,b)\mapsto(f(a),g(b))`로 $`A\times B`에서 $`C\times D`로 가는 함수를 정의하자.
+
+```savedLean
+def productMap {A B C D : Type}
+    (f : A → C) (g : B → D) : A × B → C × D :=
+  fun p => (f p.1, g p.2)
+```
+
+*보기* $`f`와 $`g`가 각각 단사이면 `productMap f g`도 단사이다.
+두 함수값인 순서쌍이 같으면 각 성분이 같으므로
+$`f(a)=f(a')`와 $`g(b)=g(b')`를 얻는다.
+각 함수의 단사성에 따라 $`a=a'`이고 $`b=b'`이므로 원래 순서쌍들도 같다.
+
+```savedLean
+theorem productMap_injective {A B C D : Type}
+    (f : A → C) (g : B → D)
+    (hf : Injective f)
+    (hg : Injective g) :
+    Injective (productMap f g) := by
+  intro x y hxy
+  -- 함수값의 두 성분을 각각 비교한다.
+  indisc at hxy with hfirst hsecond
+  ext
+  · apply hf
+    exact hfirst
+
+  · apply hg
+    exact hsecond
+```
+
+`indisc at hxy with hfirst hsecond`로 함수값의 두 성분이 같음을 얻는다.
+이 두 등식에 `hf`와 `hg`를 사용하면 원래 순서쌍의 각 성분을 비교할 수 있다.
+
+*보기* $`f`와 $`g`가 각각 전사이면 `productMap f g`도 전사이다.
+공역의 원소 $`(c,d)`를 택하면 전사성에 따라 $`f(a)=c`와 $`g(b)=d`인 원소 $`a,b`가 존재한다.
+그러면 $`(a,b)`에서의 함수값이 $`(c,d)`이므로 전사성을 얻는다.
+
+```savedLean
+theorem productMap_surjective {A B C D : Type}
+    (f : A → C) (g : B → D)
+    (hf : Surjective f)
+    (hg : Surjective g) :
+    Surjective (productMap f g) := by
+  intro y
+  -- 공역의 각 성분에 대응하는 원소를 택한다.
+  unpack hf y.1 with ⟨a, ha⟩
+  unpack hg y.2 with ⟨b, hb⟩
+  exists (a, b)
+  ext
+  · exact ha
+  · exact hb
+```
+
+여기서 `hf y.1`은 `∃ a, f a = y.1`의 증명이고
+`hg y.2`는 `∃ b, g b = y.2`의 증명이다.
+두 원소를 함께 택한 뒤 `ext`로 함수값의 두 성분을 비교하면
+각 존재명제에서 얻은 등식을 그대로 사용할 수 있다.
+
+*보기* $`f`와 $`g`가 각각 전단사이면 `productMap f g`도 전단사이다.
+앞의 두 보기에서 단사성과 전사성을 각각 증명했으므로
+그 결과를 사용하여 두 조건을 묶자.
+
+```savedLean
+theorem productMap_bijective {A B C D : Type}
+    (f : A → C) (g : B → D)
+    (hf : Bijective f)
+    (hg : Bijective g) :
+    Bijective (productMap f g) := by
+  constructor
+  · apply productMap_injective f g hf.inj hg.inj
+  · apply productMap_surjective f g hf.surj hg.surj
+```
+
+각 성분을 바꾸는 대응이 전단사이면 순서쌍 전체를 바꾸는 대응도 전단사이다.
+
+
+# 집합의 합과 함수 공간
+%%%
+tag := "functions-sums-spaces"
+%%%
+
+
+서로 다른 두 반의 학생 명단에 같은 이름이 있을 수 있다. 어느 반에서 왔는지 함께 기록하면
+이들을 구별하여 한 명단에 모을 수 있다. 집합의 *서로소인 합*도 원소에 출처를 붙이는 방식으로 구성한다.
+Lean에서는 두 타입의 합을 `A ⊕ B`로 나타내며, `⊕`는 `\oplus`로 입력한다.
+왼쪽에서 온 원소는 `Sum.inl a`, 오른쪽에서 온 원소는 `Sum.inr b`이다.
+
+같은 자연수라도 `(Sum.inl 0 : Nat ⊕ Nat)`와 `Sum.inr 0`은 서로 다르다.
+합의 원소를 인수로 받는 함수는 출처에 따라 두 경우를 정의한다.
+예를 들어 각 출처를 유지한 채 함수 $`f`, $`g`를 적용하는 함수는 다음과 같다.
+
+```savedLean
+def sumMap {A B C D : Type} (f : A → C) (g : B → D) :
+    A ⊕ B → C ⊕ D
+  | .inl a => .inl (f a)
+  | .inr b => .inr (g b)
+```
+
+정의의 `| .inl a => ...`와 `| .inr b => ...`는 각각 왼쪽과 오른쪽에서 온 경우이다.
+증명에서 `cases x with`를 사용하면 이 두 경우를 `| inl a => ...`, `| inr b => ...`로 나누어 다룬다.
+
+*보기* 합의 양쪽을 바꾸었다가 다시 바꾸면 원래 원소를 얻는다.
+
+```savedLean
+def swapSum {A B : Type} : A ⊕ B → B ⊕ A
+  | .inl a => .inr a
+  | .inr b => .inl b
+
+theorem swapSum_twice {A B : Type} (x : A ⊕ B) :
+    swapSum (swapSum x) = x := by
+  cases x with
+  | inl a => rfl
+  | inr b => rfl
+```
+
+*문제 21* (출처를 지우는 함수)
+
+아래 함수는 두 자연수 집합의 합에서 출처를 지우고 자연수만 남긴다.
+이 함수가 전사이지만 단사는 아님을 증명하라.
+
+```savedLean -keep
+def practiceForget : Nat ⊕ Nat → Nat
+  | .inl n => n
+  | .inr n => n
+
+theorem exercise_forget_surjective :
+    Surjective practiceForget := by
+  sorry
+
+theorem exercise_forget_not_injective :
+    ¬ Injective practiceForget := by
+  sorry
+```
+
+이 예에서 출처를 지우면 같은 값의 두 원소가 하나로 합쳐진다.
+따라서 일반적인 합집합의 크기를 더하려면 두 집합이 겹치지 않는다는 조건이 필요하다.
+서로소인 합에서는 출처가 두 쪽의 원소를 구별하므로 이러한 조건 없이 두 크기를 더할 수 있다.
+
+두 집합에서 원소를 하나씩 고르는 방법은 `A × B`의 원소로 나타냈다.
+이번에는 $`A`의 각 원소마다 $`B`의 값을 하나씩 정하는 방법들을 모으자.
+이러한 함수 전체를 *함수 공간*이라고 하며 Lean에서는 함수 타입 `A → B` 자체로 나타낸다.
+예를 들어 두 원소 각각에 세 값 중 하나를 지정하는 방법은 $`3\times3=9`가지이다.
+
+함수 공간의 원소를 다른 함수 공간의 원소로 보내는 함수도 만들 수 있다.
+앞에서 본 순서쌍의 인수 변환에 이름을 붙이면 다음과 같다.
+
+```savedLean
+def curry {A B C : Type} (f : A × B → C) : A → B → C :=
+  fun a b => f (a, b)
+
+def uncurry {A B C : Type} (f : A → B → C) : A × B → C :=
+  fun p => f p.1 p.2
+
+theorem curry_uncurry {A B C : Type} (f : A → B → C) :
+    curry (uncurry f) = f := by rfl
+
+theorem uncurry_curry {A B C : Type} (f : A × B → C) :
+    uncurry (curry f) = f := by rfl
+```
+
+`curry`는 순서쌍을 받는 함수를 두 인수를 차례로 받는 함수로 바꾸고,
+`uncurry`는 두 인수를 순서쌍 하나로 묶어 받도록 바꾼다.
+두 변환을 이어 적용하면 원래 함수를 얻으므로 두 함수 공간의 원소들이 서로 대응한다.
 
 # 역함수
 %%%
@@ -2809,7 +3164,7 @@ theorem inverseMap_right {A B : Type} (f : A → B)
 $`f(g(f(x)))=f(x)`이므로 $`f`의 단사성을 사용하면 된다.
 
 ```savedLean
-theorem inverseMap_left {A B : Type} {f : A → B}
+theorem inverseMap_left {A B : Type} (f : A → B)
     {hf : Bijective f}
     {x : A} :
     inverseMap f hf (f x) = x := by
@@ -2821,9 +3176,8 @@ theorem inverseMap_left {A B : Type} {f : A → B}
 남은 목표 `f (inverseMap f hf (f x)) = f x`는
 `inverseMap_right f`로 얻는다.
 
-이 계산 정리들은 목표의 역함수 식에 이미 들어 있는 인수를 추론한다.
-따라서 `inverseMap_left`는 인수를 적지 않고 사용할 수 있으며,
-`inverseMap_right f`에는 바깥에서 적용하는 함수 `f`만 지정한다.
+두 계산 정리는 모두 함수 `f`를 명시하여 `inverseMap_left f`, `inverseMap_right f`로 사용한다.
+전단사성의 증명과 원소는 목표의 역함수 식에서 추론한다.
 
 이름의 `left`와 `right`는 합성에서 역함수가 놓이는 위치를 가리킨다.
 `inverseMap_left`는 $`g(f(x))=x`를, `inverseMap_right`는 $`f(g(y))=y`를 나타낸다.
@@ -2840,7 +3194,7 @@ theorem inverse_exists {A B : Type} (f : A → B)
   exists (inverseMap f hf)
   constructor
   · intro x
-    exact inverseMap_left
+    exact inverseMap_left f
 
   · intro y
     exact inverseMap_right f
@@ -2896,7 +3250,7 @@ example {A B : Type} :
   apply inverse_function_unique swapPair
   · constructor
     · intro x
-      exact inverseMap_left
+      exact inverseMap_left swapPair
 
     · intro y
       exact inverseMap_right swapPair
@@ -2924,7 +3278,7 @@ theorem inverseMap_compose {A B : Type} (f : A → B)
     inverseMap f hf ∘ f = identity A := by
   ext x
   expand
-  rw [inverseMap_left]
+  rw [inverseMap_left f]
 
 theorem compose_inverseMap {A B : Type} (f : A → B)
     (hf : Bijective f) :
@@ -2965,7 +3319,7 @@ theorem inverseMap_bijective {A B : Type} (f : A → B)
   · intro x
     -- f x를 역함수에 넣으면 x를 얻는다.
     exists (f x)
-    exact inverseMap_left
+    exact inverseMap_left f
 ```
 
 단사성을 보일 때는 `replace`로 `hxy : g x = g y`를 `f (g x) = f (g y)`로 바꾼다.
@@ -2976,6 +3330,51 @@ theorem inverseMap_bijective {A B : Type} (f : A → B)
 `set`으로 붙인 이름은 자동으로 정리하는 과정에서도 유지된다.
 `g`의 정의를 직접 펼치려면 앞에서 배운 `dsimp`를 써서 `dsimp [g]`로 적는다.
 
+
+역함수의 두 법칙이 주어지면 원래 함수의 전단사성도 얻는다.
+단사성은 함수값이 같다는 등식에 역방향 함수를 적용하여 보이고,
+전사성은 그 역방향 함수값을 원소로 제시하여 보인다.
+
+```savedLean
+theorem bijective_of_inverse {A B : Type}
+    (f : A → B) (g : B → A)
+    (hleft : ∀ x, g (f x) = x)
+    (hright : ∀ y, f (g y) = y) :
+    Bijective f := by
+  constructor
+  · intro x y hxy
+    have h : g (f x) = g (f y) := by rw [hxy]
+    rw [hleft, hleft] at h
+    exact h
+
+  · intro y
+    exists g y
+    exact hright y
+```
+
+이를 집합의 합에 적용하자. 각 출처에서 전단사의 역함수를 사용하면
+`sumMap f g`의 역방향을 만들 수 있다.
+
+```savedLean
+theorem sumMap_bijective {A B C D : Type}
+    (f : A → C) (g : B → D)
+    (hf : Bijective f)
+    (hg : Bijective g) :
+    Bijective (sumMap f g) := by
+  apply bijective_of_inverse _
+    (sumMap (inverseMap f hf) (inverseMap g hg))
+
+  · intro x
+    cases x with
+    | inl a => simp [sumMap, inverseMap_left f]
+    | inr b => simp [sumMap, inverseMap_left g]
+
+  · intro y
+    cases y with
+    | inl c => simp [sumMap, inverseMap_right f]
+    | inr d => simp [sumMap, inverseMap_right g]
+```
+
 # 연습문제
 %%%
 tag := "functions-exercises"
@@ -2985,7 +3384,7 @@ file := "exercises"
 {anchor "sets-exercises"}[]집합 연산과 함수의 성질을 연결하여 다음 문제를 풀어 보자.
 각 문제의 `sorry`를 증명으로 바꾸어 완성하라.
 
-*문제 17* $`T \subseteq U`이면 $`S \setminus U \subseteq S \setminus T`임을 보이라.
+*문제 22* $`T \subseteq U`이면 $`S \setminus U \subseteq S \setminus T`임을 보이라.
 
 ```savedLean -keep
 theorem exercise_diff_antitone_right
@@ -2995,7 +3394,7 @@ theorem exercise_diff_antitone_right
   sorry
 ```
 
-*문제 18* (구체적인 교집합과 차집합)
+*문제 23* (구체적인 교집합과 차집합)
 
 $`T=\{3,4\}`라 하자. 앞에서 정의한 `twoThree`를 사용하여
 $`\{2,3\}\cap T=\{3\}`과 $`\{2,3\}\setminus T=\{2\}`를 각각 증명하라.
@@ -3013,7 +3412,7 @@ theorem exercise_twoThree_diff :
   sorry
 ```
 
-*문제 19* (포함 관계의 반례)
+*문제 24* (포함 관계의 반례)
 
 (1) $`\mathbb{N}_{>0}\not\subseteq\{2,3\}`임을 증명하라.
 
@@ -3031,7 +3430,7 @@ theorem exercise_positives_ne_twoThree :
 
 *힌트* (1)에서는 양수이면서 $`2`도 $`3`도 아닌 자연수를 하나 택하라.
 
-*문제 20* (공집합인 차집합)
+*문제 25* (공집합인 차집합)
 
 $`S\setminus T=\varnothing`일 필요충분조건이 $`S\subseteq T`임을 증명하라.
 
@@ -3044,7 +3443,7 @@ theorem exercise_diff_empty_iff {A : Type}
 
 *힌트* $`S\setminus T=\varnothing`에서 $`S\subseteq T`를 보일 때는 원소 $`x\in S`를 택하라. $`x\notin T`라고 가정하면 $`x`가 차집합에 속하여 모순이 생긴다.
 
-*문제 21* 전단사함수의 역함수에 다시 역함수를 취하면 원래 함수를 얻음을 증명하라.
+*문제 26* 전단사함수의 역함수에 다시 역함수를 취하면 원래 함수를 얻음을 증명하라.
 
 ```savedLean -keep
 theorem exercise_inverse_inverse {A B : Type}
@@ -3058,7 +3457,7 @@ theorem exercise_inverse_inverse {A B : Type}
 *힌트* `ext x`로 원소별 등식을 보인 뒤 역함수의 단사성을 사용하라.
 남은 두 함수값은 `inverseMap_right`과 `inverseMap_left`로 각각 `x`가 된다.
 
-*문제 22* (합성에서의 소거)
+*문제 27* (합성에서의 소거)
 
 (1) 단사함수 $`h`에 대하여 $`h\circ f=h\circ g`이면 $`f=g`임을 증명하라.
 
@@ -3080,6 +3479,28 @@ theorem exercise_cancel_surjective {A B C : Type}
     (hh : Surjective h)
     (heq : f ∘ h = g ∘ h) :
     f = g := by
+  sorry
+```
+
+*문제 28* (자기 자신의 역함수)
+
+함수 $`f:A\to A`를 두 번 적용하면 항상 원래 원소로 돌아온다고 하자.
+
+(1) $`f`가 전단사임을 증명하라.
+
+(2) 이 전단사성으로 구성한 역함수가 $`f` 자신임을 보이라.
+역함수를 구성할 때 원소를 어떻게 골랐는지와 무관하게 성립해야 한다.
+
+```savedLean -keep
+theorem exercise_involution_bijective {A : Type} (f : A → A)
+    (h : ∀ x, f (f x) = x) :
+    Bijective f := by
+  sorry
+
+theorem exercise_involution_inverse {A : Type} (f : A → A)
+    (h : ∀ x, f (f x) = x) :
+    inverseMap f
+        (exercise_involution_bijective f h) = f := by
   sorry
 ```
 

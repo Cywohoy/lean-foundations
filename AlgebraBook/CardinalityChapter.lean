@@ -16,8 +16,8 @@ file := "sizes"
 
 유한집합의 크기는 원소를 세어 비교할 수 있다. 무한집합의 크기는 어떻게 비교할까?
 두 집합의 원소를 하나씩 짝짓는 방법을 사용하면 원소를 모두 세지 않고도 크기가 같은지 판단할 수 있다.
-이 장에서는 전단사로 집합의 크기를 비교하고, 이 방법이 유한집합의 원소 수와 어떻게 연결되는지 살펴본다.
-이어서 자연수와 같은 크기의 무한집합을 구성하고, 무한집합 사이에도 크기의 차이가 있음을 증명한다.
+전단사로 원소를 짝짓는 방법을 바탕으로 유한집합의 원소 수를 정하고, 집합의 합·곱과 함수 공간의 크기를 계산하자.
+이 계산을 무한집합으로 넓히면 자연수와 같은 크기의 집합을 구성할 수 있으며, 멱집합에서는 그보다 더 큰 무한집합을 얻는다.
 
 {anchor "cardinality"}[]
 ```savedImport
@@ -107,7 +107,9 @@ theorem sameCardinality_trans {A B C : Type}
   unpack hAB with ⟨f, hf⟩
   unpack hBC with ⟨g, hg⟩
   exists (g ∘ f)
-  exact bijective_compose f g hf hg
+  apply bijective_compose f g
+  · exact hf
+  · exact hg
 ```
 
 # 기수와 동치류
@@ -161,8 +163,8 @@ attribute [reducible] Cardinal
 ```savedLean
 theorem cardinal_eq_iff (A B : Type) :
     cardinal A = cardinal B ↔ SameCardinality A B := by
-  exact classOf_eq_iff SameCardinality
-    sameCardinality_equivalence A B
+  apply classOf_eq_iff SameCardinality
+  exact sameCardinality_equivalence
 ```
 
 ```savedLean -show
@@ -185,7 +187,8 @@ example {A B : Type}
 example {A B : Type}
     (h : cardinal A = cardinal B) :
     ∃ f : A → B, Bijective f := by
-  exact (cardinal_eq_iff A B).mp h
+  apply (cardinal_eq_iff A B).mp
+  exact h
 ```
 
 집합 `S : Set A`의 기수는 `cardinal (Elem S)`이며
@@ -1000,7 +1003,8 @@ theorem cardinal_fin_eq {m n : Nat}
     (h : cardinal (Fin m) = cardinal (Fin n)) :
     m = n := by
   apply fin_sameCardinality_eq
-  exact (cardinal_eq_iff _ _).mp h
+  apply (cardinal_eq_iff _ _).mp
+  exact h
 ```
 
 *정리* 한 집합의 원소 수가 $`m`이면서 $`n`이면 $`m=n`이다.
@@ -1029,7 +1033,8 @@ theorem finite_cardinal_unique {A : Type} {m n : Nat}
 example (n : Nat)
     (hn : cardinal (Elem threeNumbers) = cardinal (Fin n)) :
     n = 3 := by
-  exact finite_cardinal_unique hn threeNumbers_cardinal
+  apply finite_cardinal_unique hn
+  exact threeNumbers_cardinal
 ```
 
 # 유한기수와 자연수
@@ -1076,35 +1081,8 @@ theorem cardinal_fin (n : Nat) :
 ```
 
 예를 들어 `cardinal (Fin 3) = 3`은 오른쪽의 $`3`을 유한기수로 사용한 등식이다.
-자연수의 곱으로 원소 수를 나타내는 `cardinal A = m * n`에서는
-먼저 자연수의 곱 `m * n`을 구한 뒤 그 값을 기수로 바꾼다.
-
-```savedLean -show
-noncomputable def cardinalityData (A : Type)
-    (hA : IsFinite A) : {n : Nat // cardinal A = n} :=
-  { val := Classical.choose hA
-    property := Classical.choose_spec hA }
-
-noncomputable def cardinality (A : Type)
-    (hA : IsFinite A) : Nat :=
-  (cardinalityData A hA).val
-theorem cardinality_spec {A : Type}
-    (hA : IsFinite A) :
-    cardinal A = cardinality A hA := by
-  exact (cardinalityData A hA).property
-
-theorem cardinality_eq {A : Type} {n : Nat}
-    (hA : IsFinite A)
-    (hn : cardinal A = n) :
-    cardinality A hA = n := by
-  exact finite_cardinal_unique (cardinality_spec hA) hn
-```
-
-```savedLean -show
-example :
-    cardinality (Fin 3) (fin_isFinite 3) = 3 := by
-  exact cardinality_eq (fin_isFinite 3) (cardinal_fin 3)
-```
+자연수에서 먼저 계산한 값을 기수로 나타낼 때는 `((m * n : Nat) : Cardinal)`로 적을 수 있다.
+이후 기수 자체의 곱셈도 정의하므로 계산하는 타입을 구별하여 사용하겠다.
 
 *문제 5* (서로 다른 원소 수)
 
@@ -1121,6 +1099,58 @@ theorem exercise_fin_two_three_not_same :
 theorem exercise_threeNumbers_not_four :
     cardinal (Elem threeNumbers) ≠ 4 := by
   sorry
+```
+
+
+## 자연수로 나타낸 원소 수
+%%%
+tag := "cardinality-natural-count"
+%%%
+
+유한집합의 원소 수를 길이나 횟수처럼 자연수로 사용할 때도 있다.
+`hA : IsFinite A`는 `cardinal A = n`인 자연수 $`n`이 존재한다는 증명이며,
+앞에서 이 $`n`이 유일함을 보였다. 이 자연수를 `cardinality A hA`로 나타내자.
+예를 들어 유한군의 위수를 자연수로 정의할 때 이 값을 사용할 수 있다.
+
+```savedLean
+noncomputable def cardinalityData (A : Type)
+    (hA : IsFinite A) : {n : Nat // cardinal A = n} :=
+  { val := Classical.choose hA
+    property := Classical.choose_spec hA }
+```
+
+`cardinalityData`에는 원소 수와 그 수를 사용한 기수 등식이 함께 들어 있다.
+역함수에서와 같이 값을 꺼내는 정의와 성질을 꺼내는 정리를 두면 다음과 같다.
+
+```savedLean
+noncomputable def cardinality (A : Type)
+    (hA : IsFinite A) : Nat :=
+  (cardinalityData A hA).val
+```
+
+```savedLean
+theorem cardinality_spec {A : Type}
+    (hA : IsFinite A) :
+    cardinal A = cardinality A hA := by
+  exact (cardinalityData A hA).property
+```
+
+```savedLean
+theorem cardinality_eq {A : Type} {n : Nat}
+    (hA : IsFinite A)
+    (hn : cardinal A = n) :
+    cardinality A hA = n := by
+  apply finite_cardinal_unique (cardinality_spec hA)
+  exact hn
+```
+
+`cardinality_spec`는 선택한 원소 수가 실제 기수와 일치함을 보장하고,
+`cardinality_eq`는 이미 센 결과로 이 값을 계산하게 한다.
+
+```savedLean
+example : cardinality (Fin 3) (fin_isFinite 3) = 3 := by
+  apply cardinality_eq
+  exact cardinal_fin 3
 ```
 
 ## 유한성의 전달
@@ -1154,92 +1184,158 @@ theorem exercise_finite_cardinal_transport
   sorry
 ```
 
+
+# 유한집합의 단사와 전사
+%%%
+tag := "cardinality-finite-maps"
+%%%
+
+
+서로 같은 수의 학생과 의자가 있을 때 학생마다 서로 다른 의자에 앉히면 빈 의자가 남지 않는다.
+의자 하나를 비워 두었다면 학생 수보다 적은 의자에 학생들을 겹치지 않게 앉힌 셈이기 때문이다.
+이는 비둘기집 원리로 배제한 상황이다.
+
+*정리* 유한집합 $`A`, $`B`의 크기가 같으면 함수 $`f:A\to B`가 단사일 필요충분조건은 전사인 것이다.
+
+먼저 두 집합 모두 번호 집합 $`\operatorname{Fin}(n)`인 경우를 보자.
+단사함수의 상에서 번호 $`r`이 빠졌다고 가정하고, 앞의 `eraseIndex`로 그 번호를 지우면
+$`n`개의 번호를 $`n-1`개의 번호에 단사로 보낼 수 있어 모순이다.
+
+```savedLean
+theorem fin_injective_surjective (n : Nat)
+    (f : Fin n → Fin n)
+    (hf : Injective f) : Surjective f := by
+  intro r
+  by_contra hmissing
+  cases n with
+  | zero => exact Fin.elim0 r
+  | succ n =>
+    have hne (x : Fin (n + 1)) : (f x).val ≠ r.val := by
+      intro hval
+      apply hmissing
+      exists x
+      ext
+      exact hval
+
+    let g (x : Fin (n + 1)) : Fin n :=
+      { val := eraseIndex r.val (f x).val
+        isLt := eraseIndex_lt r.isLt (f x).isLt (hne x) }
+    have hg : Injective g := by
+      intro x y hxy
+      apply hf
+      ext
+      apply eraseIndex_injective (hne x) (hne y)
+      indisc at hxy
+      exact hxy
+
+    -- 빠진 번호를 지우면 더 작은 번호 집합으로 가는 단사를 얻는다.
+    have hbound : n + 1 ≤ n := by
+      apply fin_injective_le g hg
+    arith
+```
+
+일반적인 유한집합에도 번호를 붙이면 같은 결과를 사용할 수 있다.
+$`a:A\to\operatorname{Fin}(n)`, $`b:B\to\operatorname{Fin}(n)`이 번호를 붙이는 전단사이면
+$`b\circ f\circ a^{-1}`에 앞의 정리를 적용한다.
+
+```savedLean
+theorem finite_injective_surjective {A B : Type} (f : A → B)
+    (hA : IsFinite A)
+    (hAB : cardinal A = cardinal B)
+    (hf : Injective f) : Surjective f := by
+  unpack hA with ⟨n, hn⟩
+  have hBn : cardinal B = cardinal (Fin n) := by
+    rw [← hAB]
+    exact hn
+  unpack (cardinal_eq_iff A (Fin n)).mp hn with ⟨a, ha⟩
+  unpack (cardinal_eq_iff B (Fin n)).mp hBn with ⟨b, hb⟩
+  let F (i : Fin n) : Fin n := b (f (inverseMap a ha i))
+  have hF : Injective F := by
+    intro i j hij
+    apply (inverseMap_bijective a ha).inj
+    apply hf
+    apply hb.inj
+    exact hij
+
+  intro y
+  unpack fin_injective_surjective n F hF (b y) with ⟨i, hi⟩
+  exists inverseMap a ha i
+  apply hb.inj
+  exact hi
+```
+
+반대 방향에서는 전사성으로 각 $`y\in B`에 대해 $`f(g(y))=y`인 원소를 하나씩 택한다.
+그러면 $`g`는 단사이므로 방금 증명한 방향에 따라 전사이기도 하다.
+임의의 $`x,x'\in A`를 $`g(u),g(v)`로 쓰면
+$`f(x)=f(x')`에서 $`u=v`를 얻어 $`x=x'`가 된다.
+
+```savedLean
+theorem finite_surjective_injective {A B : Type} (f : A → B)
+    (hA : IsFinite A)
+    (hAB : cardinal A = cardinal B)
+    (hf : Surjective f) : Injective f := by
+  let g : B → A := fun y => Classical.choose (hf y)
+  have hfg (y : B) : f (g y) = y := by
+    exact Classical.choose_spec (hf y)
+  have hg : Injective g := by
+    intro x y hxy
+    have h : f (g x) = f (g y) := by rw [hxy]
+    rw [hfg, hfg] at h
+    exact h
+
+  have hgSurj : Surjective g := by
+    apply finite_injective_surjective g
+    · apply isFinite_transport hAB hA
+    · symm
+      exact hAB
+
+    · exact hg
+
+  intro x y hxy
+  unpack hgSurj x with ⟨u, hu⟩
+  unpack hgSurj y with ⟨v, hv⟩
+  rw [← hu, ← hv, hfg, hfg] at hxy
+  rw [← hu, ← hv, hxy]
+```
+
+```savedLean
+theorem finite_injective_iff_surjective {A B : Type}
+    (f : A → B)
+    (hA : IsFinite A)
+    (hAB : cardinal A = cardinal B) :
+    Injective f ↔ Surjective f := by
+  constructor
+  · apply finite_injective_surjective f hA hAB
+  · apply finite_surjective_injective f hA hAB
+```
+
+*문제 7* (유한성의 역할)
+
+(1) `Fin n` 위의 단사함수는 전단사임을 증명하라.
+
+(2) 자연수에서 $`k\mapsto k+1`은 단사이지만 전사가 아님을 증명하라.
+정의역과 공역이 같아도 무한집합에서는 앞의 정리를 사용할 수 없다.
+
+```savedLean -keep
+theorem exercise_fin_injective_bijective (n : Nat)
+    (f : Fin n → Fin n)
+    (hf : Injective f) :
+    Bijective f := by
+  sorry
+
+theorem exercise_successor_injective :
+    Injective (fun k : Nat => k + 1) := by
+  sorry
+
+theorem exercise_successor_not_surjective :
+    ¬ Surjective (fun k : Nat => k + 1) := by
+  sorry
+```
+
 # 유한집합의 곱
 
 두 유한집합의 원소 수가 각각 $`m`, $`n`이면 그 곱에는 $`mn`개의 원소가 있다.
 이를 보이려면 각 집합의 번호를 순서쌍으로 묶고, 번호 쌍을 다시 하나의 번호로 세면 된다.
-
-## 성분별 함수의 단사·전사
-%%%
-tag := "functions-product-maps"
-file := "product-maps"
-%%%
-
-합성함수에서는 한 함수의 값을 다음 함수에 넣었다.
-집합의 곱에서는 두 성분에 서로 다른 함수를 적용하는 방식도 사용할 수 있다.
-함수 $`f:A\to C`와 $`g:B\to D`가 주어지면
-$`(a,b)\mapsto(f(a),g(b))`로 $`A\times B`에서 $`C\times D`로 가는 함수를 정의하자.
-
-```savedLean
-def productMap {A B C D : Type}
-    (f : A → C) (g : B → D) : A × B → C × D :=
-  fun p => (f p.1, g p.2)
-```
-
-*보기* $`f`와 $`g`가 각각 단사이면 `productMap f g`도 단사이다.
-두 함수값인 순서쌍이 같으면 각 성분이 같으므로
-$`f(a)=f(a')`와 $`g(b)=g(b')`를 얻는다.
-각 함수의 단사성에 따라 $`a=a'`이고 $`b=b'`이므로 원래 순서쌍들도 같다.
-
-```savedLean
-theorem productMap_injective {A B C D : Type}
-    (f : A → C) (g : B → D)
-    (hf : Injective f)
-    (hg : Injective g) :
-    Injective (productMap f g) := by
-  intro x y hxy
-  -- 함수값의 두 성분을 각각 비교한다.
-  indisc at hxy with hfirst hsecond
-  ext
-  · exact hf x.1 y.1 hfirst
-  · exact hg x.2 y.2 hsecond
-```
-
-`indisc at hxy with hfirst hsecond`로 함수값의 두 성분이 같음을 얻는다.
-이 두 등식에 `hf`와 `hg`를 사용하면 원래 순서쌍의 각 성분을 비교할 수 있다.
-
-*보기* $`f`와 $`g`가 각각 전사이면 `productMap f g`도 전사이다.
-공역의 원소 $`(c,d)`를 택하면 전사성에 따라 $`f(a)=c`와 $`g(b)=d`인 원소 $`a,b`가 존재한다.
-그러면 $`(a,b)`에서의 함수값이 $`(c,d)`이므로 전사성을 얻는다.
-
-```savedLean
-theorem productMap_surjective {A B C D : Type}
-    (f : A → C) (g : B → D)
-    (hf : Surjective f)
-    (hg : Surjective g) :
-    Surjective (productMap f g) := by
-  intro y
-  -- 공역의 각 성분에 대응하는 원소를 택한다.
-  unpack hf y.1 with ⟨a, ha⟩
-  unpack hg y.2 with ⟨b, hb⟩
-  exists (a, b)
-  ext
-  · exact ha
-  · exact hb
-```
-
-여기서 `hf y.1`은 `∃ a, f a = y.1`의 증명이고
-`hg y.2`는 `∃ b, g b = y.2`의 증명이다.
-두 원소를 함께 택한 뒤 `ext`로 함수값의 두 성분을 비교하면
-각 존재명제에서 얻은 등식을 그대로 사용할 수 있다.
-
-*보기* $`f`와 $`g`가 각각 전단사이면 `productMap f g`도 전단사이다.
-앞의 두 보기에서 단사성과 전사성을 각각 증명했으므로
-그 결과를 사용하여 두 조건을 묶자.
-
-```savedLean
-theorem productMap_bijective {A B C D : Type}
-    (f : A → C) (g : B → D)
-    (hf : Bijective f)
-    (hg : Bijective g) :
-    Bijective (productMap f g) := by
-  constructor
-  · exact productMap_injective f g hf.inj hg.inj
-  · exact productMap_surjective f g
-      hf.surj hg.surj
-```
-
-각 집합에 번호를 붙이는 두 전단사에 이 결과를 사용하면 번호 쌍과 집합의 곱 사이의 전단사를 얻는다.
 
 ## 번호 쌍과 집합의 곱
 %%%
@@ -1318,7 +1414,7 @@ file := "exercises"
 
 각 문제의 `sorry`를 증명으로 바꾸어 완성하라.
 
-*문제 7* (유한집합의 곱)
+*문제 8* (유한집합의 곱)
 
 (1) 유한집합 $`A`, $`B`의 원소 수가 각각 $`m`, $`n`이면
 $`|A\times B|=|A||B|=mn`임을 증명하라.
@@ -1336,7 +1432,7 @@ $`|A\times B|=|A||B|=mn`임을 증명하라.
 theorem exercise_cardinal_product {A B : Type} {m n : Nat}
     (hA : cardinal A = m)
     (hB : cardinal B = n) :
-    cardinal (A × B) = m * n := by
+    cardinal (A × B) = ((m * n : Nat) : Cardinal) := by
   sorry
 
 theorem exercise_cardinal_swap (A B : Type) :
@@ -1349,6 +1445,608 @@ theorem exercise_two_by_three_cardinal :
 
 theorem exercise_three_by_two_cardinal :
     cardinal (Fin 3 × Fin 2) = 6 := by
+  sorry
+```
+
+*문제 9* (두 칸의 색칠)
+
+두 칸을 색칠하는 방법은 각 칸에 색을 하나씩 대응시키는 함수이다.
+색들의 타입이 $`A`이면 이러한 함수를 `Fin 2 → A`로 나타낸다.
+
+(1) 아래 함수는 색 두 개를 받아 첫째 칸과 둘째 칸의 색을 정한다.
+이 함수가 전단사임을 증명하라.
+
+(2) 첫 결과와 `finProduct_bijective`를 사용하여 색이 세 가지일 때 두 칸을 색칠하는 방법이 아홉 가지임을 보이라.
+같은 색을 두 번 사용해도 된다.
+
+```savedLean -keep
+def practiceTwoValues {A : Type} (p : A × A) : Fin 2 → A :=
+  fun i => if i.val = 0 then p.1 else p.2
+
+theorem exercise_twoValues_bijective (A : Type) :
+    Bijective (practiceTwoValues (A := A)) := by
+  sorry
+
+theorem exercise_two_to_three_functions :
+    cardinal (Fin 2 → Fin 3) = 9 := by
+  sorry
+```
+
+
+# 기수의 합과 곱, 거듭제곱
+%%%
+tag := "cardinality-arithmetic"
+%%%
+
+
+두 집합에서 원소를 모으거나 짝을 짓는 방법은 그 집합들의 크기에도 연산을 정한다.
+서로소인 합에서는 두 쪽의 원소 수를 더하고, 곱에서는 각 쪽에서 하나씩 택하는 경우를 센다.
+함수 공간에서는 정의역의 각 원소마다 공역의 값을 정하므로 공역의 크기를 밑으로 하는 거듭제곱을 얻는다.
+
+이 연산을 기수에 정의하려면 같은 크기의 다른 집합으로 바꾸어도 결과가 같아야 한다.
+합에서는 출처별로 전단사를 적용하고, 곱에서는 각 성분에 전단사를 적용하면 된다.
+
+```savedLean
+theorem sameCardinality_sum {A B C D : Type}
+    (hAC : SameCardinality A C)
+    (hBD : SameCardinality B D) :
+    SameCardinality (A ⊕ B) (C ⊕ D) := by
+  unpack hAC with ⟨f, hf⟩
+  unpack hBD with ⟨g, hg⟩
+  exists sumMap f g
+  apply sumMap_bijective f g hf hg
+
+theorem sameCardinality_product {A B C D : Type}
+    (hAC : SameCardinality A C)
+    (hBD : SameCardinality B D) :
+    SameCardinality (A × B) (C × D) := by
+  unpack hAC with ⟨f, hf⟩
+  unpack hBD with ⟨g, hg⟩
+  exists productMap f g
+  apply productMap_bijective f g hf hg
+```
+
+함수 공간에서는 정의역을 바꾸는 방향에 주의해야 한다.
+전단사 $`f:A\to C`, $`g:B\to D`가 있고 함수 $`u:A\to B`가 주어지면,
+$`c\in C`를 먼저 $`f^{-1}(c)\in A`로 옮긴 뒤 $`u`와 $`g`를 적용한다.
+따라서 $`u`에 함수 $`g\circ u\circ f^{-1}:C\to D`를 대응시킨다.
+
+```savedLean
+noncomputable def functionMap {A B C D : Type}
+    (f : A → C)
+    (hf : Bijective f)
+    (g : B → D) :
+    (A → B) → (C → D) :=
+  fun u c => g (u (inverseMap f hf c))
+
+theorem functionMap_bijective {A B C D : Type}
+    (f : A → C) (g : B → D)
+    (hf : Bijective f)
+    (hg : Bijective g) :
+    Bijective (functionMap f hf g) := by
+  apply bijective_of_inverse _
+    (fun v a => inverseMap g hg (v (f a)))
+
+  · intro u
+    ext a
+    dsimp [functionMap]
+    rw [inverseMap_left f, inverseMap_left g]
+
+  · intro v
+    ext c
+    dsimp [functionMap]
+    rw [inverseMap_right f, inverseMap_right g]
+
+theorem sameCardinality_arrow {A B C D : Type}
+    (hAC : SameCardinality A C)
+    (hBD : SameCardinality B D) :
+    SameCardinality (A → B) (C → D) := by
+  unpack hAC with ⟨f, hf⟩
+  unpack hBD with ⟨g, hg⟩
+  exists functionMap f hf g
+  apply functionMap_bijective f g hf hg
+```
+
+`functionMap_bijective`의 역방향은 $`v`에 $`g^{-1}\circ v\circ f`를 대응시키는 것이다.
+두 합성에서 역함수의 법칙을 사용하면 각각 원래 함수로 돌아온다.
+
+앞 장의 몫 위 함수와 마찬가지로, 이러한 전단사 보존 성질을 사용하여 대표 타입의 선택에 무관한 연산을 만든다.
+공통 구성인 `Cardinal.binaryData F hF`는 두 타입에 대한 구성 `F`와 그 보존 증명 `hF`를 받아,
+기수의 연산과 `op (cardinal A) (cardinal B) = cardinal (F A B)`라는 계산 성질을 함께 담는다.
+
+```savedLean
+namespace Cardinal
+
+noncomputable def binaryData (F : Type → Type → Type)
+    (hF : ∀ {A B C D},
+      SameCardinality A C → SameCardinality B D →
+        SameCardinality (F A B) (F C D)) :
+    { op : Cardinal → Cardinal → Cardinal //
+      ∀ A B, op (cardinal A) (cardinal B) =
+        cardinal (F A B) } :=
+  { val := fun a b => cardinal
+      (F (quotientRepr SameCardinality a)
+        (quotientRepr SameCardinality b))
+    property := by
+      intro A B
+      apply cardinal_eq_of_sameCardinality
+      apply hF
+      · apply sameCardinality_of_cardinal_eq
+        symm
+        exact quotientRepr_spec (cardinal A)
+
+      · apply sameCardinality_of_cardinal_eq
+        symm
+        exact quotientRepr_spec (cardinal B) }
+
+end Cardinal
+```
+
+```savedLean
+namespace Cardinal
+
+noncomputable def add : Cardinal → Cardinal → Cardinal :=
+  (binaryData Sum sameCardinality_sum).val
+
+noncomputable def mul : Cardinal → Cardinal → Cardinal :=
+  (binaryData Prod sameCardinality_product).val
+
+noncomputable def power : Cardinal → Cardinal → Cardinal :=
+  (binaryData (fun B A => A → B)
+    (fun hB hA => sameCardinality_arrow hA hB)).val
+
+noncomputable instance : Add Cardinal := ⟨add⟩
+noncomputable instance : Mul Cardinal := ⟨mul⟩
+noncomputable instance : Pow Cardinal Cardinal := ⟨power⟩
+end Cardinal
+```
+
+`+`, `*`, `^`는 이 세 정의에 연결한 표기이다. 거듭제곱에서는 `power b a`가 $`b^a`이므로
+구성할 함수 타입의 방향을 `A → B`로 두었다. 다음 계산 정리로 이 관계를 사용할 수 있다.
+
+```savedLean
+theorem cardinal_sum (A B : Type) :
+    cardinal (A ⊕ B) = cardinal A + cardinal B := by
+  symm
+  exact (Cardinal.binaryData Sum
+    sameCardinality_sum).property A B
+
+theorem cardinal_product (A B : Type) :
+    cardinal (A × B) = cardinal A * cardinal B := by
+  symm
+  exact (Cardinal.binaryData Prod
+    sameCardinality_product).property A B
+
+theorem cardinal_arrow (A B : Type) :
+    cardinal (A → B) = cardinal B ^ cardinal A := by
+  symm
+  exact (Cardinal.binaryData (fun B A => A → B)
+    (fun hB hA => sameCardinality_arrow hA hB)).property B A
+```
+
+*보기* 곱에서 합의 두 출처를 구별하면
+$`A\times(B\oplus C)`와 $`(A\times B)\oplus(A\times C)` 사이의 전단사를 얻는다.
+
+```savedLean
+def distribute {A B C : Type} :
+    A × (B ⊕ C) → (A × B) ⊕ (A × C)
+  | (a, .inl b) => .inl (a, b)
+  | (a, .inr c) => .inr (a, c)
+
+theorem distribute_bijective (A B C : Type) :
+    Bijective (distribute :
+      A × (B ⊕ C) → (A × B) ⊕ (A × C)) := by
+  apply bijective_of_inverse _ (fun x =>
+    match x with
+    | .inl (a, b) => (a, .inl b)
+    | .inr (a, c) => (a, .inr c))
+
+  · intro x
+    rcases x with ⟨a, b | c⟩
+    · rfl
+    · rfl
+
+  · intro y
+    rcases y with ⟨a, b⟩ | ⟨a, c⟩
+    · rfl
+    · rfl
+
+theorem cardinal_distrib (A B C : Type) :
+    cardinal A * (cardinal B + cardinal C) =
+      cardinal A * cardinal B +
+        cardinal A * cardinal C := by
+  rw [← cardinal_sum, ← cardinal_product,
+    ← cardinal_product, ← cardinal_product, ← cardinal_sum]
+  apply cardinal_eq_of_sameCardinality
+  exists distribute
+  exact distribute_bijective A B C
+```
+
+두 구성 사이의 전단사에서 기수의 분배법칙을 얻었다.
+
+함수의 두 인수를 순서쌍으로 묶는 `curry`, `uncurry`에서도 계산 법칙을 얻는다.
+$`A\times B\to C`와 $`A\to(B\to C)`가 같은 크기이므로 $`|C|^{|A||B|}=(|C|^{|B|})^{|A|}`이다.
+
+```savedLean
+theorem cardinal_curry (A B C : Type) :
+    cardinal (A × B → C) = cardinal (A → B → C) := by
+  apply cardinal_eq_of_sameCardinality
+  exists curry
+  apply bijective_of_inverse _ uncurry
+  · exact uncurry_curry
+  · exact curry_uncurry
+
+theorem cardinal_power_mul (A B C : Type) :
+    cardinal C ^ (cardinal A * cardinal B) =
+      (cardinal C ^ cardinal B) ^ cardinal A := by
+  rw [← cardinal_product, ← cardinal_arrow,
+    ← cardinal_arrow, ← cardinal_arrow]
+  exact cardinal_curry A B C
+```
+
+*문제 10* (합 위의 함수)
+
+서로소인 합 위의 함수는 왼쪽과 오른쪽에서의 함수값을 각각 지정하여 정할 수 있다.
+
+(1) 아래 두 변환이 서로 역방향임을 사용하여 `practiceSplitFunction`이 전단사임을 증명하라.
+
+(2) 첫 결과를 사용하여 $`|C|^{|A|+|B|}=|C|^{|A|}|C|^{|B|}`를 증명하라.
+
+```savedLean -keep
+def practiceSplitFunction {A B C : Type}
+    (f : A ⊕ B → C) : (A → C) × (B → C) :=
+  (fun a => f (.inl a), fun b => f (.inr b))
+def practiceJoinFunction {A B C : Type}
+    (p : (A → C) × (B → C)) : A ⊕ B → C
+  | .inl a => p.1 a
+  | .inr b => p.2 b
+
+theorem exercise_splitFunction_bijective (A B C : Type) :
+    Bijective (practiceSplitFunction (A := A) (B := B)
+      (C := C)) := by
+  sorry
+
+theorem exercise_cardinal_power_sum (A B C : Type) :
+    cardinal C ^ (cardinal A + cardinal B) =
+      cardinal C ^ cardinal A *
+        cardinal C ^ cardinal B := by
+  sorry
+```
+
+## 자연수의 연산과의 일치
+
+유한한 번호 집합의 합에서는 왼쪽 번호 $`i`는 그대로 두고 오른쪽 번호 $`j`를 $`m+j`로 옮기면 된다.
+그러면 $`0,\ldots,m-1`과 $`m,\ldots,m+n-1`이 겹치지 않게 이어진다.
+
+```savedLean
+def finSum (m n : Nat) : Fin m ⊕ Fin n → Fin (m + n)
+  | .inl a => { val := a.val, isLt := by arith }
+  | .inr b => { val := m + b.val, isLt := by arith }
+```
+
+이 함수는 전단사이다. 주어진 번호가 $`m`보다 작으면 왼쪽에서 왔고,
+그렇지 않으면 $`m`을 빼서 오른쪽 번호를 되찾을 수 있다.
+단사성을 확인할 때도 두 원소가 어느 쪽에서 왔는지 나누어 살펴본다.
+서로 다른 쪽에서 왔다면 한 번호는 $`m`보다 작고 다른 번호는 $`m` 이상이므로 같을 수 없다.
+
+```savedLean
+theorem finSum_bijective (m n : Nat) :
+    Bijective (finSum m n) := by
+  constructor
+  · intro x y hxy
+    cases x with
+    | inl a =>
+      cases y with
+      | inl b =>
+        indisc at hxy with hval
+        have hab : a = b := by
+          ext
+          exact hval
+
+        rw [hab]
+
+      | inr b =>
+        indisc at hxy with hval
+        arith
+
+    | inr a =>
+      cases y with
+      | inl b =>
+        indisc at hxy with hval
+        arith
+
+      | inr b =>
+        indisc at hxy with hval
+        have hab : a = b := by
+          ext
+          arith
+
+        rw [hab]
+
+  · intro k
+    by_cases hk : k.val < m
+    · exists Sum.inl { val := k.val, isLt := hk }
+    · exists Sum.inr { val := k.val - m, isLt := by arith }
+      ext
+      dsimp [finSum]
+      arith
+```
+
+```savedLean
+theorem cardinal_nat_add (m n : Nat) :
+    (m : Cardinal) + n = ((m + n : Nat) : Cardinal) := by
+  rw [← cardinal_fin m, ← cardinal_fin n, ← cardinal_sum]
+  apply cardinal_eq_of_sameCardinality
+  exists finSum m n
+  exact finSum_bijective m n
+
+theorem cardinal_nat_mul (m n : Nat) :
+    (m : Cardinal) * n = ((m * n : Nat) : Cardinal) := by
+  rw [← cardinal_fin m, ← cardinal_fin n,
+    ← cardinal_product]
+  apply cardinal_eq_of_sameCardinality
+  apply sameCardinality_symm
+  exists finProduct m n
+  exact finProduct_bijective m n
+```
+
+두 정리는 유한기수의 덧셈·곱셈이 자연수의 덧셈·곱셈과 일치함을 보인다.
+곱에 관한 증명에서는 앞에서 구성한 `finProduct`를 다시 사용했다.
+
+
+*보기* 두 원소 집합과 한 원소 집합을 서로소인 합으로 모으면 원소가 세 개이다.
+먼저 합의 기수를 두 기수의 합으로 바꾸고, 자연수의 계산과 연결하자.
+
+```savedLean
+example : cardinal (Fin 2 ⊕ Fin 1) = 3 := by
+  rw [cardinal_sum, cardinal_fin, cardinal_fin]
+  exact cardinal_nat_add 2 1
+```
+
+`rw` 이후에는 기수의 등식 `(2 : Cardinal) + 1 = 3`이 남는다.
+`cardinal_nat_add 2 1`이 이 등식을 증명한다.
+
+*문제 11* (합과 곱의 원소 수)
+
+집합 $`A`, $`B`, $`C`의 원소 수가 각각 $`2`, $`3`, $`4`라고 하자.
+
+(1) $`A\oplus B`의 원소 수를 구하라.
+
+(2) $`A\times(B\oplus C)`의 원소 수를 구하라.
+
+```savedLean -keep
+theorem exercise_cardinal_sum_two_three {A B : Type}
+    (hA : cardinal A = 2)
+    (hB : cardinal B = 3) :
+    cardinal (A ⊕ B) = 5 := by
+  sorry
+
+theorem exercise_cardinal_product_sum {A B C : Type}
+    (hA : cardinal A = 2)
+    (hB : cardinal B = 3)
+    (hC : cardinal C = 4) :
+    cardinal (A × (B ⊕ C)) = 14 := by
+  sorry
+```
+
+# 첨자가 있는 합과 곱
+%%%
+tag := "cardinality-indexed-arithmetic"
+%%%
+
+
+크기가 서로 다른 상자 세 개에 원소가 각각 $`1`, $`2`, $`3`개 들어 있다고 하자.
+모든 원소를 출처와 함께 모으면 $`1+2+3=6`개이고,
+각 상자에서 하나씩 고르는 방법은 $`1\cdot2\cdot3=6`가지이다.
+첨자 $`i`에 따라 원소의 타입이 달라지는 집합족을 사용하면 이 두 구성을 일반화할 수 있다.
+
+`F : I → Type`은 첨자 `i`마다 원소 타입 `F i`를 정한다.
+이들의 합에는 첨자 `i : I`와 원소 `x : F i`를 묶어 넣는다.
+Lean의 `Σ i : I, F i`가 이러한 *종속합* 타입이며 `⟨i, x⟩`로 원소를 만든다.
+부분타입에서는 원소와 그 원소에 관한 증명을 묶었고, 여기서는 첨자와 해당 타입의 원소를 묶는다.
+
+예를 들어 $`i`번째 상자의 원소를 `Fin (i + 1)`로 나타내면 다음 순서쌍을 만들 수 있다.
+
+```savedLean
+def boxChoice : Σ i : Nat, Fin (i + 1) :=
+  ⟨2, { val := 1, isLt := by decide }⟩
+```
+
+첫 성분 $`2`가 두 번째 성분의 타입 `Fin 3`을 정한다.
+`Σ`는 `\Sigma`로 입력하며, 수를 더하는 기호 `∑`와 구별한다.
+
+한편 모든 상자에서 원소를 하나씩 고른 결과는 함수로 나타낸다.
+첨자 `i`에서의 값이 `F i`에 속해야 하므로 함수 타입은 `(i : I) → F i`이다.
+이를 *종속곱*이라고 하며 수학에서는 $`\prod_{i\in I}F_i`로 쓴다.
+Lean에서는 이 함수 타입 표기를 사용한다. `F i`가 모두 같은 타입 `A`이면 앞에서 본 `I → A`가 된다.
+
+```savedLean
+def firstInEachBox : (i : Nat) → Fin (i + 1) :=
+  fun i => { val := 0, isLt := by arith }
+```
+
+유한한 개수의 합과 곱은 첨자를 `Fin n`으로 제한하여 만든다.
+$`n+1`개의 합에서는 마지막 상자의 원소를 분리하고,
+곱에서는 처음 $`n`개를 고른 결과와 마지막 선택을 분리할 수 있다.
+다음 두 전단사는 이 분리에 대응한다.
+
+- `sigmaAppend F n`: 처음 $`n`개 상자의 합과 마지막 상자의 서로소인 합을 $`n+1`개 상자의 합으로 보낸다.
+- `piAppend F n`: 처음 $`n`개 상자의 선택과 마지막 선택을 묶어 $`n+1`개 상자의 선택을 만든다.
+
+합에서는 마지막 첨자에 속하는지에 따라 출처를 나누고,
+곱에서는 함수를 처음 $`n`개에 제한한 뒤 마지막 함수값을 별도로 꺼내면 역방향을 얻는다.
+
+
+여기서는 `Fin (n + 1)`의 마지막 번호를 구별하는 `Fin.lastCases`를 사용한다.
+`Fin.lastCases last rest i`는 `i`가 `Fin.last n`이면 `last`를,
+어떤 `j : Fin n`의 `j.castSucc`이면 `rest j`를 값으로 갖는다.
+첨자에 따라 결과의 타입이 달라지는 함수도 이 방식으로 정의할 수 있다.
+증명에서 `induction i using Fin.lastCases`를 쓰면 같은 두 경우가 생긴다.
+마지막 번호인 `last` 경우와 나머지 번호인 `cast i` 경우를 각각 증명하면 된다.
+
+```savedLean
+def sigmaAppend (F : Nat → Type) (n : Nat) :
+    (Σ i : Fin n, F i.val) ⊕ F n →
+      (Σ i : Fin (n + 1), F i.val)
+  | .inl ⟨i, x⟩ => ⟨i.castSucc, x⟩
+  | .inr x => ⟨Fin.last n, x⟩
+
+def sigmaSplit (F : Nat → Type) (n : Nat)
+    (p : Σ i : Fin (n + 1), F i.val) :
+    (Σ i : Fin n, F i.val) ⊕ F n :=
+  Fin.lastCases (fun x => Sum.inr x)
+    (fun i x => Sum.inl ⟨i, x⟩) p.1 p.2
+
+theorem sigmaAppend_bijective (F : Nat → Type) (n : Nat) :
+    Bijective (sigmaAppend F n) := by
+  apply bijective_of_inverse _ (sigmaSplit F n)
+  · intro p
+    rcases p with ⟨i, x⟩ | x
+    · simp [sigmaAppend, sigmaSplit]
+    · simp [sigmaAppend, sigmaSplit]
+
+  · intro p
+    rcases p with ⟨i, x⟩
+    induction i using Fin.lastCases with
+    | last => simp [sigmaAppend, sigmaSplit]
+    | cast i => simp [sigmaAppend, sigmaSplit]
+
+def piAppend (F : Nat → Type) (n : Nat)
+    (p : ((i : Fin n) → F i.val) × F n) :
+    (i : Fin (n + 1)) → F i.val :=
+  Fin.lastCases p.2 p.1
+
+def piSplit (F : Nat → Type) (n : Nat)
+    (f : (i : Fin (n + 1)) → F i.val) :
+    ((i : Fin n) → F i.val) × F n :=
+  (fun i => f i.castSucc, f (Fin.last n))
+
+theorem piAppend_bijective (F : Nat → Type) (n : Nat) :
+    Bijective (piAppend F n) := by
+  apply bijective_of_inverse _ (piSplit F n)
+  · intro p
+    simp [piAppend, piSplit]
+
+  · intro f
+    ext i
+    induction i using Fin.lastCases with
+    | last => simp [piAppend, piSplit]
+    | cast i => simp [piAppend, piSplit]
+```
+
+이제 기수의 합·곱과 유한합·유한곱의 정의를 사용하여 귀납법으로 원소 수를 구한다.
+빈 종속합에는 원소가 없고, 빈 종속곱에는 빈 함수 하나가 있으므로 시작값도 각각 $`0`, $`1`이다.
+
+```savedLean
+theorem cardinal_finiteSigma (F : Nat → Type) (n : Nat) :
+    cardinal (Σ i : Fin n, F i.val) =
+      (∑ i < n, cardinal (F i)) := by
+  induction n with
+  | zero =>
+    apply cardinal_eq_of_sameCardinality
+    exists fun p => Fin.elim0 p.1
+    apply bijective_of_inverse _ (fun i => Fin.elim0 i)
+    · intro p
+      exact Fin.elim0 p.1
+
+    · intro i
+      exact Fin.elim0 i
+
+  | succ n ih =>
+    rw [finiteSum_succ, ← ih, ← cardinal_sum]
+    apply cardinal_eq_of_sameCardinality
+    apply sameCardinality_symm
+    exists sigmaAppend F n
+    exact sigmaAppend_bijective F n
+
+theorem cardinal_finitePi (F : Nat → Type) (n : Nat) :
+    cardinal ((i : Fin n) → F i.val) =
+      (∏ i < n, cardinal (F i)) := by
+  induction n with
+  | zero =>
+    apply cardinal_eq_of_sameCardinality
+    exists fun _ => (0 : Fin 1)
+    apply bijective_of_inverse _ (fun _ i => Fin.elim0 i)
+    · intro f
+      ext i
+      exact Fin.elim0 i
+
+    · intro i
+      ext
+      arith
+
+  | succ n ih =>
+    rw [finiteProd_succ, ← ih, ← cardinal_product]
+    apply cardinal_eq_of_sameCardinality
+    apply sameCardinality_symm
+    exists piAppend F n
+    exact piAppend_bijective F n
+```
+
+귀납 단계에서는 마지막 상자를 분리한 전단사와 귀납 가정을 연결한다.
+왼쪽은 타입의 기수이고 오른쪽은 기수들을 더하거나 곱한 값이라는 점에 주의하라.
+
+각 상자의 원소 수를 자연수로 알고 있다면 자연수의 유한합·유한곱으로 계산할 수 있다.
+이때 형변환과 합·곱의 순서를 바꾸는 다음 성질을 사용한다.
+
+```savedLean
+theorem finiteSum_nat_cast (f : Nat → Nat) (n : Nat) :
+    (∑ i < n, (f i : Cardinal)) =
+      ((∑ i < n, f i : Nat) : Cardinal) := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [finiteSum_succ, ih, cardinal_nat_add]
+    rfl
+
+theorem finiteProd_nat_cast (f : Nat → Nat) (n : Nat) :
+    (∏ i < n, (f i : Cardinal)) =
+      ((∏ i < n, f i : Nat) : Cardinal) := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [finiteProd_succ, ih, cardinal_nat_mul]
+    rfl
+```
+
+*보기* $`m`개의 원소에 각각 $`n`개의 값 중 하나를 대응시키는 함수는 $`n^m`개이다.
+모든 상자의 타입을 `Fin n`으로 두면 종속곱이 `Fin m → Fin n`이 되고,
+그 원소 수는 같은 값 $`n`을 $`m`번 곱한 결과이다.
+여기서 `simp only [cardinal_fin]`은 지정한 정리만 사용하여 각 상자의 기수 `cardinal (Fin n)`을 `n`으로 바꾼다.
+
+```savedLean
+theorem cardinal_fin_arrow (m n : Nat) :
+    cardinal (Fin m → Fin n) =
+      ((n ^ m : Nat) : Cardinal) := by
+  rw [cardinal_finitePi (fun _ => Fin n) m]
+  simp only [cardinal_fin]
+  rw [finiteProd_nat_cast, finiteProd_constant]
+
+theorem cardinal_nat_pow (m n : Nat) :
+    (n : Cardinal) ^ (m : Cardinal) =
+      ((n ^ m : Nat) : Cardinal) := by
+  rw [← cardinal_fin m, ← cardinal_fin n, ← cardinal_arrow]
+  exact cardinal_fin_arrow m n
+```
+
+```savedLean
+example : cardinal (Fin 2 → Fin 3) = 9 := by
+  rw [cardinal_fin_arrow]
+  rfl
+```
+
+*문제 12* (크기가 다른 세 상자)
+
+$`i`번째 상자에는 $`i+1`개의 원소가 있다. 처음 세 상자의 원소를 모두 모은 경우와,
+각 상자에서 하나씩 고른 경우의 원소 수가 모두 $`6`임을 보이라.
+
+```savedLean -keep
+theorem exercise_three_boxes_sum :
+    cardinal (Σ i : Fin 3, Fin (i.val + 1)) = 6 := by
+  sorry
+
+theorem exercise_three_boxes_product :
+    cardinal ((i : Fin 3) → Fin (i.val + 1)) = 6 := by
   sorry
 ```
 
@@ -1417,7 +2115,9 @@ theorem infinite_of_nat_injection {A : Type} (f : Nat → A)
 
   -- 두 단사함수를 합성하면 Nat에서 Fin n으로 가는 단사이다.
   apply no_injection_nat_fin n (r ∘ f)
-  exact injective_compose f r hf hr.inj
+  apply injective_compose f r
+  · exact hf
+  · exact hr.inj
 ```
 
 자연수의 항등함수에 이 정리를 사용하면 자연수 전체가 무한집합임을 얻는다.
@@ -1444,7 +2144,7 @@ theorem isInfinite_transport {A B : Type}
 
 ## 연습문제: 유한성과 무한성
 
-*문제 8* (유한집합과 무한집합의 구별)
+*문제 13* (유한집합과 무한집합의 구별)
 
 $`A`가 무한집합이고 $`B`가 유한집합이면 두 집합의 크기가 다름을 증명하라.
 크기가 같다고 가정하여 유한성을 옮기면 어떤 모순이 생기는지 살펴보라.
@@ -1476,7 +2176,7 @@ namespace Ample
 local infixr:90 (priority := high) " ∘ " => compose
 ```
 
-*문제 9* (순서쌍 집합의 무한성)
+*문제 14* (순서쌍 집합의 무한성)
 
 자연수의 순서쌍 전체가 무한집합임을 증명하라.
 자연수에서 오는 단사함수를 하나 구성하여 `infinite_of_nat_injection`을 사용하라.
@@ -1533,7 +2233,9 @@ theorem cardinalityLE_transport {A B : Type} {A' B' : Type}
 
   -- B에서 B'로 가는 전단사를 이어 붙인다.
   exists b ∘ f ∘ inverseMap a ha
-  exact injective_compose _ _ hFirst hb.inj
+  apply injective_compose
+  · exact hFirst
+  · exact hb.inj
 ```
 
 역방향은 두 전단사의 방향을 바꾸어 같은 정리를 사용하면 된다.
@@ -1570,7 +2272,8 @@ theorem cardinal_le_iff (A B : Type) :
   constructor
   · intro h
     rcases h with ⟨A', B', hA, hB, hf⟩
-    exact cardinalityLE_transport hA hB hf
+    apply cardinalityLE_transport hA hB
+    exact hf
 
   · intro hf
     exists A, B
@@ -1615,7 +2318,9 @@ theorem cardinal_le_trans {A B C : Type}
   -- 두 단사함수를 합성하여 크기의 비교를 연결한다.
   apply (cardinal_le_iff A C).mpr
   exists g ∘ f
-  exact injective_compose f g hf hg
+  apply injective_compose f g
+  · exact hf
+  · exact hg
 ```
 
 ```savedLean -show
@@ -1720,7 +2425,8 @@ theorem countablyInfinite_isInfinite {A : Type}
     (hA : IsCountablyInfinite A) :
     IsInfinite A := by
   unpack (cardinal_eq_iff Nat A).mp hA with ⟨f, hf⟩
-  exact infinite_of_nat_injection f hf.inj
+  apply infinite_of_nat_injection f
+  exact hf.inj
 
 theorem positives_countablyInfinite :
     IsCountablyInfinite (Elem positives) := by
@@ -1742,7 +2448,8 @@ theorem evens_countablyInfinite :
   exact doubleToEvens_bijective
 
 example : IsInfinite (Elem evens) := by
-  exact countablyInfinite_isInfinite evens_countablyInfinite
+  apply countablyInfinite_isInfinite
+  exact evens_countablyInfinite
 ```
 
 첫 정리는 자연수와 짝수 집합 사이의 전단사를 제시하고,
@@ -1760,6 +2467,47 @@ example :
 `cardinal Nat = cardinal (Elem positives)`이다.
 이들을 반대 방향으로 사용하여 양변을 `cardinal Nat`로 바꾸면 원하는 등식을 얻는다.
 
+*문제 15* (부분집합의 상과 크기)
+
+단사함수 $`f:A\to B`와 집합 $`S\subseteq A`가 주어져 있다.
+아래 함수는 $`S`의 원소 $`x`를 $`f(S)`의 원소 $`f(x)`로 보낸다.
+
+(1) 이 함수가 전단사임을 증명하라.
+
+(2) 첫 결과를 사용하여 $`S`와 $`f(S)`의 크기가 같음을 보이라.
+
+(3) 둘째 결과와 양의 자연수 집합의 가산무한성을 사용하여
+양의 자연수를 두 배 한 값들의 집합도 가산무한임을 보이라.
+
+```savedLean -keep
+def practiceImageMap {A B : Type} (f : A → B) (S : Set A) :
+    Elem S → Elem (image f S) :=
+  fun x =>
+    { val := f x.val
+      property := by
+        exists x.val
+        constructor
+        · exact x.property
+        · rfl }
+
+theorem exercise_imageMap_bijective
+    {A B : Type} (f : A → B) (S : Set A)
+    (hf : Injective f) :
+    Bijective (practiceImageMap f S) := by
+  sorry
+
+theorem exercise_injective_image_cardinal
+    {A B : Type} (f : A → B) (S : Set A)
+    (hf : Injective f) :
+    cardinal (Elem (image f S)) = cardinal (Elem S) := by
+  sorry
+
+theorem exercise_positive_doubles_countable :
+    IsCountablyInfinite
+      (Elem (image double positives)) := by
+  sorry
+```
+
 ## 연습문제: 자연수의 꼬리
 %%%
 tag := "cardinality-countable-practice"
@@ -1767,7 +2515,7 @@ tag := "cardinality-countable-practice"
 
 양의 자연수에 사용한 대응을 바꾸어 다음 집합의 크기를 확인해 보자.
 
-*문제 10* $`\{n\in\mathbb{N}:2\leq n\}`이 가산무한집합임을 증명하라.
+*문제 16* $`\{n\in\mathbb{N}:2\leq n\}`이 가산무한집합임을 증명하라.
 
 ```savedLean -keep
 theorem exercise_from_two_countably_infinite :
@@ -1776,7 +2524,7 @@ theorem exercise_from_two_countably_infinite :
   sorry
 ```
 
-*문제 11* (등차수열과 가산무한집합)
+*문제 17* (등차수열과 가산무한집합)
 
 집합 $`S=\{1,4,7,10,\ldots\}`을 $`3k+1` 꼴의 자연수로 정의한다.
 
@@ -1871,7 +2619,7 @@ example {A : Type}
 둘째 목표는 `S`가 자신의 부분집합이라는 명제이다.
 따라서 집합 절에서 증명한 `empty_subset`과 `subset_refl`을 그대로 사용할 수 있다.
 
-*문제 12* $`\mathcal{P}(S\cap T)=\mathcal{P}(S)\cap\mathcal{P}(T)`임을 증명하라.
+*문제 18* $`\mathcal{P}(S\cap T)=\mathcal{P}(S)\cap\mathcal{P}(T)`임을 증명하라.
 
 ```savedLean -keep
 theorem exercise_powerSet_inter {A : Type} (S T : Set A) :
@@ -1919,12 +2667,107 @@ theorem cardinal_le_powerSet (A : Type) :
 ```savedLean -show
 theorem cardinality_le_powerSet (A : Type) :
     CardinalityLE A (Set A) := by
-  exact (cardinal_le_iff A (Set A)).mp (cardinal_le_powerSet A)
+  apply (cardinal_le_iff A (Set A)).mp
+  apply cardinal_le_powerSet
 ```
 
 정리 `cardinal_le_powerSet`으로 $`|A|\leq|\mathcal{P}(A)|`를 얻었다.
-이제 $`|A|<|\mathcal{P}(A)|`를 보이려면 두 기수가 다름을 증명하면 된다.
-이를 위해 $`A`에서 멱집합으로 가는 전사함수가 없음을 보이자.
+멱집합의 크기를 함수 공간과 연결한 뒤, 원래 집합보다 크다는 사실을 증명하자.
+
+
+## 부분집합과 두 값의 함수
+%%%
+tag := "cardinality-characteristic-functions"
+%%%
+
+부분집합을 정하는 일은 각 원소를 포함할지 말지 정하는 일이다.
+포함하면 `true`, 포함하지 않으면 `false`를 대응시키면 부분집합마다 `Bool` 값 함수를 얻는다.
+거꾸로 주어진 함수가 `true`인 원소들을 모으면 원래 부분집합을 되찾는다.
+이 함수는 집합의 *특성함수*이다.
+
+```savedLean
+noncomputable def characteristic {A : Type}
+    (S : Set A) : A → Bool :=
+  fun x => if x ∈ S then true else false
+
+def trueSet {A : Type} (f : A → Bool) : Set A :=
+  fun x => f x = true
+
+theorem trueSet_characteristic {A : Type} (S : Set A) :
+    trueSet (characteristic S) = S := by
+  ext x
+  by_cases hx : x ∈ S
+  · simp [trueSet, characteristic, hx]
+  · simp [trueSet, characteristic, hx]
+
+theorem characteristic_trueSet {A : Type} (f : A → Bool) :
+    characteristic (trueSet f) = f := by
+  ext x
+  cases hx : f x with
+  | false => simp [characteristic, trueSet, hx]
+  | true => simp [characteristic, trueSet, hx]
+```
+
+`cases hx : f x with`는 `f x`의 값에 따라 경우를 나누면서
+각 경우에 그 값이 `false` 또는 `true`라는 등식도 `hx`로 남긴다.
+집합의 소속 조건을 판정하여 함수를 만들었으므로 `characteristic`에는 고전논리를 사용한다.
+
+`Bool`과 `Fin 2`를 연결할 때는 `false`에 $`0`, `true`에 $`1`을 대응시킨다.
+반대 방향에서는 번호가 $`1`인지를 확인한다.
+
+```savedLean
+theorem bool_cardinal : cardinal Bool = 2 := by
+  apply cardinal_eq_of_sameCardinality
+  exists fun b => if b then (1 : Fin 2) else 0
+  apply bijective_of_inverse _
+    (fun i => if i.val = 1 then true else false)
+  · intro b
+    cases b with
+    | false => rfl
+    | true => rfl
+
+  · intro i
+    have hi : i.val = 0 ∨ i.val = 1 := by arith
+    rcases hi with hi | hi
+    · ext
+      simp [hi]
+
+    · ext
+      simp [hi]
+```
+
+`Bool`에는 `false`, `true` 두 원소가 있으므로 `bool_cardinal : cardinal Bool = 2`이다.
+특성함수와 그 역방향으로 얻은 전단사에 함수 공간의 계산 정리를 적용하면 멱집합의 크기를 구할 수 있다.
+
+```savedLean
+theorem cardinal_set (A : Type) :
+    cardinal (Set A) = (2 : Cardinal) ^ cardinal A := by
+  rw [← bool_cardinal, ← cardinal_arrow]
+  apply cardinal_eq_of_sameCardinality
+  exists characteristic
+  apply bijective_of_inverse _ trueSet
+  · exact trueSet_characteristic
+  · exact characteristic_trueSet
+```
+
+*문제 19* (세 원소 집합의 부분집합)
+
+(1) 세 원소 집합에서 `Bool`로 가는 함수가 여덟 개임을 보이라.
+
+(2) 특성함수와의 대응을 사용하여 세 원소 집합의 부분집합도 여덟 개임을 보이라.
+
+```savedLean -keep
+theorem exercise_three_boolean_choices :
+    cardinal (Fin 3 → Bool) = 8 := by
+  sorry
+
+theorem exercise_three_powerSet :
+    cardinal (Set (Fin 3)) = 8 := by
+  sorry
+```
+
+이 대응은 무한집합에도 성립한다. 따라서 다음 칸토어 정리는 기수의 거듭제곱으로
+$`|A|<2^{|A|}`라고 나타낼 수 있다.
 
 ## 칸토어 정리
 %%%
@@ -2004,8 +2847,8 @@ theorem powerSet_not_sameCardinality (A : Type) :
     ¬ SameCardinality A (Set A) := by
   intro h
   unpack h with ⟨f, hf⟩
-  exact cantor_not_surjective f hf.surj
-
+  apply cantor_not_surjective f
+  exact hf.surj
 ```
 
 ```savedLean -show
@@ -2014,7 +2857,6 @@ theorem cardinality_lt_powerSet (A : Type) :
   constructor
   · exact cardinality_le_powerSet A
   · exact powerSet_not_sameCardinality A
-
 ```
 
 ```savedLean
@@ -2071,21 +2913,6 @@ example : ¬ Surjective initialSegment := by
 이 예제의 대각선 집합은 자연수 전체이다.
 다른 함수에서 출발하면 다른 대각선 집합을 얻을 수 있지만, 어느 경우에도 그 집합은 해당 함수의 상에 속하지 않는다.
 
-*보기* 자연수의 멱집합은 무한집합이며 가산무한집합이 아니다.
-한 원소 집합을 만드는 단사함수로 무한성을 얻으며
-자연수와 크기가 같다고 가정하면 칸토어 정리와 모순이다.
-
-```savedLean
-theorem nat_powerSet_isInfinite :
-    IsInfinite (Set Nat) := by
-  exact infinite_of_nat_injection
-    singleton singleton_injective
-
-theorem nat_powerSet_not_countablyInfinite :
-    ¬ IsCountablyInfinite (Set Nat) := by
-  exact cardinal_ne_powerSet Nat
-```
-
 자연수에서 시작하여 멱집합을 거듭 만들면 다음과 같이 크기가 커진다.
 
 $$`|\mathbb{N}|<|\mathcal{P}(\mathbb{N})|<|\mathcal{P}(\mathcal{P}(\mathbb{N}))|<\cdots.`
@@ -2100,7 +2927,7 @@ file := "exercises"
 
 각 문제의 `sorry`를 증명으로 바꾸어 완성하라.
 
-*문제 13* (멱집합의 포함 관계)
+*문제 20* (멱집합의 포함 관계)
 
 (1) $`S\subseteq T`이면 $`\mathcal{P}(S)\subseteq\mathcal{P}(T)`임을 증명하라.
 
@@ -2125,7 +2952,7 @@ theorem exercise_powerSet_twoThree_positives :
   sorry
 ```
 
-*문제 14* (한 원소 집합들을 나열한 경우)
+*문제 21* (한 원소 집합들을 나열한 경우)
 
 $`f(n)=\{n\}`으로 부분집합들을 나열하자.
 
@@ -2151,6 +2978,23 @@ theorem exercise_singleton_not_surjective :
   sorry
 ```
 
+*문제 22* (자연수 집합의 부분집합들)
+
+(1) 자연수 집합의 모든 부분집합으로 이루어진 타입 `Set Nat`가 무한임을 증명하라.
+
+(2) 이 타입이 가산무한집합은 아님을 보이라.
+따라서 무한집합끼리도 크기가 다를 수 있다.
+
+```savedLean -keep
+theorem exercise_powerSet_nat_infinite :
+    IsInfinite (Set Nat) := by
+  sorry
+
+theorem exercise_powerSet_nat_not_countable :
+    ¬ IsCountablyInfinite (Set Nat) := by
+  sorry
+```
+
 # 크기 비교의 자동화
 %%%
 tag := "infinite-cardinality-automation"
@@ -2168,7 +3012,7 @@ attribute [ample_card_rules]
   Cardinal.eq_symm Cardinal.eq_trans
   cardinal_fin fin_isFinite empty_cardinal singleton_cardinal
   threeNumbers_cardinal finite_cardinal_unique
-  fin_sameCardinality_eq cardinal_fin_eq cardinality_spec cardinality_eq
+  fin_sameCardinality_eq cardinal_fin_eq
   isFinite_of_cardinal_eq isFinite_transport isInfinite_transport
   nat_isInfinite
 ```

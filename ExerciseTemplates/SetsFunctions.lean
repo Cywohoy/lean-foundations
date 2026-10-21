@@ -68,6 +68,17 @@ theorem exercise_preimage_compl {A B : Type}
     preimage f Tᶜ = (preimage f T)ᶜ := by
   sorry
 
+theorem exercise_indexedUnion_mono {I A : Type}
+    (S T : I → Set A)
+    (h : ∀ i, S i ⊆ T i) :
+    indexedUnion S ⊆ indexedUnion T := by
+  sorry
+
+theorem exercise_indexedUnion_complement {I A : Type}
+    (S : I → Set A) :
+    (indexedUnion S)ᶜ = indexedInter (fun i => (S i)ᶜ) := by
+  sorry
+
 def practiceFourSix : Set Nat := fun n => n = 4 ∨ n = 6
 theorem exercise_image_double_twoThree :
     image double twoThree = practiceFourSix := by
@@ -75,6 +86,37 @@ theorem exercise_image_double_twoThree :
 
 theorem exercise_preimage_double_fourSix :
     preimage double practiceFourSix = twoThree := by
+  sorry
+
+def practiceZeroOnly : Set Nat := fun n => n = 0
+def practiceOneOnly : Set Nat := fun n => n = 1
+def practiceConstant : Nat → Nat := fun _ => 0
+theorem exercise_constant_images_meet :
+    0 ∈ image practiceConstant practiceZeroOnly ∩
+      image practiceConstant practiceOneOnly := by
+  sorry
+
+theorem exercise_constant_inter_image_empty :
+    0 ∉ image practiceConstant
+      (practiceZeroOnly ∩ practiceOneOnly) := by
+  sorry
+
+theorem exercise_image_inter_not_equal :
+    image practiceConstant
+        (practiceZeroOnly ∩ practiceOneOnly) ≠
+      image practiceConstant practiceZeroOnly ∩
+        image practiceConstant practiceOneOnly := by
+  sorry
+
+theorem exercise_injective_preimage_image_iff
+    {A B : Type} (f : A → B) :
+    Injective f ↔
+      ∀ S : Set A, preimage f (image f S) = S := by
+  sorry
+
+theorem exercise_surjective_image_whole_iff
+    {A B : Type} (f : A → B) :
+    Surjective f ↔ image f (whole A) = whole B := by
   sorry
 
 theorem exercise_double_after_successor_at_three :
@@ -124,6 +166,18 @@ theorem exercise_diagonal_injective :
 
 theorem exercise_diagonal_not_surjective :
     ¬ Surjective practiceDiagonal := by
+  sorry
+
+def practiceForget : Nat ⊕ Nat → Nat
+  | .inl n => n
+  | .inr n => n
+
+theorem exercise_forget_surjective :
+    Surjective practiceForget := by
+  sorry
+
+theorem exercise_forget_not_injective :
+    ¬ Injective practiceForget := by
   sorry
 
 theorem exercise_diff_antitone_right
@@ -176,6 +230,17 @@ theorem exercise_cancel_surjective {A B C : Type}
     (hh : Surjective h)
     (heq : f ∘ h = g ∘ h) :
     f = g := by
+  sorry
+
+theorem exercise_involution_bijective {A : Type} (f : A → A)
+    (h : ∀ x, f (f x) = x) :
+    Bijective f := by
+  sorry
+
+theorem exercise_involution_inverse {A : Type} (f : A → A)
+    (h : ∀ x, f (f x) = x) :
+    inverseMap f
+        (exercise_involution_bijective f h) = f := by
   sorry
 
 end Exercises.SetsFunctions

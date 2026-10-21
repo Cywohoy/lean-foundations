@@ -104,6 +104,10 @@ async function main() {
     console.log('PASS: visible proof steps and no standalone edit controls');
 
     const exercise = example(code => code.startsWith('theorem exercise_add_three_preserves_lt'));
+    const exerciseBlocks = Object.values(manifest).filter(block => block.exercise);
+    const totalExercises = exerciseBlocks.length;
+    const chapterExercises = exerciseBlocks.filter(block =>
+      block.exerciseChapter === exercise.data.exerciseChapter).length;
     // An earlier edition saved by source position. Keep that proof after moving the problem.
     await page.evaluate(({key, code}) => localStorage.setItem('lean-algebra.code.' + key, code), {
       key: exercise.data.legacyKeys.at(-1),
@@ -202,8 +206,8 @@ async function main() {
     assert.equal(await wrapper.locator('dialog').isVisible(), false);
     assert((await wrapper.locator('.book-example-body > .hl.lean.block').innerText()).includes('exact h'));
     assert.equal(await wrapper.locator('..').locator('.book-exercise-result').innerText(), '✓ 완료');
-    await page.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='1 / 62');
-    assert.equal(await page.locator('.book-toc-tree [aria-current="page"] .book-chapter-progress').innerText(),'1/9');
+    await page.waitForFunction(total => document.querySelector('.book-progress-total')?.textContent === `1 / ${total}`, totalExercises);
+    assert.equal(await page.locator('.book-toc-tree [aria-current="page"] .book-chapter-progress').innerText(), `1/${chapterExercises}`);
     assert.equal(await wrapper.locator('..').getByRole('button', {name:'풀이 보기', exact:true}).count(), 1);
     await wrapper.getByRole('button', {name:'복사',exact:true}).click({force:true});
     assert((await page.evaluate(()=>navigator.clipboard.readText())).includes('exact h'));
@@ -251,11 +255,11 @@ async function main() {
     await status(wrapper, '증명 완료 (1/2 완료)');
     assert.equal(await wrapper.getByRole('button',{name:'(1)',exact:true}).getAttribute('data-complete'),'true');
     assert.equal(await wrapper.getByRole('button',{name:'(2)',exact:true}).getAttribute('data-complete'),'false');
-    assert.equal(await page.locator('.book-progress-total').innerText(),'1 / 62');
+    assert.equal(await page.locator('.book-progress-total').innerText(), `1 / ${totalExercises}`);
     await wrapper.getByRole('button', {name: '(2)', exact: true}).click();
     await wrapper.locator('textarea').fill('apply exercise_shift_lt\napply exercise_shift_lt\nexact hab');
     await status(wrapper, '풀이 완료');
-    await page.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='2 / 62');
+    await page.waitForFunction(total => document.querySelector('.book-progress-total')?.textContent === `2 / ${total}`, totalExercises);
     await wrapper.getByRole('button', {name: '(1)', exact: true}).click();
     assert((await wrapper.locator('textarea').inputValue()).includes('(k := c)'));
     await status(wrapper, '풀이 완료');
@@ -379,8 +383,8 @@ contradiction`);
   have hI : Injective f := hf.inj
   have hS : Surjective f := hf.surj
   constructor
-  · exact inverseMap_left f hf x
-  · exact inverseMap_right f hf y`;
+  · exact inverseMap_left f
+  · exact inverseMap_right f`;
     const checks = await page.evaluate(async ({base, tests}) => {
       const {createBrowserBackend} = await import(new URL('assets/web/wasm-reader.js', base));
       const backend = createBrowserBackend(base);

@@ -84,4 +84,20 @@ theorem exercise_property_four_times (A : Type)
     ∀ x, P x → P (f (f (f (f x)))) := by
   sorry
 
+theorem exercise_relation_iterate {A : Type}
+    (f : A → A) (R : A → A → Prop)
+    (h : ∀ x y, R x y → R y (f x))
+    (a b : A)
+    (hab : R a b) :
+    R (f a) (f b) := by
+  sorry
+
+theorem exercise_relation_iterate_twice {A : Type}
+    (f : A → A) (R : A → A → Prop)
+    (h : ∀ x y, R x y → R y (f x))
+    (a b : A)
+    (hab : R a b) :
+    R (f (f a)) (f (f b)) := by
+  sorry
+
 end Exercises.Proof

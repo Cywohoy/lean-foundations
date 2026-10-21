@@ -432,12 +432,16 @@ example (a b : Int)
   have hTwoSix : 2 ∣ 6 := by exists 3
   have hTwoTen : 2 ∣ 10 := by exists 5
   replace ha : 2 ∣ a := by
-    exact divides_trans 2 6 a hTwoSix ha
+    apply divides_trans 2 6 a hTwoSix
+    exact ha
 
   replace hb : 2 ∣ b := by
-    exact divides_trans 2 10 b hTwoTen hb
+    apply divides_trans 2 10 b hTwoTen
+    exact hb
 
-  exact divides_add 2 a b ha hb
+  apply divides_add 2 a b
+  · exact ha
+  · exact hb
 ```
 
 수를 직접 택하는 부분은 $`6=2\cdot3`과 $`10=2\cdot5`를 확인하는 두 줄이다.
@@ -575,7 +579,8 @@ theorem congruent_twenty_three_neg_five :
     23 ≡ -5 [ZMOD 7] := by
   apply congruent_trans 7 23 2 (-5)
   · exact preliminaries_congruent_twenty_three_two
-  · exact congruent_symm 7 (-5) 2 congruent_neg_five_two
+  · apply congruent_symm 7 (-5) 2
+    exact congruent_neg_five_two
 ```
 
 추이성의 중간 정수는 $`2`이다.
@@ -750,6 +755,115 @@ local infixr:90 (priority := high) " ∘ " => compose
 local notation:50 a " ≡ " b " [ZMOD " n "]" => Congruent n a b
 ```
 
+*문제 10* (두 법에 대한 합동)
+
+$`a\equiv b\pmod6`이라는 조건은 $`2`와 $`3`을 법으로 각각 합동이라는 두 조건과 동치임을 증명하라.
+역방향에서는 두 합동의 정의에서 얻은 정수들을 조합하여 $`6`의 배수로 나타내는 계수를 찾아야 한다.
+
+```savedLean -keep
+theorem exercise_congruent_six_iff_two_three (a b : Int) :
+    a ≡ b [ZMOD 6] ↔ a ≡ b [ZMOD 2] ∧ a ≡ b [ZMOD 3] := by
+  sorry
+```
+
+
+# 유한합과 유한곱
+%%%
+tag := "numbers-finite-sums"
+%%%
+
+
+처음 $`n`개의 값을 더한 결과에 다음 값 하나를 더하면 처음 $`n+1`개의 합을 얻는다.
+유한합을 귀납적으로 정의할 때도 이 관계를 사용한다.
+곱에서는 새 값을 곱하며, 아무 값도 더하거나 곱하지 않은 시작값은 각각 $`0`, $`1`로 둔다.
+
+```savedLean
+def finiteSum {M : Type _} [OfNat M 0] [Add M] :
+    Nat → (Nat → M) → M
+
+  | 0, _ => 0
+  | n + 1, f => finiteSum n f + f n
+
+def finiteProd {M : Type _} [OfNat M 1] [Mul M] :
+    Nat → (Nat → M) → M
+
+  | 0, _ => 1
+  | n + 1, f => finiteProd n f * f n
+```
+
+```savedLean
+scoped syntax "∑ " ident " < " term ", " term : term
+scoped syntax "∏ " ident " < " term ", " term : term
+macro_rules
+  | `(∑ $i:ident < $n, $t) =>
+    `(finiteSum $n (fun $i => $t))
+  | `(∏ $i:ident < $n, $t) =>
+    `(finiteProd $n (fun $i => $t))
+```
+
+`∑ i < n, f i`는 $`\sum_{i=0}^{n-1}f(i)`이고 `∏ i < n, f i`는 $`\prod_{i=0}^{n-1}f(i)`이다.
+두 정의의 `M`은 더하거나 곱할 값의 타입이다. 자연수와 정수에 모두 사용할 수 있도록
+덧셈과 $`0`, 곱셈과 $`1`을 인수의 조건으로 받았다. 여기서는 자연수의 합과 곱부터 계산하자.
+
+```savedLean
+example : (∑ i < 3, i + 1) = 6 := by rfl
+example : (∏ i < 3, i + 1) = 6 := by rfl
+```
+
+첫 식은 $`1+2+3`, 둘째 식은 $`1\cdot2\cdot3`이다.
+항의 개수가 정해져 있으면 정의를 계산할 수 있고, 임의의 개수에 관한 성질은 귀납법으로 증명한다.
+마지막 항을 분리하는 다음 등식은 정의에서 바로 얻는다.
+
+```savedLean
+theorem finiteSum_succ {M : Type _} [OfNat M 0] [Add M]
+    (n : Nat) (f : Nat → M) :
+    finiteSum (n + 1) f = finiteSum n f + f n := by rfl
+
+theorem finiteProd_succ {M : Type _} [OfNat M 1] [Mul M]
+    (n : Nat) (f : Nat → M) :
+    finiteProd (n + 1) f = finiteProd n f * f n := by rfl
+```
+
+*보기* 같은 자연수 $`a`를 $`n`번 더한 합은 $`na`이다.
+$`n=0`이면 양쪽이 $`0`이고, $`n+1`개의 합은 귀납 가정에 따라 $`na+a=(n+1)a`이다.
+
+```savedLean
+theorem finiteSum_constant (n a : Nat) :
+    (∑ _i < n, a) = n * a := by
+  induction n with
+  | zero => simp [finiteSum]
+  | succ n ih =>
+    rw [finiteSum_succ, ih, Nat.succ_mul]
+```
+
+곱에서도 같은 논증으로 $`a`를 $`n`번 곱하면 $`a^n`을 얻는다.
+아래의 `Nat.pow_succ`는 $`a^{n+1}=a^n a`를 나타낸다.
+
+```savedLean
+theorem finiteProd_constant (n a : Nat) :
+    (∏ _i < n, a) = a ^ n := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [finiteProd_succ, ih, Nat.pow_succ]
+```
+
+*문제 11* (처음 몇 개의 홀수)
+
+(1) 처음 $`n`개의 홀수의 합이 $`n^2`임을 증명하라.
+
+(2) 첫 결과를 사용하여 처음 열 개의 홀수의 합을 구하라.
+
+```savedLean -keep
+theorem exercise_sum_odds (n : Nat) :
+    (∑ i < n, 2 * i + 1) = n * n := by
+  sorry
+
+theorem exercise_sum_ten_odds :
+    (∑ i < 10, 2 * i + 1) = 100 := by
+  sorry
+```
+
 # 동치관계
 %%%
 tag := "preliminaries-equivalence-relations"
@@ -849,7 +963,7 @@ example :
 `h.symm h01`은 대칭성을 사용하여 $`0\leq1`에서 $`1\leq0`을 얻는다.
 `decide`로 확인한 그 부정 `hNot10`에 `h10`을 적용하면 모순이다.
 
-*문제 10* 함수 $`f:A\to B`에 대하여 $`f(x)=f(y)`로 정한 관계가 동치관계임을 증명하라.
+*문제 12* 함수 $`f:A\to B`에 대하여 $`f(x)=f(y)`로 정한 관계가 동치관계임을 증명하라.
 
 ```savedLean -keep
 theorem exercise_equal_values_equivalence {A B : Type}
@@ -903,11 +1017,14 @@ theorem equivalenceClass_eq {A : Type _} (R : Relation A)
   constructor
   · intro hx
     -- R(x,a)와 R(a,b)에 추이성을 사용한다.
-    exact hR.trans hx hab
+    apply hR.trans hx
+    exact hab
 
   · intro hx
     -- 대칭성으로 R(b,a)를 얻은 뒤 추이성을 사용한다.
-    exact hR.trans hx (hR.symm hab)
+    apply hR.trans hx
+    apply hR.symm
+    exact hab
 ```
 
 `ext x`로 원소 조건의 동치를 목표로 삼은 뒤 `constructor`로 두 방향을 나눈다.
@@ -932,7 +1049,7 @@ example :
 이는 앞의 보기 `congruent_twenty_three_neg_five`에서 증명한 합동이므로
 그 결과를 사용하면 두 동치류의 등식을 얻는다.
 
-*문제 11* 모든 원소는 자신의 동치류에 속함을 증명하라.
+*문제 13* 모든 원소는 자신의 동치류에 속함을 증명하라.
 
 ```savedLean -keep
 theorem exercise_mem_own_equivalenceClass {A : Type}
@@ -943,7 +1060,7 @@ theorem exercise_mem_own_equivalenceClass {A : Type}
   sorry
 ```
 
-*문제 12* 동치관계 $`R`에 대하여 $`[a]_R=[b]_R`이면 $`R(a,b)`임을 증명하라.
+*문제 14* 동치관계 $`R`에 대하여 $`[a]_R=[b]_R`이면 $`R(a,b)`임을 증명하라.
 
 ```savedLean -keep
 theorem exercise_relation_of_classes_equal {A : Type}
@@ -957,13 +1074,178 @@ theorem exercise_relation_of_classes_equal {A : Type}
 
 *힌트* 반사성으로 $`a\in[a]_R`를 얻은 뒤 두 동치류가 같다는 가정을 사용하라.
 
+
+# 집합의 분할
+%%%
+tag := "relations-partitions"
+%%%
+
+
+정수를 짝수와 홀수로 나누면 모든 정수는 두 부류 중 정확히 하나에 속한다.
+이러한 분류를 일반적인 집합에 대해 표현한 것이 분할이다.
+
+*정의* 집합 $`A`의 *분할*은 비어 있지 않은 부분집합들로 이루어지며,
+각 원소가 정확히 한 부분집합에 속하도록 하는 집합족이다. 이 부분집합들을 분할의 *블록*이라고 한다.
+모든 원소가 어느 블록에 속하고, 원소 하나를 공유하는 두 블록은 같다는 조건으로 표현할 수 있다.
+
+```savedLean
+def IsPartition {A : Type} : Set (Set A) → Prop :=
+  fun blocks =>
+    (∀ S, S ∈ blocks → ∃ x, x ∈ S) ∧
+    (∀ x, ∃ S, S ∈ blocks ∧ x ∈ S) ∧
+    (∀ S T, S ∈ blocks → T ∈ blocks →
+      (∃ x, x ∈ S ∧ x ∈ T) → S = T)
+```
+
+첫 조건은 각 블록에 원소가 있음을, 둘째 조건은 블록들이 전체집합을 덮음을 나타낸다.
+셋째 조건은 겹치는 두 블록이 같다는 뜻이다.
+`h : IsPartition blocks`에서 세 조건을 꺼낼 때는 각각
+`h.nonempty`, `h.cover`, `h.eq_of_mem`으로 사용할 수 있다.
+
+```savedLean -show
+namespace IsPartition
+theorem nonempty {A : Type} {blocks : Set (Set A)}
+    (h : IsPartition blocks) (S : Set A)
+    (hS : S ∈ blocks) : ∃ x, x ∈ S := by
+  exact h.left S hS
+
+theorem cover {A : Type} {blocks : Set (Set A)}
+    (h : IsPartition blocks) (x : A) :
+    ∃ S, S ∈ blocks ∧ x ∈ S := by
+  exact h.right.left x
+
+theorem eq_of_mem {A : Type} {blocks : Set (Set A)}
+    (h : IsPartition blocks) (S T : Set A)
+    (hS : S ∈ blocks) (hT : T ∈ blocks)
+    (hmeet : ∃ x, x ∈ S ∧ x ∈ T) : S = T := by
+  exact h.right.right S T hS hT hmeet
+end IsPartition
+```
+
+
+동치관계의 동치류들은 분할을 이룬다. 각 원소는 자기 동치류에 속하므로
+동치류는 비어 있지 않고 전체집합을 덮는다.
+두 동치류 $`[a]`, $`[b]`에 공통 원소 $`x`가 있으면 $`xRa`, $`xRb`이고,
+대칭성과 추이성에서 $`aRb`를 얻는다. 따라서 앞에서 증명한 `equivalenceClass_eq`에 따라 두 동치류가 같다.
+
+```savedLean
+theorem equivalenceClasses_partition {A : Type}
+    (R : Relation A)
+    (hR : IsEquivalence R) :
+    IsPartition
+      (fun S => ∃ a, S = equivalenceClass R a) := by
+  and_intros
+  · intro S hS
+    rcases hS with ⟨a, ha⟩
+    rw [ha]
+    exists a
+    exact hR.refl a
+
+  · intro x
+    exists equivalenceClass R x
+    constructor
+    · exists x
+    · exact hR.refl x
+
+  · intro S T hS hT hmeet
+    rcases hS with ⟨a, ha⟩
+    rcases hT with ⟨b, hb⟩
+    rcases hmeet with ⟨x, hxS, hxT⟩
+    rw [ha] at hxS
+    rw [hb] at hxT
+    rw [ha, hb]
+    apply equivalenceClass_eq R hR
+    apply hR.trans
+    · apply hR.symm
+      exact hxS
+
+    · exact hxT
+```
+
+거꾸로 분할이 주어지면 같은 블록에 속하는 원소끼리 관계를 맺을 수 있다.
+짝수끼리, 홀수끼리 관계를 맺는 것이 그 예이다.
+
+```savedLean
+def sameBlock {A : Type} (blocks : Set (Set A)) :
+    Relation A :=
+  fun x y => ∃ S, S ∈ blocks ∧ x ∈ S ∧ y ∈ S
+```
+
+이 관계의 반사성에는 모든 원소가 어느 블록에 속한다는 조건을 사용한다.
+대칭성은 두 원소의 자리를 바꾸면 된다. 추이성에서는 $`x,y`가 속하는 블록과
+$`y,z`가 속하는 블록이 $`y`를 공유하므로 같다는 사실을 사용한다.
+
+```savedLean
+theorem sameBlock_equivalence {A : Type}
+    (blocks : Set (Set A))
+    (h : IsPartition blocks) :
+    IsEquivalence (sameBlock blocks) := by
+  and_intros
+  · intro x
+    rcases h.cover x with ⟨S, hS, hx⟩
+    exists S
+
+  · intro x y hxy
+    rcases hxy with ⟨S, hS, hx, hy⟩
+    exists S
+
+  · intro x y z hxy hyz
+    rcases hxy with ⟨S, hS, hx, hy⟩
+    rcases hyz with ⟨T, hT, hyT, hz⟩
+    have hST : S = T := by
+      apply h.eq_of_mem S T hS hT
+      exists y
+    rw [← hST] at hz
+    exists S
+```
+
+이 관계로 만든 $`a`의 동치류는 $`a`가 속한 원래 블록이다.
+즉 분할에서 관계를 만든 뒤 다시 동치류를 모으면 처음 분할을 되찾는다.
+
+```savedLean
+theorem sameBlock_class {A : Type} (blocks : Set (Set A))
+    (h : IsPartition blocks)
+    (S : Set A) (a : A)
+    (hS : S ∈ blocks)
+    (ha : a ∈ S) :
+    equivalenceClass (sameBlock blocks) a = S := by
+  ext x
+  constructor
+  · intro hx
+    rcases hx with ⟨T, hT, hx, haT⟩
+    have hTS : T = S := by
+      apply h.eq_of_mem T S hT hS
+      exists a
+    rw [← hTS]
+    exact hx
+
+  · intro hx
+    exists S
+```
+
+*문제 15* (블록을 구별하는 조건)
+
+자연수의 부분집합 $`S=\{0,1\}`, $`T=\{1,2,3,\ldots\}`를 생각하자.
+두 집합을 블록으로 삼으면 왜 분할이 되지 않는가?
+공통 원소와 두 집합을 구별하는 원소를 사용하여 증명하라.
+
+```savedLean -keep
+def practiceOverlappingBlocks : Set (Set Nat) :=
+  fun S => S = (fun x => x = 0 ∨ x = 1) ∨
+    S = (fun x => 1 ≤ x)
+
+theorem exercise_overlapping_not_partition :
+    ¬ IsPartition practiceOverlappingBlocks := by
+  sorry
+```
+
 # 몫집합과 몫타입
 %%%
 tag := "preliminaries-quotients"
 file := "quotients"
 %%%
 
-앞에서 정수 하나에 대하여 그 정수와 합동인 정수들의 집합을 만들었다.
+앞 절에서는 동치류들이 원래 집합을 분할함을 보였다. 이제 각 블록 자체를 원소로 모으자.
 $`2`를 법으로 하면 $`0`의 동치류는 짝수들의 집합이고 $`1`의 동치류는 홀수들의 집합이다.
 이번에는 이 두 집합을 각각 하나의 원소로 갖는 집합을 생각하자.
 정수를 원소로 갖는 짝수 집합과 달리, 이 새 집합의 원소는 짝수 집합과 홀수 집합이다.
@@ -1139,8 +1421,8 @@ attribute [reducible] Parity
 ```savedLean
 theorem parityClass_eq_iff (a b : Int) :
     parityClass a = parityClass b ↔ a ≡ b [ZMOD 2] := by
-  exact classOf_eq_iff (Congruent 2)
-    (congruent_equivalence 2) a b
+  apply classOf_eq_iff (Congruent 2)
+  apply congruent_equivalence
 ```
 
 ```savedLean -show
@@ -1334,10 +1616,11 @@ noncomputable def quotientLiftData {A B : Type _}
         exact quotientRepr_spec ⟦a⟧
 
       -- 같은 동치류에서 f의 값은 같다.
-      exact hf b a hRelation }
+      apply hf b a
+      exact hRelation }
 ```
 
-`hRelation : R b a`를 얻은 뒤 `hf b a hRelation`으로 `f b = f a`를 보인다.
+`apply hf b a`로 목표를 `R b a`로 바꾸면 방금 얻은 `hRelation`으로 증명을 마칠 수 있다.
 이 단계에서 대표원을 바꾸어도 함수값이 같다는 조건을 사용한다.
 
 이제 `.val`로 함수를 꺼내 `quotientLift`로 정의하고,
@@ -1431,7 +1714,7 @@ theorem parityClass_zero_ne_one :
 이미 정의한 함수의 값으로 두 몫 원소를 구별한다.
 일반적으로 $`f(x)\ne f(y)`임을 알면 $`x\ne y`임을 보일 수 있다.
 
-*문제 13* $`3`과 $`1`이 같은 홀수 동치류를 나타냄을 증명하라.
+*문제 16* $`3`과 $`1`이 같은 홀수 동치류를 나타냄을 증명하라.
 이 결과와 `parityClass_zero_ne_one`을 사용하여 $`3`의 동치류와 $`0`의 동치류가 다름을 보이라.
 
 ```savedLean -keep
@@ -1478,7 +1761,7 @@ file := "exercises"
 
 각 문제의 `sorry`를 증명으로 바꾸어 완성하라.
 
-*문제 14* (첫 좌표가 같은 점들)
+*문제 17* (첫 좌표가 같은 점들)
 
 두 좌표가 모두 정수인 점들 사이에 첫 좌표가 같다는 관계를 정의한다.
 
@@ -1506,7 +1789,7 @@ theorem exercise_vertical_class :
   sorry
 ```
 
-*문제 15* (겹치는 동치류)
+*문제 18* (겹치는 동치류)
 
 (1) 동치관계의 두 동치류가 공통 원소를 가지면 두 동치류가 같음을 증명하라.
 
@@ -1535,7 +1818,7 @@ theorem exercise_mod_six_classes :
   sorry
 ```
 
-*문제 16* (대표원에 따라 달라지는 값)
+*문제 19* (대표원에 따라 달라지는 값)
 
 모든 정수 $`a`에 대하여 $`F([a])=a\bmod3`을 만족하는 함수 $`F:\operatorname{Parity}\to\mathbb{Z}`는 존재하지 않음을 증명하라.
 여기서 $`[a]`는 $`2`를 법으로 한 동치류이다.
@@ -1548,7 +1831,7 @@ theorem exercise_parity_no_mod_three :
   sorry
 ```
 
-*문제 17* (짝수 동치류와 홀수 동치류의 교환)
+*문제 20* (짝수 동치류와 홀수 동치류의 교환)
 
 동치류 $`[a]`에 $`[a+1]`을 대응시키는 함수를 구성한다.
 
@@ -1582,6 +1865,93 @@ theorem exercise_nextParity_twice (q : Parity) :
 ```
 
 *힌트* 마지막 증명에서는 `quotient_exists_classOf`로 `q`의 대표원을 얻은 뒤 두 번째 결과를 사용하라.
+
+*문제 21* (자연수 쌍과 정수의 차)
+
+자연수 쌍 $`(a,b)`로 정수 $`a-b`를 나타낸다.
+서로 다른 쌍이라도 $`(2,5)`와 $`(4,7)`처럼 같은 정수를 나타낼 수 있다.
+뺄셈을 쓰지 않고도 두 쌍의 차가 같다는 조건을 $`a+d=c+b`로 적을 수 있다.
+차는 음수일 수도 있으므로 함수값을 계산할 때는 자연수를 정수로 바꾼다.
+`(p.1 : Int)`는 자연수 `p.1`을 같은 값의 정수로 나타내며,
+이어지는 뺄셈에서 `p.2`도 정수로 변환된다.
+
+(1) 이 조건으로 정의한 `practiceBalanced`가 동치관계임을 증명하라.
+
+(2) 관계가 성립하는 두 쌍에서 정수의 차도 같음을 보이라.
+이 결과를 사용하여 몫 원소에 정수의 차를 대응시키는 함수 `practiceDifference`를 정의한다.
+
+(3) 이 함수에 $`[(a,b)]`를 넣으면 정수 $`a-b`를 얻는다는 계산 규칙을 증명하라.
+
+(4) $`(2,5)`와 $`(4,7)`이 같은 몫 원소를 나타냄을 보이라.
+
+(5) 셋째 결과를 사용하여 $`[(4,7)]`에서의 함수값을 구하라.
+
+```savedLean -keep
+def practiceBalanced : Relation (Nat × Nat) :=
+  fun p q => p.1 + q.2 = q.1 + p.2
+
+theorem exercise_balanced_equivalence :
+    IsEquivalence practiceBalanced := by
+  sorry
+
+theorem exercise_balanced_difference (p q : Nat × Nat)
+    (h : practiceBalanced p q) :
+    (p.1 : Int) - p.2 = (q.1 : Int) - q.2 := by
+  sorry
+
+noncomputable def practiceDifference :
+    (Nat × Nat) / practiceBalanced → Int :=
+  quotientLift
+    practiceBalanced
+    exercise_balanced_equivalence
+    (fun p => (p.1 : Int) - p.2)
+    exercise_balanced_difference
+
+theorem exercise_difference_class (a b : Nat) :
+    practiceDifference ⟦(a, b)⟧ = (a : Int) - b := by
+  sorry
+
+theorem exercise_difference_same_class :
+    (⟦(2, 5)⟧ : (Nat × Nat) / practiceBalanced) =
+      ⟦(4, 7)⟧ := by
+  sorry
+
+theorem exercise_difference_concrete :
+    practiceDifference ⟦(4, 7)⟧ = -3 := by
+  sorry
+```
+
+*문제 22* (몫 위의 상수함수)
+
+짝수 동치류와 홀수 동치류에 각각 어떤 동치류가 대응하는지 살펴보자.
+
+(1) 모든 정수 $`a`에 대하여 $`[2a]=[0]`임을 보이라.
+
+(2) 첫 결과를 사용하여 $`[a]`에 $`[2a]`를 대응시키는 규칙이 대표원에 무관함을 보이라.
+
+(3) 이 규칙으로 정의한 `practiceParityDouble`이 모든 몫 원소를 $`[0]`으로 보내는 상수함수임을 보이라.
+
+```savedLean -keep
+theorem exercise_parity_double_zero (a : Int) :
+    parityClass (2 * a) = parityClass 0 := by
+  sorry
+
+theorem exercise_parity_double_respects (a b : Int)
+    (_h : a ≡ b [ZMOD 2]) :
+    parityClass (2 * a) = parityClass (2 * b) := by
+  sorry
+
+noncomputable def practiceParityDouble : Parity → Parity :=
+  quotientLift
+    (Congruent 2)
+    (congruent_equivalence 2)
+    (fun a => parityClass (2 * a))
+    exercise_parity_double_respects
+
+theorem exercise_parity_double_constant (q : Parity) :
+    practiceParityDouble q = parityClass 0 := by
+  sorry
+```
 
 ```savedLean -show
 end Ample

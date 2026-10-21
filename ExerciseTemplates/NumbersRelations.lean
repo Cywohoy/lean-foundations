@@ -78,6 +78,18 @@ theorem exercise_twenty_mod_six : 20 ≡ 2 [ZMOD 6] := by
 theorem exercise_twenty_mod_three : 20 ≡ 2 [ZMOD 3] := by
   sorry
 
+theorem exercise_congruent_six_iff_two_three (a b : Int) :
+    a ≡ b [ZMOD 6] ↔ a ≡ b [ZMOD 2] ∧ a ≡ b [ZMOD 3] := by
+  sorry
+
+theorem exercise_sum_odds (n : Nat) :
+    (∑ i < n, 2 * i + 1) = n * n := by
+  sorry
+
+theorem exercise_sum_ten_odds :
+    (∑ i < 10, 2 * i + 1) = 100 := by
+  sorry
+
 theorem exercise_equal_values_equivalence {A B : Type}
     (f : A → B) :
     IsEquivalence (fun x y : A => f x = f y) := by
@@ -96,6 +108,14 @@ theorem exercise_relation_of_classes_equal {A : Type}
     (a b : A)
     (h : equivalenceClass R a = equivalenceClass R b) :
     R a b := by
+  sorry
+
+def practiceOverlappingBlocks : Set (Set Nat) :=
+  fun S => S = (fun x => x = 0 ∨ x = 1) ∨
+    S = (fun x => 1 ≤ x)
+
+theorem exercise_overlapping_not_partition :
+    ¬ IsPartition practiceOverlappingBlocks := by
   sorry
 
 theorem exercise_parityClass_three_one :
@@ -164,6 +184,59 @@ theorem exercise_nextParity_class (a : Int) :
 
 theorem exercise_nextParity_twice (q : Parity) :
     practiceNextParity (practiceNextParity q) = q := by
+  sorry
+
+def practiceBalanced : Relation (Nat × Nat) :=
+  fun p q => p.1 + q.2 = q.1 + p.2
+
+theorem exercise_balanced_equivalence :
+    IsEquivalence practiceBalanced := by
+  sorry
+
+theorem exercise_balanced_difference (p q : Nat × Nat)
+    (h : practiceBalanced p q) :
+    (p.1 : Int) - p.2 = (q.1 : Int) - q.2 := by
+  sorry
+
+noncomputable def practiceDifference :
+    (Nat × Nat) / practiceBalanced → Int :=
+  quotientLift
+    practiceBalanced
+    exercise_balanced_equivalence
+    (fun p => (p.1 : Int) - p.2)
+    exercise_balanced_difference
+
+theorem exercise_difference_class (a b : Nat) :
+    practiceDifference ⟦(a, b)⟧ = (a : Int) - b := by
+  sorry
+
+theorem exercise_difference_same_class :
+    (⟦(2, 5)⟧ : (Nat × Nat) / practiceBalanced) =
+      ⟦(4, 7)⟧ := by
+  sorry
+
+theorem exercise_difference_concrete :
+    practiceDifference ⟦(4, 7)⟧ = -3 := by
+  sorry
+
+theorem exercise_parity_double_zero (a : Int) :
+    parityClass (2 * a) = parityClass 0 := by
+  sorry
+
+theorem exercise_parity_double_respects (a b : Int)
+    (_h : a ≡ b [ZMOD 2]) :
+    parityClass (2 * a) = parityClass (2 * b) := by
+  sorry
+
+noncomputable def practiceParityDouble : Parity → Parity :=
+  quotientLift
+    (Congruent 2)
+    (congruent_equivalence 2)
+    (fun a => parityClass (2 * a))
+    exercise_parity_double_respects
+
+theorem exercise_parity_double_constant (q : Parity) :
+    practiceParityDouble q = parityClass 0 := by
   sorry
 
 end Exercises.NumbersRelations

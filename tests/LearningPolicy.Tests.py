@@ -8,7 +8,7 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from learning_policy import exercise_policies
 
 policies = exercise_policies()
-assert len(policies) == 105
+assert len(policies) == 148
 assert policies['exercise_relation_specialization_apply'] == policies['exercise_relation_specialization']
 assert policies['exercise_inter_union_absorb'] == policies['exercise_inter_union_absorb_via_subset']
 assert 'arith' not in policies['exercise_congruent_add_left']

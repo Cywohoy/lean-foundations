@@ -9,13 +9,19 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from theorem_catalog import exercise_candidates
 
 candidates = exercise_candidates()
-assert len(candidates) == 105
+assert len(candidates) == 148
 assert {'Int.add_comm', 'Int.sub_add_cancel'} <= set(candidates['exercise_congruent_one'])
 assert 'Ample.congruent_add_right' in candidates['exercise_congruent_add_left']
 assert 'Ample.congruent_add_right' in candidates['exercise_nextParity_respects']
 assert 'Ample.parityClass_zero_ne_one' in candidates['exercise_parityClass_three_one']
 assert 'Ample.quotientLift_unique' not in candidates['exercise_parityClass_three_one']
 assert 'Nat.add_lt_add_right' in candidates['exercise_add_three_preserves_lt']
+assert 'Ample.fin_injective_surjective' in candidates['exercise_fin_injective_bijective']
+assert 'Ample.cardinal_finiteSigma' in candidates['exercise_three_boxes_sum']
+assert 'Ample.cardinal_finitePi' in candidates['exercise_three_boxes_product']
+assert 'Ample.cardinal_set' in candidates['exercise_three_powerSet']
+assert 'Ample.cardinal_nat_pow' not in candidates['exercise_two_to_three_functions']
+assert 'Ample.sameBlock_class' in candidates['exercise_overlapping_not_partition']
 assert all(not name.rsplit('.', 1)[-1].startswith('exercise_')
            for names in candidates.values() for name in names)
 

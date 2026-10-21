@@ -986,6 +986,33 @@ theorem exercise_property_four_times (A : Type)
   sorry
 ```
 
+*문제 10* (두 인수의 역할)
+
+두 원소에 관한 조건 `R`와 함수 `f`가 주어져 있다.
+`R x y`에서 `R y (f x)`를 얻을 수 있다고 하자.
+
+(1) 이 규칙을 두 번 사용하여 `R a b`에서 `R (f a) (f b)`를 얻으라.
+
+(2) 첫 결과를 사용하여 두 원소에 `f`를 각각 두 번 적용한 뒤에도 `R`이 성립함을 보이라.
+
+```savedLean -keep
+theorem exercise_relation_iterate {A : Type}
+    (f : A → A) (R : A → A → Prop)
+    (h : ∀ x y, R x y → R y (f x))
+    (a b : A)
+    (hab : R a b) :
+    R (f a) (f b) := by
+  sorry
+
+theorem exercise_relation_iterate_twice {A : Type}
+    (f : A → A) (R : A → A → Prop)
+    (h : ∀ x y, R x y → R y (f x))
+    (a b : A)
+    (hab : R a b) :
+    R (f (f a)) (f (f b)) := by
+  sorry
+```
+
 ```savedLean -show
 end ProofExamples
 ```

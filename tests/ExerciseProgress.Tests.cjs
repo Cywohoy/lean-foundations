@@ -59,18 +59,18 @@ async function main() {
     }
     const requests=[]; page.on('request',request=>requests.push(request.url()));
     await page.goto(base+'proof/');
-    await count('0 / 62');
+    await count('0 / 82');
     assert(await page.evaluate(() => !!(document.querySelector('.book-toc-tree')
       .compareDocumentPosition(document.querySelector('.book-progress')) & Node.DOCUMENT_POSITION_FOLLOWING)),
       'Progress belongs below the table of contents');
     assert(!requests.some(url=>url.endsWith('/playground.json')),'Reading progress must not fetch the full execution manifest');
-    assert.deepEqual(await page.locator('.book-chapter-progress').allTextContents(),['0/9','0/22','0/17','0/14']);
+    assert.deepEqual(await page.locator('.book-chapter-progress').allTextContents(),['0/10','0/28','0/22','0/22']);
     const single=proof.find(([,v])=>(v.code.match(/^theorem\s+/gm)||[]).length===1);
     const partial=proof.find(([,v])=>(v.code.match(/^theorem\s+/gm)||[]).length>1);
     await seed([[...single,1],[...partial,1]]);
     await page.reload();
-    await count('1 / 62');
-    assert.equal(await page.locator('.book-toc-tree [aria-current="page"] .book-chapter-progress').innerText(),'1/9');
+    await count('1 / 82');
+    assert.equal(await page.locator('.book-toc-tree [aria-current="page"] .book-chapter-progress').innerText(),'1/10');
     const sectionTotal = await page.locator('.book-section-progress').allTextContents();
     assert.equal(sectionTotal.reduce((sum,text)=>sum+Number(text.split('/')[1]),0),proof.length);
     const section = page.locator(`.book-section-link[href$="#${single[1].exerciseSection}"]`);
@@ -96,7 +96,7 @@ async function main() {
     await page.setViewportSize({width:1360,height:1000});
     await seed(proof.map(([key,data])=>[key,data]));
     await page.goto(base+'proof/');
-    await count('9 / 62');
+    await count('10 / 82');
     const next=exercises.find(([,v])=>v.exerciseChapter==='sets-functions');
     await page.locator('.book-progress-next').click();
     await page.waitForURL(new URL(`sets-functions/#exercise-${next[0]}`,base).href);
@@ -111,12 +111,12 @@ async function main() {
       localStorage.setItem(key,JSON.stringify(saved));
     },single[1]);
     await page.goto(base+'proof/');
-    await count('9 / 62');
+    await count('10 / 82');
     await page.waitForFunction(key=>document.querySelector(`#exercise-${key}`)?.parentElement.querySelector('.book-exercise-result')?.textContent==='✓ 완료 · 재검사 대기',single[0]);
     await page.waitForFunction(()=>window.pendingChecks?.length>0);
     await page.evaluate(()=>window.pendingChecks.shift()());
     await page.waitForFunction(key=>document.querySelector(`#exercise-${key}`)?.parentElement.querySelector('.book-exercise-result')?.textContent==='✓ 완료',single[0]);
-    await count('9 / 62');
+    await count('10 / 82');
     // A newly failing audit removes completion but never deletes the saved solution.
     await page.evaluate(data=>{
       const key='lean-algebra.result.'+data.storageKey;
@@ -128,7 +128,7 @@ async function main() {
     await page.evaluate(()=>{window.fixtureAxioms=['sorryAx'];});
     await page.waitForFunction(()=>window.pendingChecks?.length>0);
     await page.evaluate(()=>window.pendingChecks.shift()());
-    await count('8 / 62');
+    await count('9 / 82');
     assert(await page.evaluate(data=>localStorage.getItem('lean-algebra.code.'+data.storageKey)?.includes('exact True.intro'),single[1]));
     await seed([[...single,1]]);
     await page.evaluate(id=>{
@@ -137,7 +137,7 @@ async function main() {
       localStorage.setItem(key,JSON.stringify(saved));
     },single[1].storageKey);
     await page.goto(base+'proof/');
-    await count('8 / 62');
+    await count('9 / 82');
     assert.equal(await page.locator(`#exercise-${single[0]}`).locator('..').locator('.book-exercise-result').innerText(),'작성 중');
     const staleCard=page.locator(`#exercise-${single[0]}`).locator('..');
     await staleCard.getByRole('button',{name:'이어서 풀기',exact:true}).click();
@@ -150,13 +150,13 @@ async function main() {
       saved.version=JSON.stringify([data.code,data.allowedTactics,data.contextFiles?.map(f=>f.sha256)]);
       localStorage.setItem(key,JSON.stringify(saved));
     },single[1]);
-    await count('9 / 62');
+    await count('10 / 82');
     await page.waitForFunction(key=>document.querySelector(`#exercise-${key}`)?.parentElement.querySelector('.book-exercise-result')?.textContent==='✓ 완료',single[0]);
     await other.evaluate(data=>{
       const key='lean-algebra.code.'+data.storageKey;
       localStorage.setItem(key,localStorage.getItem(key).replace('exact True.intro','-- changed elsewhere\n  exact True.intro'));
     },single[1]);
-    await count('8 / 62');
+    await count('9 / 82');
     await page.waitForFunction(key=>document.querySelector(`#exercise-${key} .book-draft-code`)?.textContent.includes('changed elsewhere'),single[0]);
     await staleCard.getByRole('button',{name:'이어서 풀기',exact:true}).click();
     assert((await staleCard.locator('textarea').inputValue()).includes('changed elsewhere'));
@@ -168,7 +168,7 @@ async function main() {
     await page.setViewportSize({width:1360,height:1000});
     await seed(exercises.map(([key,data])=>[key,data]));
     await page.goto(base);
-    await count('62 / 62');
+    await count('82 / 82');
     assert.equal(await page.locator('.book-progress-next').innerText(),'모든 문제 완료');
     assert(await page.locator('.book-progress-next').isDisabled());
     assert.equal(await page.locator('.book-progress-storage').textContent(),'');
@@ -176,7 +176,7 @@ async function main() {
       .filter(([key])=>key.startsWith('lean-algebra.code.'))));
     const reading=await context.newPage();
     await reading.goto(base+'proof/');
-    await reading.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='62 / 62');
+    await reading.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='82 / 82');
     const activeCard=reading.locator(`#exercise-${single[0]}`).locator('..');
     await activeCard.getByRole('button',{name:'풀이 보기',exact:true}).click();
     await reading.waitForFunction(()=>window.pendingChecks?.length>0);
@@ -189,14 +189,14 @@ async function main() {
     // Cancelling must not remove any saved work.
     page.once('dialog',dialog=>dialog.dismiss());
     await page.locator('.book-progress-reset').click();
-    await count('62 / 62');
+    await count('82 / 82');
     assert.equal(await page.evaluate(id=>localStorage.getItem('lean-algebra.code.'+id),single[1].storageKey),
       draftsBefore['lean-algebra.code.'+single[1].storageKey]);
     page.once('dialog',dialog=>dialog.accept());
     await page.locator('.book-progress-reset').click();
-    await count('0 / 62');
+    await count('0 / 82');
     assert.equal(await page.locator('.book-progress-storage').innerText(),'초기화됨');
-    await reading.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='0 / 62');
+    await reading.waitForFunction(()=>document.querySelector('.book-progress-total')?.textContent==='0 / 82');
     await reading.waitForFunction(()=>document.querySelector('dialog[open] textarea')?.value.trim()==='sorry');
     // An older in-flight verification must not restore the discarded solution.
     await reading.evaluate(()=>window.pendingChecks.shift()());
@@ -213,8 +213,8 @@ async function main() {
       && key!=='lean-algebra.result.other-book-proof').length),0);
     assert.equal(await page.evaluate(id=>localStorage.getItem('lean-algebra.code.'+id),partial[1].storageKey),null);
     await page.reload();
-    await count('0 / 62');
-    assert.deepEqual(await page.locator('.book-chapter-progress').allTextContents(),['0/9','0/22','0/17','0/14']);
+    await count('0 / 82');
+    assert.deepEqual(await page.locator('.book-chapter-progress').allTextContents(),['0/10','0/28','0/22','0/22']);
     await reading.close();
     await page.screenshot({path:'tmp/exercise-progress.png'});
     // Alternative methods have independent proof slots; applications that
