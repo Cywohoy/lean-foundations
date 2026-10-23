@@ -214,7 +214,7 @@ theorem double_is_even (n : Nat) :
 theorem five_not_in_double_image :
     5 ∉ image double (whole Nat) := by
   intro hy
-  rcases hy with ⟨n, hn, hEq⟩
+  rcases hy with ⟨n, ⟨hn, hEq⟩⟩
 
   -- 5가 상에 속한다면 5가 짝수라는 결론을 얻는다.
   apply five_not_even
@@ -748,31 +748,31 @@ theorem congruent_iff_emod_eq (n a b : Int) :
 theorem congruent_add (n a b c d : Int)
     (hab : Congruent n a b) (hcd : Congruent n c d) :
     Congruent n (a + c) (b + d) := by
-  rcases hab with ⟨k, hk⟩
-  rcases hcd with ⟨l, hl⟩
+  unpack hab with ⟨k, hk⟩
+  unpack hcd with ⟨l, hl⟩
   exists k + l
   arith
 
 theorem congruent_mul (n a b c d : Int)
     (hab : Congruent n a b) (hcd : Congruent n c d) :
     Congruent n (a * c) (b * d) := by
-  rcases hab with ⟨k, hk⟩
-  rcases hcd with ⟨l, hl⟩
+  unpack hab with ⟨k, hk⟩
+  unpack hcd with ⟨l, hl⟩
   exists b * l + d * k + n * k * l
   arith
 
 theorem congruent_neg (n a b : Int)
     (hab : Congruent n a b) :
     Congruent n (-a) (-b) := by
-  rcases hab with ⟨k, hk⟩
+  unpack hab with ⟨k, hk⟩
   exists -k
   arith
 
 theorem congruent_sub (n a b c d : Int)
     (hab : Congruent n a b) (hcd : Congruent n c d) :
     Congruent n (a - c) (b - d) := by
-  rcases hab with ⟨k, hk⟩
-  rcases hcd with ⟨l, hl⟩
+  unpack hab with ⟨k, hk⟩
+  unpack hcd with ⟨l, hl⟩
   exists k - l
   arith
 
@@ -790,22 +790,22 @@ theorem congruent_pow (n a b : Int) (k : Nat)
 theorem congruent_cancel_add (n a b c : Int)
     (hab : Congruent n (a + c) (b + c)) :
     Congruent n a b := by
-  rcases hab with ⟨k, hk⟩
+  unpack hab with ⟨k, hk⟩
   exists k
   arith
 
 theorem congruent_weaken_product (n d a b : Int)
     (hab : Congruent (n * d) a b) :
     Congruent n a b := by
-  rcases hab with ⟨k, hk⟩
+  unpack hab with ⟨k, hk⟩
   exists d * k
   arith
 
 theorem congruent_of_dvd (m n a b : Int)
     (hd : Dvd.dvd n m) (hab : Congruent m a b) :
     Congruent n a b := by
-  rcases hd with ⟨d, hd⟩
-  rcases hab with ⟨k, hk⟩
+  unpack hd with ⟨d, hd⟩
+  unpack hab with ⟨k, hk⟩
   exists d * k
   rw [hd] at hk
   rw [hk, Int.mul_assoc]
@@ -1043,34 +1043,15 @@ abbrev Relation (A : Type _) := A → A → Prop
 3. $`R(a,b)`이고 $`R(b,c)`이면 $`R(a,c)`이다. 이를 *추이성*이라고 한다.
 
 ```savedLean
-def IsEquivalence {A : Type _} : Relation A → Prop :=
-  fun R =>
-    (∀ a, R a a) ∧
-    (∀ a b, R a b → R b a) ∧
-    (∀ a b c, R a b → R b c → R a c)
+structure IsEquivalence {A : Type _}
+    (R : Relation A) : Prop where
+  refl : ∀ a, R a a
+  symm : ∀ {a b}, R a b → R b a
+  trans : ∀ {a b c}, R a b → R b c → R a c
 ```
 
-```savedLean -show
-namespace IsEquivalence
-
-theorem refl
-    {A : Type _} {R : Relation A} (hR : IsEquivalence R) (a : A) :
-    R a a := hR.left a
-
-theorem symm
-    {A : Type _} {R : Relation A} (hR : IsEquivalence R) {a b : A}
-    (hab : R a b) : R b a := hR.right.left a b hab
-
-theorem trans
-    {A : Type _} {R : Relation A} (hR : IsEquivalence R) {a b c : A}
-    (hab : R a b) (hbc : R b c) : R a c := hR.right.right a b c hab hbc
-
-end IsEquivalence
-```
-
-세 성질을 논리곱으로 묶었으므로 `hR : IsEquivalence R`이 주어지면
-반사성·대칭성·추이성의 증명을 각각 꺼낼 수 있다.
-교재에서는 이 세 조건을 이름으로 사용하는 정리도 준비했다.
+앞의 `Bijective`와 같이 세 조건에 이름을 붙여 묶었다.
+`hR : IsEquivalence R`이 주어지면 각 필드로 그 조건을 사용할 수 있다.
 `hR.refl a`는 `R a a`의 증명이고,
 `hR.symm hab`는 `hab : R a b`에서 `R b a`를 얻는다.
 또한 `hR.trans hab hbc`는 `hab : R a b`와 `hbc : R b c`에서 `R a c`를 얻는다.
@@ -1079,16 +1060,26 @@ end IsEquivalence
 
 *풀이* 앞에서 증명한 `congruent_refl n`, `congruent_symm n`, `congruent_trans n`이
 각각 반사성·대칭성·추이성의 증명이다.
-앞에서 배운 `and_intros`로 세 조건을 나누고 각각의 증명을 제시하자.
+`constructor`로 세 필드에 필요한 증명을 각각 제시하자.
 
 ```savedLean
 theorem congruent_equivalence (n : Int) :
     IsEquivalence (Congruent n) := by
-  and_intros
+  constructor
   · exact congruent_refl n
-  · exact congruent_symm n
-  · exact congruent_trans n
+  · intro a b hab
+    apply congruent_symm n a b
+    exact hab
+
+  · intro a b c hab hbc
+    apply congruent_trans n a b c
+    · exact hab
+    · exact hbc
 ```
+
+`P ∧ Q ∧ R`는 `P ∧ (Q ∧ R)`로 묶였지만, 이 구조체에는 세 필드가 나란히 있다.
+따라서 `constructor` 한 번으로 세 목표가 생기며,
+가정에서 세 증명을 함께 꺼낼 때도 `unpack hR with ⟨hrefl, hsymm, htrans⟩`를 사용할 수 있다.
 
 *보기* 자연수에서 $`a\leq b`라는 관계는 동치관계가 아니다.
 이 관계에서는 $`0\leq1`이 성립하지만 그 반대인 $`1\leq0`은 성립하지 않으므로 대칭성이 없다.
@@ -1339,39 +1330,18 @@ tag := "relations-partitions"
 모든 원소가 어느 블록에 속하고, 원소 하나를 공유하는 두 블록은 같다는 조건으로 표현할 수 있다.
 
 ```savedLean
-def IsPartition {A : Type} : Set (Set A) → Prop :=
-  fun blocks =>
-    (∀ S, S ∈ blocks → ∃ x, x ∈ S) ∧
-    (∀ x, ∃ S, S ∈ blocks ∧ x ∈ S) ∧
-    (∀ S T, S ∈ blocks → T ∈ blocks →
-      (∃ x, x ∈ S ∧ x ∈ T) → S = T)
+structure IsPartition {A : Type}
+    (blocks : Set (Set A)) : Prop where
+  nonempty : ∀ S, S ∈ blocks → ∃ x, x ∈ S
+  cover : ∀ x, ∃ S, S ∈ blocks ∧ x ∈ S
+  eq_of_in : ∀ S T, S ∈ blocks → T ∈ blocks →
+    (∃ x, x ∈ S ∧ x ∈ T) → S = T
 ```
 
-첫 조건은 각 블록에 원소가 있음을, 둘째 조건은 블록들이 전체집합을 덮음을 나타낸다.
-셋째 조건은 겹치는 두 블록이 같다는 뜻이다.
+`nonempty`는 각 블록에 원소가 있음을, `cover`는 블록들이 전체집합을 덮음을 나타낸다.
+`eq_of_in`은 겹치는 두 블록이 같다는 조건이다.
 `h : IsPartition blocks`에서 세 조건을 꺼낼 때는 각각
 `h.nonempty`, `h.cover`, `h.eq_of_in`으로 사용할 수 있다.
-
-```savedLean -show
-namespace IsPartition
-theorem nonempty {A : Type} {blocks : Set (Set A)}
-    (h : IsPartition blocks) (S : Set A)
-    (hS : S ∈ blocks) : ∃ x, x ∈ S := by
-  exact h.left S hS
-
-theorem cover {A : Type} {blocks : Set (Set A)}
-    (h : IsPartition blocks) (x : A) :
-    ∃ S, S ∈ blocks ∧ x ∈ S := by
-  exact h.right.left x
-
-theorem eq_of_in {A : Type} {blocks : Set (Set A)}
-    (h : IsPartition blocks) (S T : Set A)
-    (hS : S ∈ blocks) (hT : T ∈ blocks)
-    (hmeet : ∃ x, x ∈ S ∧ x ∈ T) : S = T := by
-  exact h.right.right S T hS hT hmeet
-end IsPartition
-```
-
 
 동치관계의 동치류들은 분할을 이룬다. 각 원소는 자기 동치류에 속하므로
 동치류는 비어 있지 않고 전체집합을 덮는다.
@@ -1384,10 +1354,10 @@ theorem equivalenceClasses_partition {A : Type}
     (hR : IsEquivalence R) :
     IsPartition
       (fun S => ∃ a, S = equivalenceClass R a) := by
-  and_intros
+  constructor
   · -- 동치류 [a]에는 대표원 a가 속한다.
     intro S hS
-    rcases hS with ⟨a, ha⟩
+    unpack hS with ⟨a, ha⟩
     rw [ha]
     exists a
     exact hR.refl a
@@ -1401,9 +1371,9 @@ theorem equivalenceClasses_partition {A : Type}
 
   · -- 공통 원소에서 두 대표원의 관계를 얻는다.
     intro S T hS hT hmeet
-    rcases hS with ⟨a, ha⟩
-    rcases hT with ⟨b, hb⟩
-    rcases hmeet with ⟨x, hxS, hxT⟩
+    unpack hS with ⟨a, ha⟩
+    unpack hT with ⟨b, hb⟩
+    rcases hmeet with ⟨x, ⟨hxS, hxT⟩⟩
     rw [ha] at hxS
     rw [hb] at hxT
     rw [ha, hb]
@@ -1433,21 +1403,21 @@ theorem sameBlock_equivalence {A : Type}
     (blocks : Set (Set A))
     (h : IsPartition blocks) :
     IsEquivalence (sameBlock blocks) := by
-  and_intros
+  constructor
   · -- 각 원소를 덮는 블록을 택한다.
     intro x
-    rcases h.cover x with ⟨S, hS, hx⟩
+    rcases h.cover x with ⟨S, ⟨hS, hx⟩⟩
     exists S
 
   · -- 같은 블록에서 두 원소의 자리를 바꾼다.
     intro x y hxy
-    rcases hxy with ⟨S, hS, hx, hy⟩
+    rcases hxy with ⟨S, ⟨hS, ⟨hx, hy⟩⟩⟩
     exists S
 
   · -- 가운데 원소 y를 공유하므로 두 블록은 같다.
     intro x y z hxy hyz
-    rcases hxy with ⟨S, hS, hx, hy⟩
-    rcases hyz with ⟨T, hT, hyT, hz⟩
+    rcases hxy with ⟨S, ⟨hS, ⟨hx, hy⟩⟩⟩
+    rcases hyz with ⟨T, ⟨hT, ⟨hyT, hz⟩⟩⟩
     have hST : S = T := by
       apply h.eq_of_in S T hS hT
       exists y
@@ -1469,7 +1439,7 @@ theorem sameBlock_class {A : Type} (blocks : Set (Set A))
   ext x
   constructor
   · intro hx
-    rcases hx with ⟨T, hT, hx, haT⟩
+    rcases hx with ⟨T, ⟨hT, ⟨hx, haT⟩⟩⟩
     have hTS : T = S := by
       apply h.eq_of_in T S hT hS
       exists a
@@ -1817,13 +1787,13 @@ example :
 
 *풀이* 합동의 정의에 따라 $`a=b+2k`인 정수 $`k`가 존재한다.
 두 수의 차이가 $`2`의 배수이므로 $`2`로 나눈 나머지는 같다.
-Lean에서도 `rcases`로 이 정수 `k`와 등식 `hk`를 얻은 뒤 `arith`로 나머지의 등식을 확인한다.
+Lean에서도 `unpack`으로 이 정수 `k`와 등식 `hk`를 얻은 뒤 `arith`로 나머지의 등식을 확인한다.
 
 ```savedLean
 theorem congruent_two_same_remainder (a b : Int)
     (hab : a ≡ b [MOD 2]) :
     a % 2 = b % 2 := by
-  rcases hab with ⟨k, hk⟩
+  unpack hab with ⟨k, hk⟩
   arith
 ```
 

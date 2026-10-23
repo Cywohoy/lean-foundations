@@ -154,3 +154,10 @@ the browser checks as unverified instead of starting one.
 Library tactic regressions belong to Ample and follow that repository's own
 instructions. PDF output and public deployment require a separate explicit
 request and are not consequences of passing these checks.
+
+`node tests/Theme.Tests.cjs` checks the staged portal and all reading pages with
+in-memory browser routes (no listener). It covers system/light/dark selection,
+first-content timing, persistence, cross-tab changes, blocked storage, contrast,
+narrow screens, keyboard focus, proof steps and light print colors. For a real
+Lean exercise run with dark colors, set `BOOK_THEME=dark` when running
+`BrowserDiagnostics.Tests.cjs` against the existing preview URL.

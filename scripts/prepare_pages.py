@@ -38,7 +38,10 @@ def main():
     from wasm_pages import prepare
     relative = prepare(book, args.wasm_bundle, download=not args.wasm_bundle,
                        config=args.runtime_config)
-    from reader_assets import stage_reader_assets, version_reader_links, prepare_search
+    from reader_assets import stage_reader_assets, version_reader_links, prepare_search, prepare_theme, THEME_CONTROL
+    # Like reader.js/css, always stage current theme assets even when only restaging.
+    for name in ('theme.js', 'theme.css'):
+        shutil.copyfile(ROOT / 'assets/web' / name, book / '-verso-data' / name)
     prepare_search(book)
     assets = stage_reader_assets(book)
     marker = ('<meta name="book-mode" content="wasm">'
@@ -48,6 +51,7 @@ def main():
     for page in book.rglob('*.html'):
         html = page.read_text(encoding='utf-8')
         html = render_navigation(html)
+        html = prepare_theme(html)
         html = html.replace('https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js', '-verso-data/marked.min.js')
         # Discover the reading fonts before downloading and parsing stylesheets.
         preloads = '\n'.join(
@@ -58,7 +62,11 @@ def main():
         assert '</head>' in html, page
         html = version_reader_links(html, assets)
         page.write_text(html.replace('</head>', marker + '</head>', 1), encoding='utf-8')
-    shutil.copyfile(ROOT / 'web/portal.html', destination / 'index.html')
+    portal = (ROOT / 'web/portal.html').read_text(encoding='utf-8')
+    portal = portal.replace('<!--book-theme-control-->', THEME_CONTROL)
+    # Share the book's immutable theme asset version and preference on the portal.
+    portal = portal.replace('foundations/-verso-data/theme.', 'foundations/' + assets + '-verso-data/theme.')
+    (destination / 'index.html').write_text(portal, encoding='utf-8')
     # Keep existing bookmarks, including fragments and query strings. Paths in
     # old redirect pages remain relative to the book after the extra prefix.
     for original in source.rglob('*.html'):

@@ -358,11 +358,15 @@ def main (args : List String) : IO UInt32 := do
   let project := mainFileName.parent.getD "."
   let css ← IO.FS.readFile (project / "assets/web/reader.css")
   let js ← IO.FS.readFile (project / "assets/web/reader.js")
+  let themeCss ← IO.FS.readFile (project / "assets/web/theme.css")
+  let themeJs ← IO.FS.readFile (project / "assets/web/theme.js")
   let current := { config with
-    extraCssFiles := config.extraCssFiles.insert {
-      filename := "reader.css", contents := .mk css }
-    extraJsFiles := config.extraJsFiles.insert {
-      filename := "reader.js", contents := .mk js, defer := true, sourceMap? := none } }
+    extraCssFiles := (config.extraCssFiles.insert {
+      filename := "reader.css", contents := .mk css }).insert {
+      filename := "theme.css", contents := .mk themeCss }
+    extraJsFiles := (config.extraJsFiles.insert {
+      filename := "reader.js", contents := .mk js, defer := true, sourceMap? := none }).insert {
+      filename := "theme.js", contents := .mk themeJs, defer := false, sourceMap? := none } }
   manualMain (readerCodeBlocks (%doc AlgebraBook))
     (options := args)
     (extraSteps := [buildExercises, buildPlaygrounds, buildReadingRedirects]) (config := current)

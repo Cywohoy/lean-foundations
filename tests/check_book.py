@@ -47,7 +47,7 @@ assert 'theorem not_forall_iff' not in sets and 'by_contra' not in sets[:sets.in
 assert [len(re.findall(r'^# ', (root/f"AlgebraBook/{m}.lean").read_text(encoding="utf-8"), re.M)) for m in chapters.values()] == [6,7,6,7]
 assert 'ProofExamples.predicate_ext' in sets and 'ProofExamples.exists_counterexample' in sets
 assert sets.index('def preimage') < sets.index('theorem preimage_indexedUnion')
-assert sets.index('def Bijective') < sets.index('def compose') < sets.index('def Elem')
+assert sets.index('theorem identity_inj_and_surj') < sets.index('structure Bijective') < sets.index('theorem identity_bijective') < sets.index('def compose') < sets.index('def Elem')
 assert "def cardinality_fin_three_last" not in sets
 sizes=(root/"AlgebraBook/CardinalityChapter.lean").read_text(encoding="utf-8")
 assert sizes.index('theorem finite_cardinal_unique') < sizes.index('def cardinalityData') < sizes.index('def cardinality (')

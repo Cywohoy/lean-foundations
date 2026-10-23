@@ -95,9 +95,10 @@ def prepare(site, bundle=None, download=False, config=None):
     exercise_names = set()
     exercise_index = {}
     from learning_policy import exercise_policies
-    from theorem_catalog import exercise_candidates, preferred_names
+    from theorem_catalog import declaration_positions, exercise_candidates, preferred_names, signature_body
     policies = exercise_policies()
     theorem_candidates = exercise_candidates()
+    declaration_order = declaration_positions()
     for key, snippet in manifest.items():
         if snippet.get('exercise'):
             name = re.search(r'^theorem\s+(\w+)', snippet['code'], re.M)
@@ -107,6 +108,9 @@ def prepare(site, bundle=None, download=False, config=None):
             snippet['allowedTactics'] = policies[name[1]]
             snippet['storageKey'] = 'exercise:' + name[1]
             snippet['legacyKeys'] = list(dict.fromkeys([key, *historical_keys.get(name[1], [])]))
+            snippet['theoremOrder'] = {name: declaration_order[name] for name in re.findall(
+                r'^theorem\s+(exercise_\w+)\b', snippet['code'], re.M)}
+            snippet['preferredTheorems'] = sorted(preferred_names(snippet['code']))
         snippet['before'] = translate(snippet['before'])
         digest = hashlib.sha256(snippet['before'].encode()).hexdigest()
         if snippet.get('exercise') and digest not in contexts:
@@ -118,10 +122,11 @@ def prepare(site, bundle=None, download=False, config=None):
             snippet['contextFiles'] = [dict(item, url=relative + 'contexts/' + item['name'])
                                        for item in context['files']]
             preferred = preferred_names(snippet['code'])
-            positions = {full_name: index for index, full_name in enumerate(theorem_candidates[name[1]])}
+            positions = {full_name: declaration_order[full_name] for full_name in theorem_candidates[name[1]]}
             snippet['theorems'] = [dict(item, preferred=item['reference'] in preferred
                                        or item['name'] in preferred,
-                                       declaration=re.sub(r'^\S+\s*', '', item.get('declaration', item['statement'])))
+                                       order=positions[item['name']],
+                                       declaration=signature_body(item))
                                   for item in context.get('theorems', []) if item['name'] in positions]
             snippet['theorems'].sort(key=lambda item: (not item['preferred'], -positions.get(item['name'], -1)))
             snippet['before'] = ('import ' + context['module'] + '\nimport Ample.Tactic.Unfold\nimport AmpleBrowserContext.LearningGuard\n\n'
@@ -138,7 +143,8 @@ def prepare(site, bundle=None, download=False, config=None):
             # Reading progress needs identities and versions, not every worked
             # example, import prefix, runtime file URL, or dependency source.
             fields = ['exercise', 'code', 'storageKey', 'legacyKeys', 'allowedTactics',
-                      'exerciseChapter', 'exerciseSection', 'exerciseNumber', 'exerciseOrder', 'exerciseNamespace']
+                      'exerciseChapter', 'exerciseSection', 'exerciseNumber', 'exerciseOrder', 'exerciseNamespace',
+                      'theoremOrder']
             exercise_index[key] = {field: snippet[field] for field in fields}
             exercise_index[key]['contextFiles'] = [{'sha256': item['sha256']}
                                                     for item in snippet['contextFiles']]

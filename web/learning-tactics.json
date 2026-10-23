@@ -42,7 +42,8 @@
       "logic-conjunction",
       [
         "constructor",
-        "and_intros"
+        "and_intros",
+        "unpack"
       ]
     ],
     [
@@ -51,6 +52,12 @@
         "cases",
         "left",
         "right"
+      ]
+    ],
+    [
+      "logic-pattern-decomposition",
+      [
+        "rcases"
       ]
     ],
     [
@@ -71,8 +78,7 @@
     [
       "logic-existence",
       [
-        "exists",
-        "rcases"
+        "exists"
       ]
     ],
     [
@@ -110,12 +116,6 @@
       [
         "ext",
         "ext!"
-      ]
-    ],
-    [
-      "functions-unpack",
-      [
-        "unpack"
       ]
     ],
     [

@@ -635,24 +635,30 @@ theorem three_lt_five_and_five_lt_eight :
   · decide
 ```
 
-반대로 `h : P ∧ Q`가 주어지면 `h.left`는 `P`의 증명이고 `h.right`는 `Q`의 증명이다.
-두 사실을 사용하는 예로 논리곱의 순서를 바꾸어 보자.
+반대로 `h : P ∧ Q`가 주어지면 두 사실을 꺼내 사용할 수 있다.
+`unpack h with ⟨hP, hQ⟩`는 `P`의 증명을 `hP`, `Q`의 증명을 `hQ`로 꺼낸다.
+꺾쇠괄호 `⟨`, `⟩`는 각각 `\<`, `\>`로 입력한다.
+이 두 사실로 논리곱의 순서를 바꾸어 보자.
 
 ```savedLean
 theorem conjunction_comm (P Q : Prop) :
     P ∧ Q → Q ∧ P := by
   intro h
+  unpack h with ⟨hP, hQ⟩
   constructor
-  · exact h.right
-  · exact h.left
+  · exact hQ
+  · exact hP
 ```
 
-`intro h` 뒤에는 두 사실을 함께 갖고 있다. `constructor`로 나뉜 첫 목표 `Q`에는
-`h.right`를, 둘째 목표 `P`에는 `h.left`를 사용한다.
+`unpack` 뒤에는 `hP : P`와 `hQ : Q`를 함께 사용할 수 있다.
+`constructor`로 나뉜 첫 목표에는 `hQ`를, 둘째 목표에는 `hP`를 사용한다.
+두 증명을 따로 꺼내지 않고 `h.left`, `h.right`로 각각 사용할 수도 있다.
 
 세 명제의 논리곱 `P ∧ Q ∧ R`는 `P ∧ (Q ∧ R)`로 묶인다.
 `constructor`를 쓰면 먼저 `P`와 `Q ∧ R`로 나뉘므로 둘째 목표에서 한 번 더 나누어야 한다.
 `and_intros`는 이처럼 겹친 논리곱을 모두 나누어 `P`, `Q`, `R`를 각각 목표로 남긴다.
+가정에서도 `unpack h with ⟨hP, hQR⟩`는 바깥 묶음만 꺼내므로
+`hQR : Q ∧ R`의 두 증명이 필요하면 다시 `unpack`을 사용한다.
 
 ```savedLean
 example (P Q R : Prop)
@@ -701,6 +707,30 @@ theorem disjunction_comm (P Q : Prop) :
 첫 경우에는 `hP : P`를 얻으므로 목표 `Q ∨ P`의 오른쪽을 증명하고,
 둘째 경우에는 `hQ : Q`를 얻으므로 왼쪽을 증명한다.
 논리곱에서는 두 증명을 모두 꺼낼 수 있었지만 논리합에서는 주어진 경우마다 논증을 완성해야 한다.
+
+{anchor "logic-pattern-decomposition"}[]*보기* $`P`와 $`P\Rightarrow R`가 함께 성립하거나,
+$`Q`와 $`Q\Rightarrow R`가 함께 성립한다고 하자. 어느 경우에도 $`R`을 얻는다.
+첫 경우에는 $`P`를 $`P\Rightarrow R`에 사용하고, 둘째 경우에는 $`Q`를 $`Q\Rightarrow R`에 사용하면 된다.
+
+Lean에서도 먼저 `cases`로 두 경우를 나누고 각 경우에서 `unpack`으로 두 증명을 꺼낼 수 있다.
+이처럼 여러 단계의 분해와 경우 구분을 한 패턴으로 지정하는 전술이 `rcases`이다.
+아래의 `⟨hP, hPR⟩ | ⟨hQ, hQR⟩`에서 `|`는 두 경우를 나누고,
+각 꺾쇠괄호는 그 경우에 함께 주어진 두 증명을 꺼낸다.
+
+```savedLean
+example (P Q R : Prop)
+    (h : (P ∧ (P → R)) ∨ (Q ∧ (Q → R))) :
+    R := by
+  rcases h with ⟨hP, hPR⟩ | ⟨hQ, hQR⟩
+  · apply hPR
+    exact hP
+
+  · apply hQR
+    exact hQ
+```
+
+첫 분기에서는 `hP : P`와 `hPR : P → R`를 사용할 수 있고,
+둘째 분기에서는 `hQ : Q`와 `hQR : Q → R`를 사용할 수 있다.
 
 {anchor "sets-equivalence"}[]{anchor "sets-proving-equivalence"}[]{anchor "sets-using-equivalence"}[]
 
@@ -1459,21 +1489,23 @@ theorem square_sixteen_has_solution :
 일반적인 조건에서는 원소를 택한 뒤 남은 목표를 계속 증명해야 한다.
 
 반대로 해가 존재한다는 사실을 알고 있다면 그 해와 함께 주어진 등식을 사용할 수 있다.
-전술 `rcases h with ⟨n, hn⟩`는 존재명제의 증명 `h`에서 원소를 `n`으로,
+전술 `unpack h with ⟨n, hn⟩`는 존재명제의 증명 `h`에서 원소를 `n`으로,
 그 원소가 조건을 만족한다는 증명을 `hn`으로 꺼낸다.
-꺾쇠괄호 `⟨`, `⟩`는 각각 `\<`, `\>`로 입력한다.
+논리곱에서 꺼낸 두 항목은 모두 증명이었지만, 이번에는 원소와 그 원소의 성질에 대한 증명을 얻는다.
 
 ```savedLean
 theorem square_solution_gives_square (a : Nat)
     (h : ∃ n : Nat, solvesSquare a n) :
     ∃ n : Nat, n * n = a := by
-  rcases h with ⟨n, hn⟩
+  unpack h with ⟨n, hn⟩
   exists n
 ```
 
 `hn`은 `solvesSquare a n`, 곧 `n * n = a`의 증명이므로 같은 원소 `n`을 제시하면 된다.
 이때 `n`은 임의로 고른 원소가 아니라 가정 `h`가 존재를 보장하는 해이다.
-조건이 `P n ∧ Q n`처럼 여러 사실을 담으면 `rcases h with ⟨n, hP, hQ⟩`로 함께 분해할 수 있다.
+조건이 `P n ∧ Q n`처럼 두 사실을 담으면 원소를 꺼낸 뒤 그 조건을 다시 분해한다.
+`rcases h with ⟨n, ⟨hP, hQ⟩⟩`로 두 단계를 함께 지정할 수도 있다.
+바깥 꺾쇠괄호는 원소와 조건을, 안쪽 꺾쇠괄호는 그 조건의 두 증명을 꺼낸다.
 
 ## 양화사의 순서
 %%%
@@ -1528,7 +1560,7 @@ theorem not_exists_iff (A : Type) (P : A → Prop) :
     exists x
 
   · intro h hExists
-    rcases hExists with ⟨x, hx⟩
+    unpack hExists with ⟨x, hx⟩
     apply h x
     exact hx
 ```
@@ -1560,7 +1592,7 @@ theorem not_forall_iff (A : Type) (P : A → Prop) :
     exists x
 
   · intro h hAll
-    rcases h with ⟨x, hnotPx⟩
+    unpack h with ⟨x, hnotPx⟩
     apply hnotPx
     exact hAll x
 ```
@@ -1587,7 +1619,7 @@ theorem exists_counterexample (A : Type) (P Q : A → Prop)
     apply hIff.mp
     exact h
 
-  rcases hExists with ⟨x, hx⟩
+  unpack hExists with ⟨x, hx⟩
   exists x
   apply (not_imp_iff (P x) (Q x)).mp
   exact hx

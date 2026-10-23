@@ -5,6 +5,18 @@ from book_code import CHAPTERS, ROOT
 EXTERNAL = re.compile(r'\b(?:Nat|Int|Fin|Eq|Iff|And|Or|True|False|Classical)\.[A-Za-z_][A-Za-z0-9_.]*')
 
 
+def signature_body(item):
+    """Separate a checked declaration name from its binders and result type."""
+    declaration = item.get('declaration')
+    if not declaration:
+        return item['statement'].strip()
+    # ppSignature may append .{u_1, u_2}; whitespace can occur inside that list.
+    prefix = re.match(re.escape(item['name']) + r'(?:\.\{[^}]*\})?(?=\s|:|$)', declaration)
+    if not prefix:
+        raise ValueError('Unexpected checked theorem signature: ' + item['name'])
+    return declaration[prefix.end():].strip()
+
+
 def chapter_names(chapter):
     source = (ROOT / 'AlgebraBook' / (chapter + '.lean')).read_text(encoding='utf-8')
     names, scopes = [], []
@@ -72,6 +84,24 @@ def exercise_candidates():
             result[exercise[1]] = list(dict.fromkeys([*prior, *taught]))
         prior.extend(name for _, name in names)
     return result
+
+
+def declaration_positions():
+    """Place taught theorems and exercise results on one reading-order axis.
+
+    Repeated uses do not reintroduce a theorem. Exercise names are unique in the
+    manuscript; their short names can also be used by the reader's subproblems.
+    Positions affect presentation only, never which proofs are available.
+    """
+    positions, offset = {}, 0
+    for chapter in CHAPTERS:
+        source, names = chapter_names(chapter)
+        for position, name in names:
+            positions.setdefault(name, offset + position)
+        for exercise in re.finditer(r'^theorem\s+(exercise_\w+)\b', source, re.M):
+            positions[exercise[1]] = offset + exercise.start()
+        offset += len(source) + 1
+    return positions
 
 
 def preferred_names(code):

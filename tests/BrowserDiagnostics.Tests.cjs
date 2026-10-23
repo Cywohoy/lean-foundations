@@ -13,7 +13,11 @@ const [key] = Object.entries(manifest).find(([, value]) => value.exercise && val
   const browser = await playwright.chromium.launch({channel:'chrome', headless:true});
   try {
     const page = await browser.newPage({viewport:{width:1360, height:1000}, permissions:['clipboard-read','clipboard-write']});
+    if (process.env.BOOK_THEME) await page.addInitScript(theme => {
+      localStorage.setItem('lean-foundations.theme', theme);
+    }, process.env.BOOK_THEME);
     await page.goto(new URL('numbers-relations/', base).href);
+    if (process.env.BOOK_THEME) assert.equal(await page.locator('html').getAttribute('data-theme'), process.env.BOOK_THEME);
     const wrapper = page.locator(`[data-snippet="${key}"]`);
     await wrapper.locator('..').getByRole('button', {name:'풀기', exact:true}).click();
     const input = wrapper.locator('textarea');
@@ -27,15 +31,23 @@ const [key] = Object.entries(manifest).find(([, value]) => value.exercise && val
     }
     // Wait for the checked catalog rather than querying during initial setup.
     await finished('증명 중');
+    assert.equal(await wrapper.locator('.book-theorem-name').first().innerText(), 'parityClass_zero_ne_one',
+      'The explicitly cited theorem precedes older exercises from every namespace');
     const theoremSearch = wrapper.getByRole('searchbox', {name:'정리 검색'});
     await theoremSearch.fill('parityClass_zero_ne_one');
     const theorem = wrapper.locator('.book-theorem');
     assert.equal(await theorem.count(), 1);
     assert((await theorem.innerText()).includes('parityClass 0 ≠ parityClass 1'));
+    assert.equal(await theorem.locator('.book-theorem-statement').innerText(), 'parityClass 0 ≠ parityClass 1',
+      'An argument-free theorem shows its proposition without an orphan colon');
     await theorem.getByRole('button').click();
     assert.equal(await page.evaluate(() => navigator.clipboard.readText()), 'parityClass_zero_ne_one');
     await theoremSearch.fill('quotientLift_unique');
     assert.equal(await theorem.count(), 0, 'Later theorems must not be suggested');
+    await theoremSearch.fill('quotientLift_classOf');
+    const signature = await theorem.locator('.book-theorem-statement').innerText();
+    assert(signature.startsWith('{A : Type'), signature);
+    assert(!signature.startsWith('u_2}'), 'Universe arguments belong to the removed declaration name');
     await theoremSearch.fill('');
     console.log('PASS: browser context is ready');
     await input.fill('have h := parityClass_zero_ne_one_misspelled\nsorry');
@@ -57,6 +69,8 @@ const [key] = Object.entries(manifest).find(([, value]) => value.exercise && val
     await wrapper.getByRole('button', {name:'(2)', exact:true}).click();
     await theoremSearch.fill('exercise_parityClass_three_one');
     assert.equal(await theorem.count(), 1, 'The preceding subproblem is a usable named result');
+    assert.equal(await theorem.locator('.book-theorem-statement').innerText(), 'parityClass 3 = parityClass 1',
+      'The same formatting applies to the reader\'s preceding result');
     await theoremSearch.fill('');
     await input.fill('intro h\napply parityClass_zero_ne_one\nrw [← h]\nexact exercise_parityClass_three_one');
     await finished('풀이 완료');
@@ -67,10 +81,18 @@ const [key] = Object.entries(manifest).find(([, value]) => value.exercise && val
     }
     assert.equal(await page.locator('main .hl.lean.block').first().evaluate(node => getComputedStyle(node).fontVariantLigatures),'none');
     assert(!await status.evaluate(node => node.classList.contains('book-error')));
+    if (process.env.BOOK_THEME === 'dark') {
+      for (const selector of ['dialog','.book-code-input','.book-theorems-search']) {
+        assert.equal(await wrapper.locator(selector).first().evaluate(node => getComputedStyle(node).backgroundColor),'rgb(25, 29, 35)');
+      }
+      fs.mkdirSync('tmp/theme-tests',{recursive:true});
+      await page.screenshot({path:'tmp/theme-tests/dark-exercise.png'});
+    }
     await page.setViewportSize({width:390,height:844});
     const panel = wrapper.locator('.book-theorems');
     assert(await panel.isVisible());
     assert(!await wrapper.locator('dialog').evaluate(node => node.scrollWidth > node.clientWidth));
+    if (process.env.BOOK_THEME === 'dark') await page.screenshot({path:'tmp/theme-tests/dark-exercise-mobile.png'});
     console.log('PASS: have diagnostics, real theorem search and copy, chronology, prior subproblem, both parity proofs, ligatures, and mobile layout');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

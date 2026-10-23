@@ -6,10 +6,29 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
-from theorem_catalog import chapter_names, exercise_candidates
+from theorem_catalog import chapter_names, declaration_positions, exercise_candidates, signature_body
+
+assert signature_body({'name': 'Sample.ready', 'declaration': 'Sample.ready : True'}) == ': True'
+assert signature_body({'name': 'Sample.id',
+    'declaration': 'Sample.id.{u_1, u_2}\n {A : Type u_1} {B : Type u_2} (f : A → B) : A → B'}) == \
+    '{A : Type u_1} {B : Type u_2} (f : A → B) : A → B'
+assert signature_body({'name': 'Sample.ready', 'statement': 'True'}) == 'True', \
+    'A type-only fallback must not lose its first token'
+try:
+    signature_body({'name': 'Sample.ready', 'declaration': 'Sample.readyElse : True'})
+    raise AssertionError('A different name must not be stripped as a prefix')
+except ValueError:
+    pass
 
 candidates = exercise_candidates()
+positions = declaration_positions()
 assert len(candidates) == 154
+functions, function_names = chapter_names('SetsFunctions')
+assert functions.index('theorem identity_inj_and_surj') < functions.index('structure Bijective') < functions.index('theorem identity_bijective')
+assert 'Ample.identity_inj_and_surj' in candidates['exercise_injective_of_compose']
+# Generated projections are taught on the hypothesis, not listed as earlier
+# standalone theorems left over from the former conjunction wrappers.
+assert 'Ample.Bijective.inj' not in candidates['exercise_injective_of_compose']
 assert {'Int.add_comm', 'Int.sub_add_cancel'} <= set(candidates['exercise_congruent_one'])
 assert 'Ample.congruent_add_right' in candidates['exercise_congruent_add_left']
 assert 'Ample.congruent_add_right' in candidates['exercise_nextParity_respects']
@@ -40,12 +59,19 @@ for snippet in manifest.values():
     if not snippet.get('exercise'):
         continue
     name = re.search(r'^theorem\s+(exercise_\w+)\b', snippet['code'], re.M)[1]
+    names = re.findall(r'^theorem\s+(exercise_\w+)\b', snippet['code'], re.M)
+    assert snippet['theoremOrder'] == {name: positions[name] for name in names}
+    assert snippet['preferredTheorems'] == sorted(set(snippet['preferredTheorems']))
     entries = snippet['theorems']
     assert len(entries) == len({entry['name'] for entry in entries})
     for entry in entries:
         assert entry['name'] in candidates[name], (name, entry)
+        assert entry['order'] == positions[entry['name']]
+        assert entry['order'] < min(snippet['theoremOrder'].values()), 'Only earlier introductions enter the catalog'
         assert entry['reference'] and entry['statement'], (name, entry)
         assert ':= by' not in entry['statement'], 'The panel shows propositions, not proofs'
+        assert re.match(r'^(?:\(|\{|⦃|:)', entry['declaration']), (name, entry)
+        assert not re.match(r'^u_\d+\}', entry['declaration']), 'No partial universe list may remain'
     if name == 'exercise_parityClass_three_one':
         assert entries[0]['name'] == 'Ample.parityClass_zero_ne_one'
         assert entries[0]['preferred']

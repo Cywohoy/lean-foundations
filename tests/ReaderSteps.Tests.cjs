@@ -88,6 +88,25 @@ async function main() {
 
     // Inspect the last reader step of every checked, hole-free code block.
     // This covers other transformations as well as compound proof commands.
+    await chapter('proof');
+    const commutation = page.locator('.book-example').filter({has: page.locator('#ProofExamples___conjunction_comm')});
+    const conjunctionSteps = await readSteps(commutation);
+    const unpacked = conjunctionSteps.find(step => step.title.startsWith('unpack'));
+    assert(unpacked && /hP\s*:\s*P/.test(unpacked.state) && /hQ\s*:\s*Q/.test(unpacked.state),
+      'The first unpack visibly introduces the two proofs');
+    await chapter('sets-functions');
+    const identity = page.locator('.book-example').filter({has: page.locator('#Ample___identity_bijective')});
+    const identitySteps = await readSteps(identity);
+    assert(identitySteps.some(step => step.title.startsWith('unpack') &&
+      /hinj\s*:/.test(step.state) && /hsurj\s*:/.test(step.state)),
+      'The conjunction proof supplies the two named structure fields');
+    assert.equal(identitySteps.find(step => step.title === 'constructor').goals, 2);
+    await chapter('numbers-relations');
+    const equivalence = page.locator('.book-example').filter({has: page.locator('#Ample___congruent_equivalence')});
+    const equivalenceSteps = await readSteps(equivalence);
+    assert.equal(equivalenceSteps.find(step => step.title === 'constructor').goals, 3,
+      'A three-field proposition structure produces three immediate goals');
+
     let checked = 0;
     const partial = [];
     const commands = new Set();

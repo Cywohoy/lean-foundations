@@ -140,7 +140,7 @@ file := "cardinals"
 ```savedLean
 theorem sameCardinality_equivalence :
     IsEquivalence SameCardinality := by
-  and_intros
+  constructor
   · exact sameCardinality_refl
   · intro A B hAB
     exact sameCardinality_symm hAB
@@ -2373,7 +2373,9 @@ theorem cardinal_le_iff (A B : Type) :
     cardinal A ≤ cardinal B ↔ ∃ f : A → B, Injective f := by
   constructor
   · intro h
-    rcases h with ⟨A', B', hA, hB, hf⟩
+    unpack h with ⟨A', hRemaining⟩
+    unpack hRemaining with ⟨B', hConditions⟩
+    rcases hConditions with ⟨hA, ⟨hB, hf⟩⟩
     apply cardinalityLE_transport hA hB
     exact hf
 
@@ -3138,12 +3140,14 @@ theorem bool_cardinal : cardinal Bool = 2 := by
 
   · intro i
     have hi : i.val = 0 ∨ i.val = 1 := by arith
-    rcases hi with hi | hi
-    · ext
-      simp [hi]
+    cases hi with
+    | inl hi =>
+        ext
+        simp [hi]
 
-    · ext
-      simp [hi]
+    | inr hi =>
+        ext
+        simp [hi]
 ```
 
 `Bool`에는 `false`, `true` 두 원소가 있으므로 `bool_cardinal : cardinal Bool = 2`이다.

@@ -31,7 +31,9 @@ assert 'symm' not in policies['exercise_two_shifts_lt']
 assert 'symm' in policies['exercise_parityClass_three_one']
 assert 'intro' in policies['exercise_relation_specialization']
 assert 'by_contra' in policies['exercise_implication_cases']
-assert 'rcases' not in policies['exercise_implication_cases']
+assert 'rcases' not in policies['exercise_implication_chain']
+assert 'rcases' in policies['exercise_logic_iff_trans']
+assert 'rcases' in policies['exercise_implication_cases']
 assert 'rw' not in policies['exercise_forall_implication']
 assert 'by_contra' in policies['exercise_exists_forall_swap']
 assert 'rw' not in policies['exercise_no_largest_nat']
@@ -44,14 +46,29 @@ assert 'apply_fun' not in policies['exercise_forall_implication']
 assert 'apply_fun' in policies['exercise_predicate_conjunction_comm']
 assert 'apply_fun' in policies['exercise_oneModThree_bijective']
 assert all(not {'indisc', 'indisc!'} & set(allowed) for allowed in policies.values())
-assert 'unpack' not in policies['exercise_double_successor_noncommute']
+assert 'unpack' not in policies['exercise_implication_chain']
+assert 'unpack' in policies['exercise_logic_iff_trans']
+assert 'unpack' in policies['exercise_exists_forall_swap']
+assert 'unpack' in policies['exercise_double_successor_noncommute']
 assert 'unpack' in policies['exercise_injective_of_compose']
 assert 'unpack' in policies['exercise_surjective_of_compose']
 assert all('congr' not in allowed for allowed in policies.values())
 
-guard = 'import Ample.Tactic.Auto\n' + (ROOT / 'web/lean/LearningGuard.lean').read_text(encoding='utf-8')
+guard = 'import Ample.Tactic.Auto\nimport Ample.Tactic.Rule\n' + (ROOT / 'web/lean/LearningGuard.lean').read_text(encoding='utf-8')
 cases = '''
 open scoped Ample
+example (P Q : Prop) (h : P ∧ Q) : Q := by learning_guard "unpack,exact" in
+  unpack h with ⟨hP, hQ⟩
+  exact hQ
+example (A : Type) (P : A → Prop) (h : ∃ x, P x) : ∃ x, P x := by learning_guard "unpack,exists,exact" in
+  unpack h with ⟨x, hx⟩
+  exists x
+example (P Q R : Prop) (h : (P ∧ (P → R)) ∨ (Q ∧ (Q → R))) : R := by learning_guard "rcases,apply,exact" in
+  rcases h with ⟨hP, hPR⟩ | ⟨hQ, hQR⟩
+  · apply hPR
+    exact hP
+  · apply hQR
+    exact hQ
 example (P : Prop) (h : P) : P := by learning_guard "set,exact" in
   set Q := P
   exact h

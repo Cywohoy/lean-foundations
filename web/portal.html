@@ -2,8 +2,11 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <script src="foundations/-verso-data/theme.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lean으로 배우는 수학</title>
+  <link rel="stylesheet" href="foundations/-verso-data/theme.css">
   <link rel="preload" href="foundations/-verso-data/NanumSquareNeo-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="foundations/-verso-data/NanumSquareNeo-Bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="foundations/-verso-data/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin>
@@ -12,25 +15,26 @@
     @font-face { font-family: NanumSquareNeo; src: url('foundations/-verso-data/NanumSquareNeo-Bold.woff2') format('woff2'); font-weight: 700; font-display: block; }
     @font-face { font-family: NanumSquareNeo; src: url('foundations/-verso-data/NanumSquareNeo-ExtraBold.woff2') format('woff2'); font-weight: 800; font-display: block; }
     * { box-sizing: border-box; }
-    body { margin: 0; color: #252525; background: #fafaf9; font-family: Pretendard, system-ui, sans-serif; line-height: 1.7; }
+    body { margin: 0; color: var(--book-portal-text); background: var(--book-portal-page); font-family: Pretendard, system-ui, sans-serif; line-height: 1.7; }
     main { max-width: 760px; margin: 14vh auto 0; padding: 0 28px 60px; }
     h1, h2 { font-family: NanumSquareNeo, Pretendard, system-ui, sans-serif; }
     h1 { font-size: clamp(26px, 4vw, 36px); font-weight: 800; letter-spacing: -.025em; margin: 0 0 60px; }
-    article { padding: 24px 0 30px; border-top: 1px solid #d6d6d3; border-bottom: 1px solid #d6d6d3; }
+    article { padding: 24px 0 30px; border-top: 1px solid var(--book-portal-border); border-bottom: 1px solid var(--book-portal-border); }
     h2 { margin: 0 0 12px; font-size: 24px; font-weight: 700; }
-    a { color: #315b78; text-decoration-color: #b8ccd9; text-decoration-thickness: 1px; text-underline-offset: .23em; transition: color .15s, text-decoration-color .15s; }
-    h2 a { color: #252f38; text-decoration: none; }
-    a:hover { color: #193e58; text-decoration-color: currentColor; }
+    a { color: var(--book-link); text-decoration-color: var(--book-link-line); text-decoration-thickness: 1px; text-underline-offset: .23em; transition: color .15s, text-decoration-color .15s; }
+    h2 a { color: var(--book-portal-heading); text-decoration: none; }
+    a:hover { color: var(--book-link-hover); text-decoration-color: currentColor; }
     h2 a:hover { text-decoration: underline; }
-    a:focus-visible { outline: 2px solid #315b78; outline-offset: 4px; border-radius: 2px; }
+    a:focus-visible { outline: 2px solid var(--book-link); outline-offset: 4px; border-radius: 2px; }
     @media (prefers-reduced-motion: reduce) { a { transition: none; } }
-    p { margin: 0; color: #575753; }
+    p { margin: 0; color: var(--book-portal-muted); }
     .status { margin-top: 14px; font-size: 14px; }
-    ol { margin: 18px 0 0; padding-left: 24px; color: #575753; }
-    footer { margin-top: 36px; font-size: 14px; color: #6b6b66; }
+    ol { margin: 18px 0 0; padding-left: 24px; color: var(--book-portal-muted); }
+    footer { margin-top: 36px; font-size: 14px; color: var(--book-portal-footer); }
   </style>
 </head>
-<body>
+<body class="book-portal">
+  <!--book-theme-control-->
   <main>
     <h1>Lean으로 배우는 수학</h1>
     <article>

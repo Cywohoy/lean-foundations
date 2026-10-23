@@ -135,8 +135,8 @@ example (P Q : Prop)
 
 존재명제에서는 `exists a`로 증인을 제시하고 남은 조건을 증명한다.
 가정 `h : ∃ x, P x`는 `unpack h with ⟨x, hx⟩`로 원소와 그 성질을 꺼낸다.
-`rcases`는 `⟨x, hx, hy⟩`처럼 여러 겹의 묶음이나 `hP | hQ`처럼 경우를 지정하여 분해한다.
-꺾쇠괄호는 한 묶음의 성분을 나타낸다.
+`unpack`은 한 묶음만 꺼내므로 `h : P ∧ (Q ∧ R)`에서는 `⟨hP, hQR⟩`로 이름을 붙이고,
+남은 `hQR`을 다시 분해한다.
 
 논리합을 증명할 때는 `left` 또는 `right`로 보일 쪽을 정한다.
 논리합인 가정은 두 경우를 모두 다루어야 하므로 `cases`를 사용한다.
@@ -154,6 +154,17 @@ example (P Q : Prop)
       left
       exact hQ
 ```
+
+{ref "logic-pattern-decomposition"}[1장의 중첩 예제]에서 배운 `rcases`는
+분해와 경우 구분을 패턴으로 함께 지정한다.
+`⟨…⟩`는 함께 주어진 항목을 꺼내고 `|`는 서로 다른 경우를 나눈다.
+가령 `h : ∃ x, P x ∧ Q x`에서는 `rcases h with ⟨x, ⟨hP, hQ⟩⟩`로
+원소와 두 조건의 증명을 꺼낼 수 있다.
+패턴이 길어지면 중간 묶음에 이름을 붙여 여러 단계로 나누어도 된다.
+
+`Bijective`나 `IsEquivalence`처럼 명제 구조체로 정의한 조건도 `constructor`로 증명한다.
+각 필드가 목표로 남으며 `unpack`으로는 그 필드들을 한 겹에서 꺼낸다.
+조건 하나만 사용할 때는 `.inj`·`.surj`나 `.refl`·`.symm`·`.trans`로 접근한다.
 
 `trivial`은 `True` 같은 자명한 목표를 증명한다.
 `contradiction`은 `False`나 서로 모순되는 가정을 사용하여 목표를 증명한다.

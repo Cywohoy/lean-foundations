@@ -404,7 +404,7 @@ theorem not_subset_iff {A : Type} (S T : Set A) :
     exact h
 
   · intro h hST
-    rcases h with ⟨x, hxS, hxNotT⟩
+    rcases h with ⟨x, ⟨hxS, hxNotT⟩⟩
     apply hxNotT
     exact hST x hxS
 ```
@@ -1121,7 +1121,7 @@ theorem image_mono {A B : Type} (f : A → B) (S T : Set A)
     (hST : S ⊆ T) :
     image f S ⊆ image f T := by
   intro y hy
-  rcases hy with ⟨x, hxS, hxy⟩
+  rcases hy with ⟨x, ⟨hxS, hxy⟩⟩
 
   -- 같은 원소 x를 더 큰 집합 T에서도 사용할 수 있다.
   exists x
@@ -1148,7 +1148,7 @@ theorem image_mono {A B : Type} (f : A → B) (S T : Set A)
 example :
     1 ∉ image (fun _ : Nat => 0) (whole Nat) := by
   intro hy
-  rcases hy with ⟨n, hn, hEq⟩
+  rcases hy with ⟨n, ⟨hn, hEq⟩⟩
   contradiction
 ```
 
@@ -1395,7 +1395,7 @@ theorem preimage_image_of_injective {A B : Type} (f : A → B)
     preimage f (image f S) = S := by
   apply set_eq_of_subset
   · intro x hx
-    rcases hx with ⟨y, hy, hxy⟩
+    rcases hx with ⟨y, ⟨hy, hxy⟩⟩
     replace hxy : y = x := by
       exact hf y x hxy
 
@@ -1473,40 +1473,49 @@ tag := "functions-bijectivity"
 
 전사성에 따라 공역의 각 원소 $`y`에 대해 $`f(x)=y`인 원소 $`x`가 존재하고
 단사성에 따라 그러한 원소는 하나뿐이다.
-Lean에서는 두 조건을 논리곱으로 묶어 전단사성을 정의한다.
+앞에서 항등함수의 단사성과 전사성을 각각 증명했으므로,
+우선 이 두 결과를 논리곱으로 묶어 보자.
 
 ```savedLean
-def Bijective {A B : Type} : (A → B) → Prop :=
-  fun f => Injective f ∧ Surjective f
+theorem identity_inj_and_surj (A : Type) :
+    Injective (identity A) ∧ Surjective (identity A) := by
+  constructor
+  · exact identity_injective A
+  · exact identity_surjective A
 ```
 
-```savedLean -show
-namespace Bijective
+전단사성을 사용할 때는 두 조건을 `inj`와 `surj`라는 이름으로 꺼낼 수 있도록 묶겠다.
+이처럼 항목에 이름을 붙여 묶는 선언이 `structure`이다.
+아래에서 `Bijective f`는 명제이며, `where` 아래의 두 *필드*에는
+각각 단사성과 전사성의 증명이 들어간다.
 
-theorem inj {A B : Type}
-    {f : A → B} (hf : Bijective f) : Injective f :=
-    hf.left
-
-theorem surj {A B : Type}
-    {f : A → B} (hf : Bijective f) : Surjective f :=
-    hf.right
-
-end Bijective
+```savedLean
+structure Bijective {A B : Type}
+    (f : A → B) : Prop where
+  inj : Injective f
+  surj : Surjective f
 ```
 
 `hf : Bijective f`가 주어지면 `hf.inj`로 단사성의 증명을,
 `hf.surj`로 전사성의 증명을 꺼내 사용할 수 있다.
 
 *보기* 항등함수는 전단사이다.
-단사성과 전사성을 앞에서 각각 증명했으므로 `constructor`로 나뉜 목표에 두 정리를 사용하면 된다.
+앞의 논리곱 증명에서 두 성분을 꺼내 이 구조체의 필드에 사용하자.
+구조체로 정의한 명제에서도 `constructor`를 쓰면 각 필드에 필요한 증명이 목표로 남는다.
 
 ```savedLean
 theorem identity_bijective (A : Type) :
     Bijective (identity A) := by
+  have h := identity_inj_and_surj A
+  unpack h with ⟨hinj, hsurj⟩
   constructor
-  · exact identity_injective A
-  · exact identity_surjective A
+  · exact hinj
+  · exact hsurj
 ```
+
+`unpack` 뒤에는 `hinj : Injective (identity A)`와 `hsurj : Surjective (identity A)`가 있다.
+`constructor`가 남긴 두 목표가 바로 이 명제들이므로 각각의 증명을 제시하면 된다.
+구조체를 선언할 때는 어떤 항목을 묶을지 정하고, 그 명제를 증명할 때는 각 항목의 증명을 구성한다.
 
 *문제 11* (두 원소 집합의 상과 역상)
 
@@ -1768,9 +1777,7 @@ $`g`가 전사이므로 $`g(y) = z`인 원소 $`y \in B`가 존재하고
 $`f`가 전사이므로 $`f(x) = y`인 원소 $`x \in A`가 존재한다.
 이때 $`(g \circ f)(x) = g(f(x)) = g(y) = z`이므로 원하는 원소를 얻는다.
 
-{anchor "functions-unpack"}[]`unpack`은 원소와 성질처럼 한 묶음으로 주어진 내용을 분해하는 전술이다.
-앞의 `rcases`는 여러 겹을 한꺼번에 분해할 수 있으며, `unpack`은 한 묶음을 꺼낸다.
-여기서 `hg z`는 `∃ y, g y = z`의 증명이므로
+{anchor "functions-unpack"}[]여기서 `hg z`는 `∃ y, g y = z`의 증명이므로
 `unpack hg z with ⟨y, hy⟩`로 원소 `y`와 등식 `hy : g y = z`를 얻는다.
 이어서 `hf y`에서도 같은 방식으로 원소 `x`와 `hx : f x = y`를 얻는다.
 
@@ -2168,7 +2175,7 @@ def toImage {A B : Type} (f : A → B) (x : A) :
 theorem toImage_surjective {A B : Type} (f : A → B) :
     Surjective (toImage f) := by
   intro y
-  rcases y.property with ⟨x, hx, hxy⟩
+  rcases y.property with ⟨x, ⟨hx, hxy⟩⟩
   exists x
   ext
   exact hxy
@@ -2681,7 +2688,7 @@ tag := "functions-existence-and-values"
 `(b, a)`를 `(a, b)`로 보낸다. 일반적인 전단사에서도 이 두 등식을 만족하는 함수를
 만들 수 있는지 확인하기 위해, 먼저 존재명제의 증명과 함수값으로 사용할 원소를 구별하자.
 `hf.surj y`는 `∃ x, f x = y`의 증명이다.
-이 명제를 `unpack`이나 `rcases`로 분해하여 다른 명제를 증명할 수는 있지만,
+이 명제를 `unpack`으로 분해하여 다른 명제를 증명할 수는 있지만,
 그 안의 원소를 꺼내 `A`의 값으로 반환할 수는 없다.
 예를 들어 `∃ n : Nat, True`는 $`0`을 제시해서도, $`1`을 제시해서도 증명할 수 있다.
 Lean은 이 두 증명을 같은 명제의 증명으로서 같게 취급한다.

@@ -611,11 +611,13 @@
       output.append(reference);
       refreshTheorems = () => {
         const earlier = fullCode ? [] : exercise.parts.slice(0, selectedProof).map(part => ({
-          name: part.name, reference: part.name,
+          name: [exerciseIndex[key].exerciseNamespace, part.name].filter(Boolean).join('.'), reference: part.name,
+          order: original.theoremOrder?.[part.name],
           statement: part.header.trim().replace(/^theorem\s+\S+\s*/, '').replace(/\s*:=\s*by$/, ''),
         }));
         const previous = dependencyTools.earlierTheorems(exerciseIndex, exerciseIndex[key]);
-        const available = [...earlier, ...previous, ...original.theorems];
+        const available = dependencyTools.orderTheorems(
+          [...original.theorems, ...previous, ...earlier], original.preferredTheorems);
         const query = search.value.trim().toLocaleLowerCase();
         const words = query.split(/\s+/).filter(Boolean);
         const found = available.filter(item => words.every(word =>
@@ -633,7 +635,7 @@
           }, 'book-theorem-name');
           name.title = '정리 이름 복사';
           name.setAttribute('aria-label', `${item.reference} 이름 복사`);
-          row.append(name, element('pre', 'book-theorem-statement', item.declaration || item.statement));
+          row.append(name, element('pre', 'book-theorem-statement', dependencyTools.theoremSignature(item)));
           list.append(row);
         }
         if (!found.length) list.append(element('p', 'book-theorems-empty', '일치하는 정리가 없습니다.'));

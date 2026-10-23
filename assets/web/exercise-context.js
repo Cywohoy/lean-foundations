@@ -11,8 +11,32 @@ export function earlierTheorems(manifest, current) {
       .map(match => ({key, name: [item.exerciseNamespace, match[1]].filter(Boolean).join('.'),
         reference: item.exerciseNamespace === current.exerciseNamespace ? match[1]
           : [item.exerciseNamespace, match[1]].filter(Boolean).join('.'),
+        order: item.theoremOrder?.[match[1]],
         statement: match[2].trim(), declaration: match[2].trim(),
         exerciseChapter: item.exerciseChapter, exerciseNumber: item.exerciseNumber})));
+}
+
+// The name is displayed separately. Without binders, show just the proposition.
+export function theoremSignature(item) {
+  return (item.declaration || item.statement || '').trim().replace(/^:\s*/, '');
+}
+
+// Body theorems and prior exercises share the same chronology. A namespace or
+// the fact that a proof was an exercise never grants it unconditional priority.
+export function orderTheorems(items, preferredNames = []) {
+  const preferred = new Set(preferredNames);
+  const seen = new Set();
+  return items.filter(item => {
+    const name = item.name || item.reference;
+    if (seen.has(name)) return false;
+    seen.add(name);
+    return true;
+  }).map((item, index) => ({item, index,
+    preferred: Boolean(item.preferred || preferred.has(item.name) || preferred.has(item.reference)
+      || preferred.has(item.name?.split('.').at(-1))),
+    order: Number.isFinite(item.order) ? item.order : -1,
+  })).sort((a, b) => Number(b.preferred) - Number(a.preferred) || b.order - a.order || a.index - b.index)
+    .map(({item}) => item);
 }
 
 function references(code) {

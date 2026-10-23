@@ -1,0 +1,188 @@
+/* Shared semantic palette. Light values retain the existing reading view. */
+:root {
+  color-scheme: light;
+  --book-page: white;
+  --book-text: black;
+  --book-strong: #111;
+  --book-ink: #171717;
+  --book-primary: #222;
+  --book-secondary: #444;
+  --book-label: #555;
+  --book-muted: #666;
+  --book-soft: #777;
+  --book-subtle: #888;
+  --book-disabled: #aaa;
+  --book-button: #737373;
+  --book-border-strong: #bbb;
+  --book-input-border: #ccc;
+  --book-border: #ddd;
+  --book-divider: #e5e5e5;
+  --book-divider-quiet: #eee;
+  --book-code-surface: #f7f8f9;
+  --book-code-border: #d9dde1;
+  --book-step-selected: #ededed;
+  --book-link: #315b78;
+  --book-link-hover: #193e58;
+  --book-link-line: #b8ccd9;
+  --book-link-surface: #edf3f7;
+  --book-nav-text: #4c5562;
+  --book-nav-active: #253c50;
+  --book-nav-selected: #e7eff4;
+  --book-nav-marker: #537b97;
+  --book-nav-link: #3d4c59;
+  --book-permalink: #7a8b98;
+  --book-search-border: #d6dfe5;
+  --book-search-shadow: rgb(30 50 65 / .12);
+  --book-search-result: #344b5c;
+  --book-error: #a02c2c;
+  --book-warning: #806127;
+  --book-success: #5d6e60;
+  --book-complete: #386047;
+  --book-backdrop: rgb(0 0 0 / .28);
+  --book-nav-fallback: rgb(127 127 127 / .12);
+  --book-portal-page: #fafaf9;
+  --book-portal-text: #252525;
+  --book-portal-heading: #252f38;
+  --book-portal-muted: #575753;
+  --book-portal-footer: #6b6b66;
+  --book-portal-border: #d6d6d3;
+  --book-theme-slot: 7.5rem;
+  --verso-selected-color: var(--book-link-surface);
+}
+
+/* Screen-only colors keep a light, legible printout even with dark selected. */
+@media screen {
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --book-page: #191d23;
+    --book-text: #dee3eb;
+    --book-strong: #f1f4f8;
+    --book-ink: var(--book-text);
+    --book-primary: var(--book-text);
+    --book-secondary: #c3cbd6;
+    --book-label: var(--book-secondary);
+    --book-muted: #b0bac7;
+    --book-soft: var(--book-muted);
+    --book-subtle: #a4afbe;
+    --book-disabled: #788391;
+    --book-button: var(--book-muted);
+    --book-border-strong: #5a6574;
+    --book-input-border: #525d6b;
+    --book-border: #3c4552;
+    --book-divider: #343c47;
+    --book-divider-quiet: #303742;
+    --book-code-surface: #222831;
+    --book-code-border: #4c5868;
+    --book-step-selected: #3a4657;
+    --book-link: #a4cfee;
+    --book-link-hover: #d0ebff;
+    --book-link-line: #668aa5;
+    --book-link-surface: #2d3e50;
+    --book-nav-text: #c0c9d5;
+    --book-nav-active: #deedfa;
+    --book-nav-selected: #2b3c4f;
+    --book-nav-marker: #8ebadb;
+    --book-nav-link: var(--book-secondary);
+    --book-permalink: var(--book-subtle);
+    --book-search-border: var(--book-border-strong);
+    --book-search-shadow: rgb(0 0 0 / .3);
+    --book-search-result: var(--book-text);
+    --book-error: #ffabab;
+    --book-warning: #ecd08c;
+    --book-success: #a2d2af;
+    --book-complete: var(--book-success);
+    --book-backdrop: rgb(0 0 0 / .65);
+    --book-nav-fallback: var(--book-nav-selected);
+    --book-portal-page: var(--book-page);
+    --book-portal-text: var(--book-text);
+    --book-portal-heading: var(--book-strong);
+    --book-portal-muted: var(--book-secondary);
+    --book-portal-footer: var(--book-muted);
+    --book-portal-border: var(--book-border);
+
+    --verso-text-color: var(--book-text);
+    --verso-structure-color: var(--book-strong);
+    --verso-background-color: var(--book-page);
+    --verso-surface-color: var(--book-code-surface);
+    --verso-muted-color: var(--book-muted);
+    --verso-border-color: var(--book-border);
+    --verso-code-color: var(--book-text);
+    --verso-code-const-color: #c0d9ed;
+    --verso-code-keyword-color: #d4c2f0;
+    --verso-code-hover-bg-color: var(--book-step-selected);
+    --verso-toc-background-color: #161a20;
+    --verso-toc-text-color: var(--book-text);
+    --verso-toc-border-color: var(--book-border);
+    --verso-toc-resize-handle-color: var(--book-subtle);
+    --verso-burger-toc-visible-color: var(--book-text);
+    --verso-burger-toc-hidden-color: var(--book-text);
+    --verso-burger-toc-visible-shadow-color: var(--book-page);
+    --verso-burger-toc-hidden-shadow-color: var(--book-page);
+    --verso-tooltip-color: var(--book-text);
+    --verso-tooltip-bg-color: #272e38;
+    --verso-tooltip-border-color: var(--book-border-strong);
+    --verso-tooltip-separator-color: var(--book-border);
+    --verso-tactic-state-color: var(--book-text);
+    --verso-tactic-state-bg-color: var(--book-page);
+    --verso-tactic-state-border-color: var(--book-border-strong);
+    --verso-tactic-toggle-color: var(--book-muted);
+    --verso-tactic-toggle-checked-color: var(--book-text);
+    --verso-code-info-hover-bg-color: #2d4560;
+    --verso-info-indicator-color: #98c6ef;
+    --verso-tooltip-info-border-color: #98c6ef;
+    --verso-code-warning-hover-bg-color: #514323;
+    --verso-warning-indicator-color: var(--book-warning);
+    --verso-tooltip-warning-border-color: var(--book-warning);
+    --verso-tooltip-warning-bg-color: #373124;
+    --verso-code-error-hover-bg-color: #57323a;
+    --verso-error-indicator-color: var(--book-error);
+    --verso-message-error-color: var(--book-error);
+    --verso-tooltip-error-border-color: var(--book-error);
+    --verso-tooltip-error-bg-color: #392930;
+  }
+  html, body { background-color: var(--book-page); color: var(--book-text); }
+  header { background: var(--book-page); box-shadow: 0 1px 0 var(--book-border); }
+  header .header-title { color: var(--book-strong); }
+  #toc .split-toc a { color: var(--book-nav-text); }
+  #toc .split-toc a:hover { color: var(--book-link-hover); }
+  #toc .split-toc label.toggle-split-toc::before { background-color: var(--book-text); }
+  #search-wrapper [role="searchbox"]:empty::before,
+  #search-wrapper .more-results { color: var(--book-subtle); }
+  ::selection { background: var(--book-link-surface); color: var(--book-strong); }
+}
+
+/* One native, keyboard-accessible control in the existing header. */
+.book-theme-control[hidden] { display: none; }
+.book-theme-control {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: .3rem;
+  margin-inline: auto .85rem;
+  color: var(--book-muted);
+  font: .875rem/1.5 var(--verso-text-font-family, Pretendard, system-ui, sans-serif);
+}
+.book-theme-control svg { width: 1rem; height: 1rem; pointer-events: none; }
+.book-theme-control select {
+  min-height: 40px;
+  max-width: 6rem;
+  padding: .25rem .25rem;
+  border: 0;
+  border-radius: 3px;
+  background-color: var(--book-page);
+  color: var(--book-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+.book-theme-control select:hover { color: var(--book-strong); }
+.book-theme-control select:focus-visible { outline: 2px solid var(--book-link); outline-offset: 2px; }
+header .book-theme-control { position: absolute; right: 0; top: .25rem; }
+/* Verso positions search at the right edge too; reserve a distinct slot rather
+   than letting its dynamically mounted wrapper cover the theme control. */
+#search-wrapper { right: var(--book-theme-slot); }
+#search-wrapper ul[role="listbox"] { right: calc(-1 * var(--book-theme-slot) + .5rem); }
+.book-portal > .book-theme-control { position: absolute; top: .25rem; right: .25rem; }
+@media screen and (max-width: 700px) {
+  :root { --search-bar-width: min(12rem, calc(100vw - 12rem)); }
+}
+@media print { .book-theme-control { display: none !important; } }
