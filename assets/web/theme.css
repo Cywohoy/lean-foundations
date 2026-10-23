@@ -54,42 +54,42 @@
 @media screen {
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --book-page: #191d23;
-    --book-text: #dee3eb;
-    --book-strong: #f1f4f8;
+    --book-page: #201e1b;
+    --book-text: #e7e2da;
+    --book-strong: #f5f1ea;
     --book-ink: var(--book-text);
     --book-primary: var(--book-text);
-    --book-secondary: #c3cbd6;
+    --book-secondary: #d0c8bd;
     --book-label: var(--book-secondary);
-    --book-muted: #b0bac7;
+    --book-muted: #beb4a8;
     --book-soft: var(--book-muted);
-    --book-subtle: #a4afbe;
-    --book-disabled: #788391;
+    --book-subtle: #b3a89b;
+    --book-disabled: #8a8073;
     --book-button: var(--book-muted);
-    --book-border-strong: #5a6574;
-    --book-input-border: #525d6b;
-    --book-border: #3c4552;
-    --book-divider: #343c47;
-    --book-divider-quiet: #303742;
-    --book-code-surface: #222831;
-    --book-code-border: #4c5868;
-    --book-step-selected: #3a4657;
-    --book-link: #a4cfee;
-    --book-link-hover: #d0ebff;
-    --book-link-line: #668aa5;
-    --book-link-surface: #2d3e50;
-    --book-nav-text: #c0c9d5;
-    --book-nav-active: #deedfa;
-    --book-nav-selected: #2b3c4f;
-    --book-nav-marker: #8ebadb;
+    --book-border-strong: #6d6459;
+    --book-input-border: #655c52;
+    --book-border: #4d453c;
+    --book-divider: #443d35;
+    --book-divider-quiet: #3f3831;
+    --book-code-surface: #2b2824;
+    --book-code-border: #60574b;
+    --book-step-selected: #4c443a;
+    --book-link: #dfcba9;
+    --book-link-hover: #f3e4cd;
+    --book-link-line: #9d896a;
+    --book-link-surface: #453d31;
+    --book-nav-text: #cec6bb;
+    --book-nav-active: #eee4d6;
+    --book-nav-selected: #433b31;
+    --book-nav-marker: #cbb38b;
     --book-nav-link: var(--book-secondary);
     --book-permalink: var(--book-subtle);
     --book-search-border: var(--book-border-strong);
     --book-search-shadow: rgb(0 0 0 / .3);
     --book-search-result: var(--book-text);
-    --book-error: #ffabab;
-    --book-warning: #ecd08c;
-    --book-success: #a2d2af;
+    --book-error: #f4ada2;
+    --book-warning: #e6cc96;
+    --book-success: #c9c29a;
     --book-complete: var(--book-success);
     --book-backdrop: rgb(0 0 0 / .65);
     --book-nav-fallback: var(--book-nav-selected);
@@ -107,10 +107,10 @@
     --verso-muted-color: var(--book-muted);
     --verso-border-color: var(--book-border);
     --verso-code-color: var(--book-text);
-    --verso-code-const-color: #c0d9ed;
-    --verso-code-keyword-color: #d4c2f0;
+    --verso-code-const-color: #ddcfb9;
+    --verso-code-keyword-color: #e1d3c5;
     --verso-code-hover-bg-color: var(--book-step-selected);
-    --verso-toc-background-color: #161a20;
+    --verso-toc-background-color: #1c1b18;
     --verso-toc-text-color: var(--book-text);
     --verso-toc-border-color: var(--book-border);
     --verso-toc-resize-handle-color: var(--book-subtle);
@@ -119,7 +119,7 @@
     --verso-burger-toc-visible-shadow-color: var(--book-page);
     --verso-burger-toc-hidden-shadow-color: var(--book-page);
     --verso-tooltip-color: var(--book-text);
-    --verso-tooltip-bg-color: #272e38;
+    --verso-tooltip-bg-color: #332f29;
     --verso-tooltip-border-color: var(--book-border-strong);
     --verso-tooltip-separator-color: var(--book-border);
     --verso-tactic-state-color: var(--book-text);
@@ -127,19 +127,22 @@
     --verso-tactic-state-border-color: var(--book-border-strong);
     --verso-tactic-toggle-color: var(--book-muted);
     --verso-tactic-toggle-checked-color: var(--book-text);
-    --verso-code-info-hover-bg-color: #2d4560;
-    --verso-info-indicator-color: #98c6ef;
-    --verso-tooltip-info-border-color: #98c6ef;
-    --verso-code-warning-hover-bg-color: #514323;
+    --verso-code-info-hover-bg-color: #4c4031;
+    --verso-info-indicator-color: #d6bd9a;
+    --verso-tooltip-info-border-color: #d6bd9a;
+    --verso-code-warning-hover-bg-color: #4e422a;
     --verso-warning-indicator-color: var(--book-warning);
     --verso-tooltip-warning-border-color: var(--book-warning);
-    --verso-tooltip-warning-bg-color: #373124;
-    --verso-code-error-hover-bg-color: #57323a;
+    --verso-tooltip-warning-bg-color: #373025;
+    --verso-code-error-hover-bg-color: #563832;
     --verso-error-indicator-color: var(--book-error);
     --verso-message-error-color: var(--book-error);
     --verso-tooltip-error-border-color: var(--book-error);
-    --verso-tooltip-error-bg-color: #392930;
+    --verso-tooltip-error-bg-color: #3c2e29;
   }
+  /* The compact sidebar title is a link with Verso's own fixed link color. */
+  :root[data-theme="dark"] #toc .toc-title,
+  :root[data-theme="dark"] main :is(h1, h2, h3, h4, h5, h6) { color: var(--book-strong); }
   html, body { background-color: var(--book-page); color: var(--book-text); }
   header { background: var(--book-page); box-shadow: 0 1px 0 var(--book-border); }
   header .header-title { color: var(--book-strong); }

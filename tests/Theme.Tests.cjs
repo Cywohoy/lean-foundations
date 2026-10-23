@@ -123,6 +123,21 @@ function contrast(a,b) {const x = luminance(a), y = luminance(b); return (Math.m
         assert(await control().evaluate(node => {const b=node.getBoundingClientRect();return b.left>=0 && b.right<=innerWidth && b.height>=40;}),slug);
         assert(await control().evaluate(node => {const b=node.getBoundingClientRect();return document.elementFromPoint(b.x+b.width/2,b.y+b.height/2)===node;}),slug+' theme must not be covered by search');
         assert(await page.evaluate(() => document.documentElement.scrollWidth<=document.documentElement.clientWidth+1),slug+' at '+width);
+        if (slug === 'foundations/proof/' && width === 320) {
+          await page.locator('#toggle-toc-click').click();
+          const title = page.locator('#toc .toc-title');
+          await title.waitFor({state:'visible'});
+          const colors = await title.evaluate(node => ({text:getComputedStyle(node.querySelector('h1')).color,
+            background:getComputedStyle(document.querySelector('#toc')).backgroundColor}));
+          assert(contrast(colors.text,colors.background)>=7,'Mobile book title must be legible: '+JSON.stringify(colors));
+          await title.hover();
+          assert.equal(await title.locator('h1').evaluate(node=>getComputedStyle(node).color),colors.text,'Hover must not restore the fixed black title color');
+          await page.screenshot({path:path.join(artifacts,'dark-mobile-toc.png')});
+          await page.locator('#toggle-toc-click').click();
+          await page.setViewportSize({width:1024,height:900});
+          assert(await title.isVisible(),'The tablet sidebar also displays the book title');
+          assert.equal(await title.locator('h1').evaluate(node=>getComputedStyle(node).color),colors.text);
+        }
       }
       if (slug === 'foundations/sets-functions/') await page.screenshot({path:path.join(artifacts,'dark-mobile.png')});
       if (slug === '') await page.screenshot({path:path.join(artifacts,'dark-portal.png')});
@@ -141,7 +156,7 @@ function contrast(a,b) {const x = luminance(a), y = luminance(b); return (Math.m
     await results.waitFor({state:'visible'});
     assert(await results.locator('li').count()>0);
     assert(await results.evaluate(node => {const b=node.getBoundingClientRect();return b.left>=0 && b.right<=innerWidth;}),'Search results fit beside the reserved theme slot');
-    assert.equal(await results.evaluate(node=>getComputedStyle(node).backgroundColor),'rgb(25, 29, 35)');
+    assert.equal(await results.evaluate(node=>getComputedStyle(node).backgroundColor),'rgb(32, 30, 27)');
     await search.press('Escape');
     await page.setViewportSize({width:1440,height:1000});
     await control().focus();
@@ -149,7 +164,7 @@ function contrast(a,b) {const x = luminance(a), y = luminance(b); return (Math.m
     await page.emulateMedia({media:'print'});
     assert.equal(await control().isVisible(),false);
     assert.equal(await page.locator('body').evaluate(node=>getComputedStyle(node).backgroundColor),'rgba(0, 0, 0, 0)');
-    assert.notEqual(await page.locator('body').evaluate(node=>getComputedStyle(node).color),'rgb(222, 227, 235)');
+    assert.notEqual(await page.locator('body').evaluate(node=>getComputedStyle(node).color),'rgb(231, 226, 218)');
     await page.emulateMedia({media:'screen'});
     await page.evaluate(()=>scrollTo(0,0));
     await choose('light');

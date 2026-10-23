@@ -80,10 +80,13 @@ const [key] = Object.entries(manifest).find(([, value]) => value.exercise && val
       }
     }
     assert.equal(await page.locator('main .hl.lean.block').first().evaluate(node => getComputedStyle(node).fontVariantLigatures),'none');
+    for (const selector of ['.book-exercise-declaration','.book-live-goal','.book-theorem-statement']) {
+      assert.equal(await wrapper.locator(selector).first().evaluate(node=>getComputedStyle(node).whiteSpace),'pre-wrap',selector+' preserves line breaks and wraps long lines');
+    }
     assert(!await status.evaluate(node => node.classList.contains('book-error')));
     if (process.env.BOOK_THEME === 'dark') {
       for (const selector of ['dialog','.book-code-input','.book-theorems-search']) {
-        assert.equal(await wrapper.locator(selector).first().evaluate(node => getComputedStyle(node).backgroundColor),'rgb(25, 29, 35)');
+        assert.equal(await wrapper.locator(selector).first().evaluate(node => getComputedStyle(node).backgroundColor),'rgb(32, 30, 27)');
       }
       fs.mkdirSync('tmp/theme-tests',{recursive:true});
       await page.screenshot({path:'tmp/theme-tests/dark-exercise.png'});
