@@ -34,7 +34,7 @@ namespace Ample
 local infixr:90 (priority := high) " ∘ " => compose
 ```
 
-# 같은 크기와 기수
+# 기수
 %%%
 tag := "cardinality-same-size"
 file := "same-cardinality"
@@ -180,9 +180,9 @@ attribute [ample_compare] cardinal_eq_iff
 ```
 
 앞 장의 `classOf_eq_iff`를 전단사 관계에 적용한 결과이다.
-이 정리를 `ext`와 `indisc`에도 연결했으므로
-`ext`는 기수의 등식을 `SameCardinality A B`를 보이는 목표로 바꾸고,
-`indisc at h`는 등식 가정에서 전단사의 존재를 얻는다.
+이 정리를 `ext`에 연결했으므로 기수의 등식에 `ext`를 쓰면
+`SameCardinality A B`가 새 목표가 된다.
+기수의 등식이 가정으로 주어졌을 때는 `cardinal_eq_iff`의 정방향으로 전단사의 존재를 얻는다.
 
 ```savedLean
 example {A B : Type}
@@ -224,7 +224,7 @@ theorem eq_trans {a b c : Cardinal}
 end Cardinal
 ```
 
-# 유한집합과 번호
+# 유한집합
 %%%
 tag := "cardinality-finite-numbering"
 %%%
@@ -504,7 +504,7 @@ theorem threeNumbers_cardinal :
   · intro i j hij
     -- 함수값의 등식을 자연수의 등식으로 옮긴다.
     expand at hij
-    indisc at hij
+    apply_fun (fun x => x.val) at hij
     ext
     arith
 
@@ -579,7 +579,7 @@ theorem cardinality_finite_transport {A B : Type} {n : Nat}
   exact hA
 ```
 
-# 비둘기집 원리와 원소 수
+# 비둘기집 원리
 %%%
 tag := "cardinality-uniqueness"
 file := "uniqueness"
@@ -759,7 +759,7 @@ theorem fin_injection_remove {m n : Nat}
     { val := 0, isLt := by arith }
   let next (i : Fin m) : Fin (m + 1) :=
     { val := i.val + 1
-      isLt := Nat.succ_lt_succ i.isLt }
+      isLt := by arith }
 
   -- 단사성에 따라 나머지 함수값은 f(0)과 다르다.
   have hne (i : Fin m) :
@@ -771,7 +771,7 @@ theorem fin_injection_remove {m n : Nat}
 
     replace h : next i = first :=
       hf (next i) first h
-    indisc at h
+    apply_fun (fun x => x.val) at h
     expand at h
     arith
 
@@ -784,7 +784,7 @@ theorem fin_injection_remove {m n : Nat}
   have hg : Injective g := by
     intro i j hij
     -- 새 번호의 등식에서 원래 함수값의 등식을 얻는다.
-    indisc at hij
+    apply_fun (fun x => x.val) at hij
     replace hij : f (next i) = f (next j) := by
       ext
       exact eraseIndex_injective (hne i) (hne j) hij
@@ -792,7 +792,7 @@ theorem fin_injection_remove {m n : Nat}
     -- f의 단사성으로 i + 1 = j + 1을 얻는다.
     replace hij : next i = next j :=
       hf (next i) (next j) hij
-    indisc at hij
+    apply_fun (fun x => x.val) at hij
 
     -- 양변의 1을 소거하여 i = j를 보인다.
     ext
@@ -1177,7 +1177,8 @@ $`n=k+1`일 때 상에서 번호 $`r`이 빠졌다고 가정하자.
 ```savedLean
 theorem fin_injective_surjective (n : Nat)
     (f : Fin n → Fin n)
-    (hf : Injective f) : Surjective f := by
+    (hf : Injective f) :
+    Surjective f := by
   intro r
   by_contra hmissing
   cases n with
@@ -1198,7 +1199,7 @@ theorem fin_injective_surjective (n : Nat)
       apply hf
       ext
       apply eraseIndex_injective (hne x) (hne y)
-      indisc at hxy
+      apply_fun (fun x => x.val) at hxy
       exact hxy
 
     -- 빠진 번호를 지우면 더 작은 번호 집합으로 가는 단사를 얻는다.
@@ -1219,14 +1220,18 @@ $`b\circ f\circ a^{-1}`에 앞의 정리를 적용한다.
 theorem finite_injective_surjective {A B : Type} (f : A → B)
     (hA : IsFinite A)
     (hAB : cardinal A = cardinal B)
-    (hf : Injective f) : Surjective f := by
+    (hf : Injective f) :
+    Surjective f := by
+  -- A와 B에 같은 수의 번호를 붙인다.
   unpack hA with ⟨n, hn⟩
   have hBn : cardinal B = cardinal (Fin n) := by
     rw [← hAB]
     exact hn
+
   unpack (cardinal_eq_iff A (Fin n)).mp hn with ⟨a, ha⟩
   unpack (cardinal_eq_iff B (Fin n)).mp hBn with ⟨b, hb⟩
   let F (i : Fin n) : Fin n := b (f (inverseMap a ha i))
+  -- 번호 사이의 함수도 세 단사함수의 합성이므로 단사이다.
   have hF : Injective F := by
     intro i j hij
     apply (inverseMap_bijective a ha).inj
@@ -1234,6 +1239,7 @@ theorem finite_injective_surjective {A B : Type} (f : A → B)
     apply hb.inj
     exact hij
 
+  -- y의 번호를 만드는 원상을 A의 원소로 옮긴다.
   intro y
   unpack fin_injective_surjective n F hF (b y) with ⟨i, hi⟩
   exists inverseMap a ha i
@@ -1249,21 +1255,31 @@ theorem finite_injective_surjective {A B : Type} (f : A → B)
 그러면 $`g`는 단사이므로 방금 증명한 방향에 따라 전사이기도 하다.
 임의의 $`x,x'\in A`를 $`g(u),g(v)`로 쓰면
 $`f(x)=f(x')`에서 $`u=v`를 얻어 $`x=x'`가 된다.
+이때 고른 함수와 $`f(g(y))=y`라는 성질은 앞의 역함수 구성처럼 함께 담아 두자.
 
 ```savedLean
 theorem finite_surjective_injective {A B : Type} (f : A → B)
     (hA : IsFinite A)
     (hAB : cardinal A = cardinal B)
-    (hf : Surjective f) : Injective f := by
-  let g : B → A := fun y => Classical.choose (hf y)
-  have hfg (y : B) : f (g y) = y := by
-    exact Classical.choose_spec (hf y)
+    (hf : Surjective f) :
+    Injective f := by
+  let gData : { g : B → A // ∀ y, f (g y) = y } :=
+    { val := fun y => Classical.choose (hf y)
+      property := by
+        intro y
+        exact Classical.choose_spec (hf y) }
+
+  let g : B → A := gData.val
+  have hfg (y : B) : f (g y) = y :=
+    gData.property y
+  -- g의 함수값이 같으면 f를 적용하여 원래 원소의 등식을 얻는다.
   have hg : Injective g := by
     intro x y hxy
-    have h : f (g x) = f (g y) := by rw [hxy]
-    rw [hfg, hfg] at h
-    exact h
+    apply_fun f at hxy
+    rw [hfg, hfg] at hxy
+    exact hxy
 
+  -- 같은 크기의 유한집합 사이의 단사이므로 g는 전사이기도 하다.
   have hgSurj : Surjective g := by
     apply finite_injective_surjective g
     · apply isFinite_transport hAB hA
@@ -1272,6 +1288,7 @@ theorem finite_surjective_injective {A B : Type} (f : A → B)
 
     · exact hg
 
+  -- x와 y를 g의 함수값으로 나타내어 f의 단사성을 보인다.
   intro x y hxy
   unpack hgSurj x with ⟨u, hu⟩
   unpack hgSurj y with ⟨v, hv⟩
@@ -1313,7 +1330,7 @@ theorem exercise_successor_not_surjective :
   sorry
 ```
 
-# 집합의 구성과 기수 연산
+# 기수 연산
 %%%
 tag := "cardinality-constructions"
 %%%
@@ -1347,11 +1364,12 @@ theorem finSum_bijective (m n : Nat) :
     Bijective (finSum m n) := by
   constructor
   · intro x y hxy
+    -- 두 원소의 출처에 따라 번호가 같을 수 있는지 확인한다.
     cases x with
     | inl a =>
       cases y with
       | inl b =>
-        indisc at hxy with hval
+        apply_fun (fun x => x.val) at hxy with hval
         have hab : a = b := by
           ext
           exact hval
@@ -1359,17 +1377,17 @@ theorem finSum_bijective (m n : Nat) :
         rw [hab]
 
       | inr b =>
-        indisc at hxy with hval
+        apply_fun (fun x => x.val) at hxy with hval
         arith
 
     | inr a =>
       cases y with
       | inl b =>
-        indisc at hxy with hval
+        apply_fun (fun x => x.val) at hxy with hval
         arith
 
       | inr b =>
-        indisc at hxy with hval
+        apply_fun (fun x => x.val) at hxy with hval
         have hab : a = b := by
           ext
           arith
@@ -1377,6 +1395,7 @@ theorem finSum_bijective (m n : Nat) :
         rw [hab]
 
   · intro k
+    -- m보다 작은 번호는 왼쪽, 나머지는 오른쪽에서 온다.
     by_cases hk : k.val < m
     · exists Sum.inl { val := k.val, isLt := hk }
     · exists Sum.inr { val := k.val - m, isLt := by arith }
@@ -1425,7 +1444,8 @@ theorem finProduct_bijective (m n : Nat) :
   constructor
   · intro x y hxy
     -- 같은 나머지와 몫에서 원래 번호의 같음을 얻는다.
-    indisc : 2 at hxy
+    apply_fun (fun p => p.1.val) at hxy with hmod
+    apply_fun (fun p => p.2.val) at hxy with hdiv
     arith
 
   · intro y
@@ -1599,85 +1619,282 @@ theorem sameCardinality_arrow {A B C D : Type}
   apply functionMap_bijective f g hf hg
 ```
 
-덧셈의 구성을 직접 살펴보자. 기수 `a`, `b`에서 대표 타입을 하나씩 택하고,
-두 타입의 서로소인 합의 기수를 `a + b`로 정의한다.
-앞 장의 `quotientRepr`가 각 기수를 나타내는 타입을 택한다.
+덧셈에서는 두 타입 `A`, `B`에 서로소인 합의 기수 `cardinal (A ⊕ B)`를 대응시키려 한다.
+예를 들어 `A`에 두 원소, `B`에 세 원소가 있으면 그 합에는 다섯 원소가 있다.
+이때 어떤 두 원소 집합과 세 원소 집합을 골랐는지는 합의 크기에 영향을 주지 않는다.
+따라서 `cardinal A`와 `cardinal B`만으로 합의 기수를 정할 수 있어야 한다.
+
+앞 장의 `quotientLift`는 대표원을 받는 함수에서 몫 원소를 받는 함수를 만들었다.
+여기서는 대표원이 타입 `A`, `B`이고 몫 원소가 그 기수이다.
+두 인수를 차례로 옮기기 위해 먼저 `A`를 고정하고 `B`만 기수로 바꾸자.
+`sameCardinality_sum`에 따라 `B`와 크기가 같은 타입을 넣어도 합의 기수가 같으므로
+다음 함수 `addToType A : Cardinal → Cardinal`을 얻는다.
 
 ```savedLean
 namespace Cardinal
 
+noncomputable def addToType (A : Type) :
+    Cardinal → Cardinal :=
+  quotientLift
+    SameCardinality
+    sameCardinality_equivalence
+    (fun B : Type => cardinal (A ⊕ B))
+    (by
+      intro B D hBD
+      ext
+      apply sameCardinality_sum
+      · exact sameCardinality_refl A
+      · exact hBD)
+
+theorem addToType_cardinal (A B : Type) :
+    addToType A (cardinal B) = cardinal (A ⊕ B) := by
+  exact quotientLift_classOf
+```
+
+`addToType A (cardinal B)`는 `cardinal (A ⊕ B)`이다.
+이 계산 정리는 앞 장의 `quotientLift_classOf`를 그대로 적용한 결과이다.
+이 단계의 첫째 인수는 타입 `A`이고 둘째 인수는 기수이다.
+
+이제 `A`와 `C`의 크기가 같으면 `addToType A`와 `addToType C`도 같은 함수임을 보이자.
+어느 타입 `B`를 더해도 `A ⊕ B`와 `C ⊕ B`의 크기가 같기 때문이다.
+몫집합 위 함수의 유일성 정리 `quotientLift_unique`를 사용하면
+`cardinal B`에서 두 함수의 값이 같음을 확인하여 함수의 등식을 얻는다.
+
+```savedLean
+theorem addToType_respects (A C : Type)
+    (hAC : SameCardinality A C) :
+    addToType A = addToType C := by
+  apply quotientLift_unique SameCardinality
+    (fun B : Type => cardinal (C ⊕ B))
+  · intro B
+    calc
+      addToType A (cardinal B) = cardinal (A ⊕ B) := by
+        rw [addToType_cardinal]
+      _ = cardinal (C ⊕ B) := by
+        ext
+        apply sameCardinality_sum
+        · exact hAC
+        · exact sameCardinality_refl B
+
+  · intro B
+    exact addToType_cardinal C B
+```
+
+이 증명에서 `A`만 `C`로 바꾸고 `B`는 그대로 두었으므로
+`sameCardinality_sum`에는 `hAC`와 `sameCardinality_refl B`를 사용했다.
+이제 `addToType` 자체에 다시 `quotientLift`를 적용하여 첫째 인수도 기수로 바꾸자.
+그 결과인 `add`는 두 기수 `a`, `b`를 받아 합의 기수를 돌려준다.
+
+```savedLean
 noncomputable def add (a b : Cardinal) : Cardinal :=
-  cardinal (quotientRepr SameCardinality a ⊕
-    quotientRepr SameCardinality b)
+  quotientLift
+    SameCardinality
+    sameCardinality_equivalence
+    addToType
+    addToType_respects
+    a b
 
 noncomputable instance : Add Cardinal := ⟨add⟩
 
 end Cardinal
 ```
 
-대표 타입이 원래의 `A`, `B`와 다르더라도 각각 같은 크기이다.
-`sameCardinality_sum`에 따라 서로소인 합도 같은 크기이므로
-`cardinal (A ⊕ B) = cardinal A + cardinal B`가 성립한다.
-Lean에서는 `expand`로 덧셈의 정의를 펼친 뒤 이 전단사 보존 성질을 적용한다.
+두 번의 계산 규칙을 적용하면 `cardinal A + cardinal B = cardinal (A ⊕ B)`를 얻는다.
+아래에서는 먼저 `Cardinal.add (cardinal A) = Cardinal.addToType A`에 이름 `h`를 붙인다.
+이는 첫째 인수에 적용한 `quotientLift_classOf`이며,
+`calc`에서는 둘째 인수의 계산 규칙과 `h`를 반대 순서로 사용하여 원하는 등식을 얻는다.
+계산에 쓰기 편하도록 정리의 등식은 합의 타입에서 기수의 합으로 향하게 적는다.
 
 ```savedLean
 theorem cardinal_sum (A B : Type) :
     cardinal (A ⊕ B) = cardinal A + cardinal B := by
-  expand
-  apply cardinal_eq_of_sameCardinality
-  apply sameCardinality_sum
-  · apply sameCardinality_of_cardinal_eq
-    exact quotientRepr_spec (cardinal A)
+  have h : Cardinal.add (cardinal A) =
+      Cardinal.addToType A := by
+    exact quotientLift_classOf
 
-  · apply sameCardinality_of_cardinal_eq
-    exact quotientRepr_spec (cardinal B)
+  calc
+    cardinal (A ⊕ B) =
+        Cardinal.addToType A (cardinal B) := by
+      rw [Cardinal.addToType_cardinal]
+    _ = Cardinal.add (cardinal A) (cardinal B) := by
+      rw [h]
 ```
 
-`quotientRepr_spec (cardinal A)`는 `cardinal A`와 선택한 대표 타입의 기수가 같다는 증명이다.
-두 타입의 크기가 같음을 각각 보이면 합에 관한 증명이 끝난다.
+곱과 거듭제곱에도 같은 두 단계를 사용한다.
+같은 크기의 집합으로 바꿀 수 있다는 두 보존 정리는 다음과 같다.
 
-곱과 거듭제곱도 같은 방식으로 정의한다.
-대표 타입을 `A`, `B`라고 할 때 곱은 `A × B`의 기수이고,
-$`|B|^{|A|}`는 함수 공간 `A → B`의 기수이다.
-앞의 `sameCardinality_product`, `sameCardinality_arrow`를 사용하면
-각각 `cardinal_product`, `cardinal_arrow`라는 계산 정리를 얻는다.
+```lean -show (name := productPreservationType)
+set_option format.width 50 in
+#check sameCardinality_product
+```
+
+```leanOutput productPreservationType
+Ample.sameCardinality_product {A B C D : Type} (hAC : SameCardinality A C) (hBD : SameCardinality B D) :
+  SameCardinality (A × B) (C × D)
+```
+
+```lean -show (name := arrowPreservationType)
+set_option format.width 50 in
+#check sameCardinality_arrow
+```
+
+```leanOutput arrowPreservationType
+Ample.sameCardinality_arrow {A B C D : Type} (hAC : SameCardinality A C) (hBD : SameCardinality B D) :
+  SameCardinality (A → B) (C → D)
+```
+
+아래의 `mulToType A`는 타입 `A`를 고정하고 다른 쪽의 기수를 받아 곱의 기수를 구한다.
+거듭제곱에서는 공역 `B`를 고정한 `powerToType B`로 정의역의 기수를 받는다.
+이 두 함수에 다시 `quotientLift`를 적용하면 두 인수가 모두 기수인 연산을 얻는다.
+`mulToType_respects`와 `powerToType_respects`는 고정했던 타입도 같은 크기의 타입으로 바꿀 수 있다는 증명이며,
+앞의 `addToType_respects`와 같은 방식으로 얻는다.
 
 ```savedLean -show
 namespace Cardinal
 
-noncomputable def mul (a b : Cardinal) : Cardinal :=
-  cardinal (quotientRepr SameCardinality a ×
-    quotientRepr SameCardinality b)
+noncomputable def mulToType (A : Type) :
+    Cardinal → Cardinal :=
+  quotientLift
+    SameCardinality
+    sameCardinality_equivalence
+    (fun B : Type => cardinal (A × B))
+    (by
+      intro B D hBD
+      ext
+      apply sameCardinality_product
+      · exact sameCardinality_refl A
+      · exact hBD)
 
-noncomputable def power (b a : Cardinal) : Cardinal :=
-  cardinal (quotientRepr SameCardinality a →
-    quotientRepr SameCardinality b)
+theorem mulToType_cardinal (A B : Type) :
+    mulToType A (cardinal B) = cardinal (A × B) := by
+  exact quotientLift_classOf
+theorem mulToType_respects (A C : Type)
+    (hAC : SameCardinality A C) :
+    mulToType A = mulToType C := by
+  apply quotientLift_unique SameCardinality
+    (fun B : Type => cardinal (C × B))
+  · intro B
+    calc
+      mulToType A (cardinal B) = cardinal (A × B) := by
+        rw [mulToType_cardinal]
+      _ = cardinal (C × B) := by
+        ext
+        apply sameCardinality_product
+        · exact hAC
+        · exact sameCardinality_refl B
+
+  · intro B
+    exact mulToType_cardinal C B
+noncomputable def powerToType (B : Type) :
+    Cardinal → Cardinal :=
+  quotientLift
+    SameCardinality
+    sameCardinality_equivalence
+    (fun A : Type => cardinal (A → B))
+    (by
+      intro A C hAC
+      ext
+      apply sameCardinality_arrow
+      · exact hAC
+      · exact sameCardinality_refl B)
+
+theorem powerToType_cardinal (A B : Type) :
+    powerToType B (cardinal A) = cardinal (A → B) := by
+  exact quotientLift_classOf
+theorem powerToType_respects (B D : Type)
+    (hBD : SameCardinality B D) :
+    powerToType B = powerToType D := by
+  apply quotientLift_unique SameCardinality
+    (fun A : Type => cardinal (A → D))
+  · intro A
+    calc
+      powerToType B (cardinal A) = cardinal (A → B) := by
+        rw [powerToType_cardinal]
+      _ = cardinal (A → D) := by
+        ext
+        apply sameCardinality_arrow
+        · exact sameCardinality_refl A
+        · exact hBD
+
+  · intro A
+    exact powerToType_cardinal A D
+
+end Cardinal
+```
+
+```savedLean
+namespace Cardinal
+
+noncomputable def mul (a b : Cardinal) : Cardinal :=
+  quotientLift
+    SameCardinality
+    sameCardinality_equivalence
+    mulToType
+    mulToType_respects
+    a b
 
 noncomputable instance : Mul Cardinal := ⟨mul⟩
-noncomputable instance : Pow Cardinal Cardinal := ⟨power⟩
-end Cardinal
+noncomputable def power (a b : Cardinal) : Cardinal :=
+  quotientLift
+    SameCardinality
+    sameCardinality_equivalence
+    powerToType
+    powerToType_respects
+    a b
 
+noncomputable instance : Pow Cardinal Cardinal := ⟨power⟩
+
+end Cardinal
+```
+
+거듭제곱의 첫째 인수는 밑이고 둘째 인수는 지수이다.
+따라서 함수 공간 `A → B`의 기수는 `cardinal B ^ cardinal A`로 계산한다.
+곱과 거듭제곱의 계산 정리도 `cardinal_sum`과 같이 두 번의 계산 규칙으로 증명한다.
+
+```savedLean -show
 theorem cardinal_product (A B : Type) :
     cardinal (A × B) = cardinal A * cardinal B := by
-  expand
-  apply cardinal_eq_of_sameCardinality
-  apply sameCardinality_product
-  · apply sameCardinality_of_cardinal_eq
-    exact quotientRepr_spec (cardinal A)
+  have h : Cardinal.mul (cardinal A) =
+      Cardinal.mulToType A := by
+    exact quotientLift_classOf
 
-  · apply sameCardinality_of_cardinal_eq
-    exact quotientRepr_spec (cardinal B)
+  calc
+    cardinal (A × B) =
+        Cardinal.mulToType A (cardinal B) := by
+      rw [Cardinal.mulToType_cardinal]
+    _ = Cardinal.mul (cardinal A) (cardinal B) := by
+      rw [h]
 
 theorem cardinal_arrow (A B : Type) :
     cardinal (A → B) = cardinal B ^ cardinal A := by
-  expand
-  apply cardinal_eq_of_sameCardinality
-  apply sameCardinality_arrow
-  · apply sameCardinality_of_cardinal_eq
-    exact quotientRepr_spec (cardinal A)
+  have h : Cardinal.power (cardinal B) =
+      Cardinal.powerToType B := by
+    exact quotientLift_classOf
 
-  · apply sameCardinality_of_cardinal_eq
-    exact quotientRepr_spec (cardinal B)
+  calc
+    cardinal (A → B) =
+        Cardinal.powerToType B (cardinal A) := by
+      rw [Cardinal.powerToType_cardinal]
+    _ = Cardinal.power (cardinal B) (cardinal A) := by
+      rw [h]
+```
+
+```lean -show (name := cardinalProductType)
+set_option format.width 50 in
+#check cardinal_product
+```
+
+```leanOutput cardinalProductType
+Ample.cardinal_product (A B : Type) : cardinal (A × B) = cardinal A * cardinal B
+```
+
+```lean -show (name := cardinalArrowType)
+set_option format.width 50 in
+#check cardinal_arrow
+```
+
+```leanOutput cardinalArrowType
+Ample.cardinal_arrow (A B : Type) : cardinal (A → B) = cardinal B ^ cardinal A
 ```
 
 이후에는 다음 세 식으로 집합의 구성과 기수의 계산을 연결한다.
@@ -1699,7 +1916,7 @@ tag := "cardinality-finite-calculations"
 theorem cardinal_nat_add (m n : Nat) :
     (m : Cardinal) + n = ((m + n : Nat) : Cardinal) := by
   rw [← cardinal_fin m, ← cardinal_fin n, ← cardinal_sum]
-  apply cardinal_eq_of_sameCardinality
+  ext
   exists finSum m n
   exact finSum_bijective m n
 
@@ -1707,7 +1924,7 @@ theorem cardinal_nat_mul (m n : Nat) :
     (m : Cardinal) * n = ((m * n : Nat) : Cardinal) := by
   rw [← cardinal_fin m, ← cardinal_fin n,
     ← cardinal_product]
-  apply cardinal_eq_of_sameCardinality
+  ext
   apply sameCardinality_symm
   exists finProduct m n
   exact finProduct_bijective m n
@@ -1759,13 +1976,21 @@ tag := "cardinality-arithmetic-laws"
 
 *보기* 곱에서 합의 두 출처를 구별하면
 $`A\times(B\oplus C)`와 $`(A\times B)\oplus(A\times C)` 사이의 전단사를 얻는다.
+역방향에서는 왼쪽 출처의 $`(a,b)`를 $`(a,\operatorname{inl}(b))`로,
+오른쪽 출처의 $`(a,c)`를 $`(a,\operatorname{inr}(c))`로 보낸다.
 
 ```savedLean
 def distribute {A B C : Type} :
     A × (B ⊕ C) → (A × B) ⊕ (A × C)
   | (a, .inl b) => .inl (a, b)
   | (a, .inr c) => .inr (a, c)
+```
 
+아래의 `match x with`는 앞의 `sumMap` 정의와 같이 출처에 따라 함수값을 정한다.
+`rcases x with ⟨a, b | c⟩`는 순서쌍의 첫 성분을 `a`로 꺼내고 둘째 성분의 출처에 따라 두 경우로 나눈다.
+반대로 `rcases y with ⟨a, b⟩ | ⟨a, c⟩`는 먼저 출처를 나눈 뒤 각 순서쌍의 성분을 꺼낸다.
+
+```savedLean
 theorem distribute_bijective (A B C : Type) :
     Bijective (distribute :
       A × (B ⊕ C) → (A × B) ⊕ (A × C)) := by
@@ -1790,7 +2015,7 @@ theorem cardinal_distrib (A B C : Type) :
         cardinal A * cardinal C := by
   rw [← cardinal_sum, ← cardinal_product,
     ← cardinal_product, ← cardinal_product, ← cardinal_sum]
-  apply cardinal_eq_of_sameCardinality
+  ext
   exists distribute
   exact distribute_bijective A B C
 ```
@@ -1803,7 +2028,7 @@ $`A\times B\to C`와 $`A\to(B\to C)`가 같은 크기이므로 $`|C|^{|A||B|}=(|
 ```savedLean
 theorem cardinal_curry (A B C : Type) :
     cardinal (A × B → C) = cardinal (A → B → C) := by
-  apply cardinal_eq_of_sameCardinality
+  ext
   exists curry
   apply bijective_of_inverse _ uncurry
   · exact uncurry_curry
@@ -1881,18 +2106,40 @@ theorem finiteProd_nat_cast (f : Nat → Nat) (n : Nat) :
     rfl
 ```
 
+*보기* 기수 $`1`, $`2`, $`3`을 더하거나 곱한 값도 자연수의 계산으로 구할 수 있다.
+먼저 `finiteSum_nat_cast`와 `finiteProd_nat_cast`로 자연수에서 계산한 결과의 기수로 바꾸자.
+그 뒤에는 앞 장에서와 같이 유한합·유한곱의 정의를 계산하면 된다.
+
+```savedLean
+example : (∑ i < 3, ((i + 1 : Nat) : Cardinal)) = 6 := by
+  rw [finiteSum_nat_cast]
+  rfl
+
+example : (∏ i < 3, ((i + 1 : Nat) : Cardinal)) = 6 := by
+  rw [finiteProd_nat_cast]
+  rfl
+```
+
 *문제 12* (크기가 다른 세 상자)
 
 세 상자의 원소 수가 각각 $`1`, $`2`, $`3`이다.
-원소를 출처와 함께 모두 모은 경우와 각 상자에서 하나씩 고른 경우의 원소 수가 모두 $`6`임을 보이라.
+상자에 $`0`, $`1`, $`2`라는 번호를 붙이면 $`i`번 상자의 원소 수는 $`i+1`이다.
+
+(1) 원소를 출처와 함께 모두 모은 집합의 기수가 세 기수의 유한합과 같음을 보이라.
+
+(2) 각 상자에서 하나씩 고르는 방법들의 집합의 기수가 세 기수의 유한곱과 같음을 보이라.
+
+앞의 보기에서 두 계산의 값은 모두 $`6`임을 확인했다.
 
 ```savedLean -keep
 theorem exercise_three_boxes_sum :
-    cardinal (Fin 1 ⊕ (Fin 2 ⊕ Fin 3)) = 6 := by
+    cardinal (Fin 1 ⊕ (Fin 2 ⊕ Fin 3)) =
+      ∑ i < 3, ((i + 1 : Nat) : Cardinal) := by
   sorry
 
 theorem exercise_three_boxes_product :
-    cardinal (Fin 1 × (Fin 2 × Fin 3)) = 6 := by
+    cardinal (Fin 1 × (Fin 2 × Fin 3)) =
+      ∏ i < 3, ((i + 1 : Nat) : Cardinal) := by
   sorry
 ```
 
@@ -1906,11 +2153,62 @@ $`m`개의 칸을 각각 $`n`가지 색 중 하나로 칠하는 방법은 함수
 이를 귀납법으로 확인하자. 칸이 없을 때는 빈 함수 하나가 있고,
 칸이 하나 늘면 기존 색칠 방법마다 마지막 칸의 색을 $`n`가지로 고를 수 있다.
 
-먼저 공역이 `B`인 함수에서 마지막 값을 분리하자.
+먼저 칸이 없는 경우를 살펴보자. `Fin 0`에는 원소가 없으므로
+공역이 어떤 타입 `B`이든 값을 지정할 곳이 없다.
+이때의 함수를 *빈 함수*라고 하며, `Fin.elim0`으로 정의할 수 있다.
+
+```savedLean
+def emptyFinFunction (B : Type) : Fin 0 → B :=
+  fun i => Fin.elim0 i
+```
+
+`Fin 0 → B`의 원소는 이러한 함수들이며 그 원소가 하나임을 보이려면
+이 함수들의 타입과 `Fin 1` 사이의 전단사를 구성하면 된다.
+모든 함수를 유일한 번호 $`0`으로 보내고, 번호에서는 빈 함수로 돌아오도록 하자.
+첫째 합성에서는 임의의 `f : Fin 0 → B`가 빈 함수와 같음을 보인다.
+`ext i`로 값 하나를 비교하려 해도 `i : Fin 0`은 존재할 수 없으므로 증명이 끝난다.
+
+```savedLean
+theorem cardinal_empty_fin_arrow (B : Type) :
+    cardinal (Fin 0 → B) = 1 := by
+  ext
+  let toSingle (_ : Fin 0 → B) : Fin 1 :=
+    { val := 0, isLt := by decide }
+  let fromSingle (_ : Fin 1) : Fin 0 → B :=
+    emptyFinFunction B
+  exists toSingle
+  apply bijective_of_inverse _ fromSingle
+  · intro f
+    ext i
+    exact Fin.elim0 i
+
+  · intro i
+    ext
+    arith
+```
+
+다음으로 공역이 `B`인 함수에서 마지막 값을 분리하자.
 `Fin (m + 1) → B`인 함수는 앞의 $`m`개 값과 마지막 값으로 결정되므로,
 `(Fin m → B) × B`와 전단사를 이룬다.
 `Fin.lastCases last rest i`는 번호 `i`가 마지막 번호이면 `last`를,
 `j.castSucc` 꼴의 앞 번호이면 `rest j`를 값으로 갖는다.
+
+가령 앞의 두 번호에서 $`1`, $`2`를, 마지막 번호에서 $`7`을 값으로 갖는 함수를 만들 수 있다.
+앞의 두 값은 `fun i : Fin 2 => i.val + 1`로 정하고 마지막 값으로 `7`을 제시하자.
+
+```savedLean
+example :
+    Fin.lastCases 7 (fun i : Fin 2 => i.val + 1)
+      (Fin.last 2) = 7 := by
+  rfl
+
+example (i : Fin 2) :
+    Fin.lastCases 7 (fun j : Fin 2 => j.val + 1)
+      i.castSucc = i.val + 1 := by
+  simp
+```
+
+이제 마지막 값에는 `p.2`를, 앞의 값들에는 함수 `p.1`을 사용하여 두 방향을 정의하자.
 
 ```savedLean
 def finFunctionAppend (B : Type) (m : Nat)
@@ -1925,8 +2223,9 @@ def finFunctionSplit (B : Type) (m : Nat)
 `finFunctionAppend`는 앞의 함수에 마지막 값을 붙이고,
 `finFunctionSplit`는 함수에서 이 둘을 꺼낸다.
 붙였다가 꺼내거나 꺼냈다가 붙이면 원래 자료로 돌아온다.
-마지막 증명의 `induction i using Fin.lastCases`는 번호를 마지막 번호인 `last`와
-앞 번호인 `cast i`의 두 경우로 나누며, 각 경우에는 정의를 계산하면 된다.
+아래의 `induction i using Fin.lastCases`는 방금 사용한 번호의 분해 규칙으로 두 경우를 나눈다.
+`last`에서는 마지막 번호를, `cast i`에서는 앞 번호 `i.castSucc`를 비교한다.
+각 경우의 함수값은 위의 두 계산과 같이 정해진다.
 
 ```savedLean
 theorem finFunctionAppend_bijective (B : Type) (m : Nat) :
@@ -1951,23 +2250,12 @@ theorem cardinal_fin_arrow (m n : Nat) :
     cardinal (Fin m → Fin n) =
       ((n ^ m : Nat) : Cardinal) := by
   induction m with
-  | zero =>
-    apply cardinal_eq_of_sameCardinality
-    exists fun _ => (0 : Fin 1)
-    apply bijective_of_inverse _ (fun _ i => Fin.elim0 i)
-    · intro f
-      ext i
-      exact Fin.elim0 i
-
-    · intro i
-      ext
-      arith
-
+  | zero => exact cardinal_empty_fin_arrow (Fin n)
   | succ m ih =>
     calc
       cardinal (Fin (m + 1) → Fin n) =
           cardinal ((Fin m → Fin n) × Fin n) := by
-        apply cardinal_eq_of_sameCardinality
+        ext
         apply sameCardinality_symm
         exists finFunctionAppend (Fin n) m
         exact finFunctionAppend_bijective (Fin n) m
@@ -1994,7 +2282,7 @@ example : cardinal (Fin 2 → Fin 3) = 9 := by
   rfl
 ```
 
-# 무한집합과 크기 비교
+# 무한집합
 %%%
 tag := "cardinality-infinite-comparisons"
 %%%
@@ -2114,7 +2402,7 @@ example : cardinal (Fin 2) ≤ cardinal (Fin 3) := by
   apply (cardinal_le_iff _ _).mpr
   exists (fun i : Fin 2 => i.castSucc)
   intro i j hij
-  indisc at hij
+  apply_fun (fun x => x.val) at hij
   ext
   exact hij
 ```
@@ -2345,7 +2633,7 @@ theorem toPositive_bijective : Bijective toPositive := by
   · intro x y hxy
     -- 함수값이 같으면 x + 1 = y + 1이다.
     expand at hxy
-    indisc at hxy
+    apply_fun (fun x => x.val) at hxy
     arith
 
   · intro y
@@ -2359,7 +2647,7 @@ theorem toPositive_bijective : Bijective toPositive := by
 ```
 
 단사성에서는 `expand at hxy`로 함수값을 펼치고
-`indisc at hxy`로 $`x+1=y+1`을 얻는다.
+`apply_fun (fun x => x.val) at hxy`로 $`x+1=y+1`을 얻는다.
 이 등식에서 공통 항을 소거하면 $`x=y`이므로 `arith`로 증명을 마친다.
 전사성에서는 `y.val - 1`을 택하고 `ext`로 값을 비교하면
 목표를 `y.val - 1 + 1 = y.val`로 바꾼다.
@@ -2547,7 +2835,7 @@ $`a_0,a_1,\ldots`로 나열하는 것이 그 구성이다.
 자연수의 기수 $`\aleph_0`가 가장 작은 무한기수이다.
 여기서는 이 구성의 수학적 논증을 설명했으며 Lean 코드에서는 앞서 증명한 역방향만 사용한다.
 
-# 멱집합과 칸토어 정리
+# 멱집합
 %%%
 tag := "cardinality-power-sets"
 file := "power-sets"
@@ -2694,27 +2982,27 @@ theorem cantor_not_surjective {A : Type} (f : A → Set A) :
 
   -- a ∈ D이면 원소 조건과 모순이다.
   have hnot : a ∉ D := by
-    intro hmem
-    apply hmem
+    intro hin
+    apply hin
     rw [ha]
-    exact hmem
+    exact hin
 
   -- a ∉ D에서 다시 a ∈ D를 얻는다.
-  have hmem : a ∈ D := by
+  have hin : a ∈ D := by
     expand
     rw [ha]
     exact hnot
 
-  exact hnot hmem
+  exact hnot hin
 ```
 
-첫 `have`에서 `hmem : a ∈ D`의 원소 조건은 `a ∉ f a`이다.
-따라서 `apply hmem`을 쓰면 모순을 보이는 목표 `False`가 `a ∈ f a`로 바뀐다.
+첫 `have`에서 `hin : a ∈ D`의 원소 조건은 `a ∉ f a`이다.
+따라서 `apply hin`을 쓰면 모순을 보이는 목표 `False`가 `a ∈ f a`로 바뀐다.
 `ha : f a = D`를 대입하면 `a ∈ D`가 되어 원래 가정으로 증명할 수 있다.
 
 둘째 `have`에서는 `expand`로 `D`의 원소 조건을 펼친 뒤 같은 등식을 대입한다.
 이때 목표는 `a ∉ D`이므로 앞에서 얻은 `hnot`으로 마친다.
-최종적으로 `hnot : a ∉ D`와 `hmem : a ∈ D`를 함께 사용하여 모순을 얻는다.
+최종적으로 `hnot : a ∉ D`와 `hin : a ∈ D`를 함께 사용하여 모순을 얻는다.
 
 이제 전단사가 존재한다고 가정하면 그 전사성이 방금 증명한 정리와 모순이므로
 멱집합과 원래 집합의 크기가 같을 수 없다.
@@ -2839,7 +3127,7 @@ theorem characteristic_trueSet {A : Type} (f : A → Bool) :
 
 ```savedLean
 theorem bool_cardinal : cardinal Bool = 2 := by
-  apply cardinal_eq_of_sameCardinality
+  ext
   exists fun b => if b then (1 : Fin 2) else 0
   apply bijective_of_inverse _
     (fun i => if i.val = 1 then true else false)
@@ -2865,7 +3153,7 @@ theorem bool_cardinal : cardinal Bool = 2 := by
 theorem cardinal_set (A : Type) :
     cardinal (Set A) = (2 : Cardinal) ^ cardinal A := by
   rw [← bool_cardinal, ← cardinal_arrow]
-  apply cardinal_eq_of_sameCardinality
+  ext
   exists characteristic
   apply bijective_of_inverse _ trueSet
   · exact trueSet_characteristic

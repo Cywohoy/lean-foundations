@@ -2,10 +2,10 @@ import AlgebraBook.NumbersRelations
 
 open scoped Ample Classical
 open scoped Ample.Auto
-open Ample
+open Ample ProofExamples
 local infixr:90 (priority := high) " ∘ " => Ample.compose
 local infix:50 (priority := high) " ∣ " => Ample.Divides
-local notation:50 a " ≡ " b " [ZMOD " n "]" => Ample.Congruent n a b
+local notation:50 a " ≡ " b " [MOD " n "]" => Ample.Congruent n a b
 
 namespace Exercises.NumbersRelations
 
@@ -46,40 +46,40 @@ theorem exercise_three_ne_negative_three :
   sorry
 
 theorem exercise_congruent_zero_iff (a b : Int) :
-    a ≡ b [ZMOD 0] ↔ a = b := by
+    a ≡ b [MOD 0] ↔ a = b := by
   sorry
 
 theorem exercise_congruent_one (a b : Int) :
-    a ≡ b [ZMOD 1] := by
+    a ≡ b [MOD 1] := by
   sorry
 
 theorem exercise_congruent_add_left
     (n a b t : Int)
-    (h : a ≡ b [ZMOD n]) :
-    t + a ≡ t + b [ZMOD n] := by
+    (h : a ≡ b [MOD n]) :
+    t + a ≡ t + b [MOD n] := by
   sorry
 
 theorem exercise_congruent_thirty_seven_two :
-    37 ≡ 2 [ZMOD 7] := by
+    37 ≡ 2 [MOD 7] := by
   sorry
 
 theorem exercise_congruent_thirty_seven_twenty_three :
-    37 ≡ 23 [ZMOD 7] := by
+    37 ≡ 23 [MOD 7] := by
   sorry
 
 theorem exercise_congruent_divisor (n d a b : Int)
-    (h : a ≡ b [ZMOD n * d]) :
-    a ≡ b [ZMOD n] := by
+    (h : a ≡ b [MOD n * d]) :
+    a ≡ b [MOD n] := by
   sorry
 
-theorem exercise_twenty_mod_six : 20 ≡ 2 [ZMOD 6] := by
+theorem exercise_twenty_mod_six : 20 ≡ 2 [MOD 6] := by
   sorry
 
-theorem exercise_twenty_mod_three : 20 ≡ 2 [ZMOD 3] := by
+theorem exercise_twenty_mod_three : 20 ≡ 2 [MOD 3] := by
   sorry
 
 theorem exercise_congruent_six_iff_two_three (a b : Int) :
-    a ≡ b [ZMOD 6] ↔ a ≡ b [ZMOD 2] ∧ a ≡ b [ZMOD 3] := by
+    a ≡ b [MOD 6] ↔ a ≡ b [MOD 2] ∧ a ≡ b [MOD 3] := by
   sorry
 
 theorem exercise_sum_odds (n : Nat) :
@@ -95,7 +95,7 @@ theorem exercise_equal_values_equivalence {A B : Type}
     IsEquivalence (fun x y : A => f x = f y) := by
   sorry
 
-theorem exercise_mem_own_equivalenceClass {A : Type}
+theorem exercise_in_own_equivalenceClass {A : Type}
     (R : Relation A)
     (hR : IsEquivalence R)
     (a : A) :
@@ -224,7 +224,7 @@ theorem exercise_parity_double_zero (a : Int) :
   sorry
 
 theorem exercise_parity_double_respects (a b : Int)
-    (_h : a ≡ b [ZMOD 2]) :
+    (_h : a ≡ b [MOD 2]) :
     parityClass (2 * a) = parityClass (2 * b) := by
   sorry
 

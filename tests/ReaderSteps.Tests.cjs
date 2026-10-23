@@ -128,9 +128,9 @@ async function main() {
     assert(checked >= 190, 'Audit must cover the complete generated book');
     // The text intentionally stops here to motivate propositional extensionality.
     assert.equal(partial.length, 1, 'All other finished proofs must end without goals');
-    assert.equal(partial[0].chapter, 'sets-functions');
-    assert(partial[0].text.endsWith('have hx : S x ↔ T x := h x'));
-    for (const command of ['expand', 'dsimp', 'simp', 'symm', 'ext', 'indisc',
+    assert.equal(partial[0].chapter, 'proof');
+    assert.match(partial[0].text, /have hx : P x ↔ Q x :=\s+h x$/);
+    for (const command of ['expand', 'dsimp', 'simp', 'symm', 'ext', 'apply_fun',
       'rw', 'have', 'replace', 'let', 'suffices', 'apply', 'constructor', 'unpack', 'arith']) {
       assert(commands.has(command), `Audit must cover ${command}`);
     }

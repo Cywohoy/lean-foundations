@@ -26,6 +26,60 @@ function example(match) {
   assert(file, key);
   return {key, data, url: path.relative(site, file).replaceAll('\\', '/').replace(/index\.html$/, '')};
 }
+
+// A failed transfer must be retryable in the same editor, without losing a draft
+// or pretending that files fetched before the failure reached the Lean worker.
+async function checkDownloadRecovery(base, browser) {
+  const context = await browser.newContext();
+  try {
+    const page = await context.newPage();
+    const selected = example(code => code.startsWith('theorem exercise_four_square'));
+    await page.goto(new URL(selected.url, base).href, {waitUntil: 'networkidle'});
+    await page.evaluate(async base => {
+      await navigator.serviceWorker.register(new URL('coi-serviceworker.js', base));
+      await navigator.serviceWorker.ready;
+    }, base);
+    await page.reload({waitUntil: 'networkidle'});
+    await page.waitForFunction(() => crossOriginIsolated);
+    const failures = [];
+    await context.route('**/packs/*.pack', async route => {
+      const name = new URL(route.request().url()).pathname.split('/').at(-1);
+      const initial = name.startsWith('init-') && !failures.includes('initial');
+      const additional = name === 'rest-019.pack' && !failures.includes('additional');
+      if (initial || additional) {
+        failures.push(initial ? 'initial' : 'additional');
+        // Let another parallel transfer finish before rejecting this batch.
+        await new Promise(resolve => setTimeout(resolve, 150));
+        await route.fulfill({status: 503, body: 'Deliberate download failure'});
+      } else await route.continue();
+    });
+    const wrapper = page.locator(`[data-snippet="${selected.key}"]`);
+    await wrapper.locator('..').getByRole('button', {name: /^(풀기|이어서 풀기|풀이 보기)$/, exact: true}).click();
+    const input = wrapper.locator('textarea');
+    await input.waitFor();
+    const waitStatus = text => page.waitForFunction(({key, text}) =>
+      document.querySelector(`[data-snippet="${key}"] .book-run-status`)?.textContent === text,
+    {key: selected.key, text}, {timeout: 120000});
+    await waitStatus('실행 실패');
+    assert.deepEqual(failures, ['initial']);
+    const before = await input.inputValue();
+    await input.fill('decide');
+    await page.waitForFunction(({key, before}) =>
+      document.querySelector(`[data-snippet="${key}"] textarea`)?.value !== before,
+    {key: selected.key, before});
+    await page.waitForFunction(() => document.querySelector('.book-run-status')?.textContent === '실행 실패'
+      && document.querySelector('.book-diagnostics')?.textContent.includes('rest-019.pack'), null, {timeout: 120000});
+    assert.deepEqual(failures, ['initial', 'additional']);
+    assert.equal(await input.inputValue(), 'decide');
+    assert(!await wrapper.locator('.book-run-status').evaluate(node => node.classList.contains('book-success')));
+    await input.press('Control+Enter');
+    await waitStatus('풀이 완료');
+    assert.equal(await input.inputValue(), 'decide');
+    assert.equal(await page.evaluate(key => localStorage.getItem('lean-algebra.code.' + key), selected.data.storageKey),
+      selected.data.code.replace(/  sorry\b/, '  decide'));
+    console.log('PASS: initial and mid-library download failures recover in the same editor; draft and completion remain accurate');
+  } finally {await context.close();}
+}
 async function main() {
   const server = http.createServer((request, response) => {
     const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
@@ -45,6 +99,7 @@ async function main() {
   if (process.env.BOOK_URL) manifest = await (await fetch(new URL('playground.json', base))).json();
   const browser = await playwright.chromium.launch({channel: 'chrome', headless: true});
   try {
+    await checkDownloadRecovery(base, browser);
     const page = await browser.newPage({viewport: {width: 1360, height: 1000}});
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
     if (process.env.TRACE_WASM) await page.addInitScript(() => {
@@ -92,7 +147,7 @@ async function main() {
       }
       catch (error) { console.error(await wrapper.locator('.book-live-editor').innerText()); throw error; }
     }
-    const selected = example(code => code.startsWith('example {A : Type _} {S T : Set A}') && code.includes('funext x'));
+    const selected = example(code => code.startsWith('theorem predicate_ext') && code.includes('funext x'));
     await page.goto(new URL(selected.url, base).href);
     let wrapper = page.locator(`[data-snippet="${selected.key}"]`);
     assert.equal(await page.getByRole('button', {name: '편집', exact: true}).count(), 0);
@@ -300,7 +355,8 @@ async function main() {
 have heq : (0, 0) = (0, 1) := by
   apply h
   rfl
-indisc at heq with hfirst hsecond
+apply_fun (fun p => p.1) at heq with hfirst
+apply_fun (fun p => p.2) at heq with hsecond
 contradiction`);
     await status(wrapper, '풀이 완료');
     await page.keyboard.press('Escape');
@@ -378,7 +434,7 @@ exists i, j`);
     await status(wrapper, '증명 중');
     const failingArithmetic = `constructor
 · intro x y hxy
-  indisc at hxy
+  apply_fun (fun x => x.val) at hxy
   arith
 · intro y
   exists (y.val - 1) / 3
@@ -406,7 +462,7 @@ exists i, j`);
     }
     await wrapper.locator('textarea').fill(`constructor
 · intro x y hxy
-  indisc at hxy
+  apply_fun (fun x => x.val) at hxy
   arith
 · intro y
   rcases y.property with ⟨k, hk⟩
@@ -494,4 +550,5 @@ example (k : Int) : ¬ (2 ∣ 2 * k + 1) := by arith`},
     }
   }
 }
-main().catch(error => {console.error(error); process.exitCode = 1;});
+if (require.main === module) main().catch(error => {console.error(error); process.exitCode = 1;});
+module.exports = {checkDownloadRecovery};

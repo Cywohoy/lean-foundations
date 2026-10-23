@@ -1,4 +1,5 @@
 import AlgebraBook.Meta.Lean
+import AlgebraBook.Proof
 import AlgebraBook.Meta.Notation
 import AlgebraBook.Tactic.Auto
 import AlgebraBook.Tactic.Classical
@@ -20,12 +21,13 @@ file := "sets-functions"
 %%%
 
 두 집합이 같음을 보일 때는 어느 원소가 속하는지 비교한다.
-집합의 포함 관계나 교집합의 성질도 원소에 관한 명제로 바꾸면 앞 장에서 배운 방법으로 증명할 수 있다.
-이 장에서는 집합을 이러한 원소 조건으로 나타내고, 집합 사이의 함수를 다룬다.
+집합의 포함 관계나 교집합의 성질도 원소에 관한 명제로 바꾸면 앞 장에서 배운 논리 규칙으로 증명할 수 있다.
+이 장에서는 집합을 원소 조건으로 나타내고, 집합 사이의 함수를 다룬다.
 함수가 어떤 값을 갖는지 살펴보면서 상과 역상, 단사와 전사, 역함수의 관계를 알아보자.
 
 {anchor "sets"}[]
 ```savedImport
+import AlgebraBook.Proof
 import AlgebraBook.Meta.Notation
 import AlgebraBook.Tactic.Classical
 import AlgebraBook.Tactic.Auto
@@ -36,10 +38,12 @@ import AlgebraBook.Tactic.Unfold
 ```
 
 ```savedLean -show
+open scoped Classical
+open ProofExamples
 namespace Ample
 ```
 
-# 집합과 술어
+# 집합의 표현
 %%%
 tag := "sets-sets-as-predicates"
 file := "sets-as-predicates"
@@ -129,9 +133,9 @@ tag := "sets-membership-simplification"
 %%%
 
 ```savedLean -show
-@[simp] theorem mem_def {A : Type} (S : Set A) (x : A) :
+@[simp] theorem in_def {A : Type} (S : Set A) (x : A) :
     (x ∈ S) = S x := rfl
-attribute [ample_arith_simp] mem_def positives positive
+attribute [ample_arith_simp] in_def positives positive
 ```
 
 `positives`의 정의를 읽으면 양수라는 조건을 알 수 있다.
@@ -154,7 +158,7 @@ example (n : Nat)
 
 정의 이름을 직접 지정하려면 `dsimp [positives] at h`와 `dsimp [positive] at h`를 차례로 쓴다.
 어떤 표현으로 바꿀지 알고 있을 때는 `change 0 < n at h`로 한 번에 바꿀 수도 있다.
-둘 다 정의상 같은 표현으로 바꾸며, 등식 정리를 사용한 변환은 뒤에서 배울 `rw`로 수행한다.
+둘 다 정의상 같은 표현으로 바꾸며, 등식 정리를 사용하는 변환은 앞 장에서 배운 `rw`로 수행한다.
 
 ## 전체집합과 공집합
 %%%
@@ -164,7 +168,7 @@ file := "universal-and-empty-sets"
 
 타입 $`A`의 모든 원소를 모은 집합이 전체집합이고, 원소가 하나도 없는 집합이 공집합이다.
 집합을 술어로 나타내고 있으므로 전체집합의 조건은 항상 참이고 공집합의 조건은 항상 거짓이다.
-Lean에서 항상 참인 명제는 `True`, 거짓인 명제는 `False`로 쓴다.
+앞 장의 `True`와 `False`를 사용하여 두 원소 조건을 나타내자.
 
 ```savedLean
 def whole (A : Type) : Set A := fun _ => True
@@ -182,7 +186,7 @@ instance {A : Type} : EmptyCollection (Set A) where
 `∅`만으로 원소의 타입을 알 수 없을 때는 `(∅ : Set Nat)`와 같이 타입을 덧붙이며,
 이 경우에는 `empty Nat`와 같은 집합을 나타낸다.
 
-# 포함 관계와 함의의 증명
+## 포함 관계와 함의의 증명
 %%%
 tag := "sets-subsets"
 file := "subsets"
@@ -230,34 +234,22 @@ theorem subset_refl {A : Type} (S : Set A) :
 attribute [simp] subset_refl
 ```
 
-각 증명 단계에서 가정과 목표는 다음과 같이 변한다.
-
-1. `expand`로 포함 관계의 정의를 펼치면 전칭명제 `∀ x : A, x ∈ S → x ∈ S`를 얻는다.
-2. `intro x`로 임의의 원소 `x : A`를 택하면 목표는 `x ∈ S → x ∈ S`가 된다.
-3. `intro hx`로 가정 `hx : x ∈ S`를 도입하면 남은 목표는 `x ∈ S`이다.
-4. `exact hx`로 목표 `x ∈ S`의 증명을 제시하여 마친다.
-
-이 예제의 `expand`는 목표에 들어 있는 전칭명제의 구조를 보여 주기 위해 썼다.
-Lean은 `intro`를 처리할 때도 포함 관계의 정의를 펼치므로,
-`expand`를 생략하고 바로 `intro x`와 `intro hx`를 써도 된다.
-
-`intro x`와 `intro hx`는 `intro x hx`로 한 번에 쓸 수 있으며,
-이후 증명에서는 두 단계를 이렇게 묶어 쓰겠다.
-웹에서는 증명 코드의 전술을 눌러 각 단계의 가정과 목표를 확인할 수 있다.
+`expand`는 포함 관계의 정의를 펼쳐 전칭명제와 함의가 들어 있음을 보여 준다.
+앞 장처럼 `intro x`로 임의의 원소를 받고 `intro hx`로 그 원소의 조건을 가정하면 된다.
+이 둘은 `intro x hx`로 묶어 쓸 수 있다. Lean은 `intro`에서도 필요한 정의를 펼치므로 `expand`는 생략할 수 있다.
 
 ## 전체집합과 공집합의 포함 관계
 %%%
 tag := "sets-basic-subsets"
 %%%
 
-전체집합과 공집합의 원소 조건은 각각 `True`와 `False`이므로
-이 두 명제를 증명에 사용하는 방법을 살펴보자.
+전체집합과 공집합의 원소 조건에는 앞 장의 `trivial`과 `contradiction`을 사용할 수 있다.
 
 *정리* 모든 집합은 전체집합의 부분집합이다.
 
 *증명* 임의의 원소 $`x \in S`를 택하면 $`x`는 $`A`의 원소이므로 전체집합에 속한다.
 Lean에서 남은 목표 `x ∈ whole A`는 정의에 따라 `True`이다.
-전술 `trivial`은 이처럼 참인 목표를 증명한다.
+따라서 `trivial`로 증명한다.
 
 ```savedLean
 theorem subset_whole {A : Type} (S : Set A) :
@@ -274,7 +266,7 @@ attribute [simp] subset_whole
 
 *증명* 임의의 원소 $`x`에 대하여 $`x \in \varnothing`라고 가정하자.
 이 가정의 원소 조건은 `False`이므로 모순이다.
-전술 `contradiction`은 이러한 가정을 사용하여 남은 목표를 증명한다.
+이 모순에서 `contradiction`으로 결론을 얻는다.
 
 ```savedLean
 theorem empty_subset {A : Type} (S : Set A) :
@@ -301,7 +293,7 @@ example {A : Type} (S : Set A) :
   simp
 ```
 
-## 포함 관계의 추이성
+### 포함 관계의 추이성
 %%%
 tag := "sets-using-subset-proofs"
 file := "using-subset-proofs"
@@ -342,256 +334,33 @@ theorem exercise_subset_chain {A : Type} (S T U V : Set A)
   sorry
 ```
 
-# 교집합과 논리곱
-%%%
-tag := "sets-intersections-and-conjunctions"
-file := "intersections-and-conjunctions"
-%%%
-
-*정의* $`S`와 $`T`에 모두 속하는 원소로 이루어진 집합을 *교집합*이라고 한다.
-
-교집합을 Lean으로 정의하려면 `x ∈ S`와 `x ∈ T`가 모두 성립한다는 조건을 나타내야 한다.
-이를 위해 두 명제 $`P`와 $`Q`가 모두 성립한다는 명제인 *논리곱* `P ∧ Q`를 사용하며
-교집합의 원소 조건은 `x ∈ S ∧ x ∈ T`로 쓴다.
-
-```savedLean
-def inter {A : Type} (S T : Set A) : Set A :=
-  fun x => x ∈ S ∧ x ∈ T
-instance {A : Type} : Inter (Set A) where
-  inter := Ample.inter
-```
-
-`S ∩ T`는 `inter S T`이며, 원소 조건은 `x ∈ S ∧ x ∈ T`이다.
-논리곱 `P ∧ Q`의 증명에는 `P`의 증명과 `Q`의 증명이 함께 들어 있다.
-`h : P ∧ Q`에서 이들을 각각 `h.left`, `h.right`로 꺼낼 수 있으므로,
-교집합의 원소라는 증명에서도 두 집합에 속한다는 사실을 따로 사용할 수 있다.
-첫 번째 사실을 사용하여 교집합이 $`S`의 부분집합임을 보이자.
-
-```savedLean
-theorem inter_subset_left {A : Type} (S T : Set A) :
-    S ∩ T ⊆ S := by
-  intro x hx
-  exact hx.left
-```
-
-가정 `hx`는 `x ∈ S ∧ x ∈ T`의 증명이므로
-`hx.left`로 `x ∈ S`를 얻고 `hx.right`로 `x ∈ T`를 얻는다.
-
-*문제 2* 교집합이 두 번째 집합의 부분집합임을 증명하라.
-
-```savedLean -keep
-theorem exercise_inter_subset_right
-    {A : Type} (S T : Set A) :
-    S ∩ T ⊆ T := by
-  sorry
-```
-
-이번에는 두 조건을 모아 교집합에 속함을 증명해 보자.
-
-*정리* $`x \in S \cap T`이면 $`x \in T \cap S`이다.
-
-*증명* $`x \in S \cap T`라고 하면 $`x \in S`와 $`x \in T`를 모두 얻는다.
-이 두 사실의 순서를 바꾸어 묶으면 $`x \in T \cap S`이다.
-
-Lean에서도 `x ∈ T ∩ S`를 보이려면 `x ∈ T`와 `x ∈ S`를 모두 보여야 하므로
-`constructor`를 써서 목표를 두 명제로 나눈다.
-각 목표의 증명은 `·` 뒤에 적으며, `·`는 `\.`로 입력한다.
-
-```savedLean
-theorem inter_comm_forward {A : Type} (S T : Set A)
-    (x : A) :
-    x ∈ S ∩ T → x ∈ T ∩ S := by
-  intro hx
-  constructor
-  · exact hx.right
-  · exact hx.left
-```
-
-# 동치와 두 방향의 함의
-%%%
-tag := "sets-equivalence"
-file := "equivalence"
-%%%
-
-앞의 교집합 증명처럼 포함 관계 $`S \subseteq T`에서는 $`x \in S`로부터 $`x \in T`를 얻는 한쪽 방향만 보였다.
-교집합의 순서를 바꾸어도 같은 원소를 갖는다는 것을 표현하려면 역방향도 필요하므로
-먼저 두 방향의 함의를 함께 나타내는 *동치*를 살펴보자.
-
-두 명제 $`P`와 $`Q`가 *동치*라는 것은
-$`P \Rightarrow Q`와 $`Q \Rightarrow P`가 모두 성립한다는 뜻이며, Lean에서는 `P ↔ Q`로 쓴다.
-수학에서 “$`P`일 필요충분조건은 $`Q`이다”라고 하는 것도 같은 뜻이다.
-즉 `P`를 가정하여 `Q`를 보이고 `Q`를 가정하여 `P`를 보이면 된다.
-
-{anchor "sets-proving-equivalence"}[]`hPQ : P → Q`와 `hQP : Q → P`가 주어졌다고 하자.
-각 방향의 증명을 이미 갖고 있으므로 이를 묶으면 `P ↔ Q`를 얻는다.
-이때 `constructor`를 쓰면 동치를 두 방향의 함의로 나누어 각각 증명할 수 있다.
-
-```savedLean
-example
-    (P Q : Prop)
-    (hPQ : P → Q)
-    (hQP : Q → P) :
-    P ↔ Q := by
-  constructor
-  · exact hPQ
-  · exact hQP
-```
-
-`constructor`로 나뉜 목표는 `P → Q`와 `Q → P`이다.
-목표가 여러 개로 나뉠 때는 `·` 뒤에 각 목표의 증명을 적으며,
-첫 번째 목표는 `hPQ`로, 두 번째 목표는 `hQP`로 증명한다.
-
-{anchor "sets-using-equivalence"}[]반대로 `h : P ↔ Q`가 있으면 `h.mp`로 `P → Q`의 증명을 얻고,
-`h.mpr`로 `Q → P`의 증명을 얻는다.
-따라서 `P`의 증명도 갖고 있다면 정방향인 `h.mp`를 사용하여 `Q`를 보일 수 있다.
-
-```savedLean
-example
-    (P Q : Prop)
-    (h : P ↔ Q)
-    (hP : P) :
-    Q := by
-  apply h.mp
-  exact hP
-```
-
-`apply h.mp` 이후에는 목표가 `P`로 바뀌므로 `exact hP`로 증명을 마친다.
-역방향에서도 `h.mpr`를 사용하면 같은 방식으로 `Q`에서 `P`를 얻는다.
-
-# 집합의 같음과 함수의 등식
+## 집합의 같음
 %%%
 tag := "sets-equality"
 file := "equality"
 %%%
 
-두 집합이 같은 원소들을 가지면 두 집합은 같다.
-따라서 $`S = T`를 보이려면 임의의 원소 $`x`가 $`S`에 속할 필요충분조건이
-$`T`에 속하는 것임을 보이면 된다.
-앞 절에서 배운 동치를 사용하면 이 조건을 `∀ x, x ∈ S ↔ x ∈ T`로 쓸 수 있다.
-집합을 함수 `A → Prop`로 정의했으므로,
-이 조건에서 `S = T`를 얻으려면 함수의 등식과 명제의 등식이 어떻게 증명되는지 알아야 한다.
-먼저 함수의 등식을 증명하는 방법부터 살펴보자.
+두 집합이 같다는 것은 같은 원소들로 이루어져 있다는 뜻이다.
+집합을 술어로 나타냈으므로 앞 장의 술어 외연성을 원소 조건에 적용하면 된다.
 
-## 함수와 명제의 외연성
-%%%
-tag := "sets-function-extensionality"
-%%%
-
-두 함수 $`f, g : A \to B`가 모든 원소 $`x \in A`에서 같은 값을 가지면 두 함수는 같다.
-이를 *함수의 외연성*이라고 하며 다음과 같이 나타낼 수 있다.
-
-$$`\bigl(\text{모든 } x \in A \text{에 대하여 } f(x) = g(x)\bigr) \;\Longrightarrow\; f = g.`
-
-Lean에서는 `funext x`로 임의의 원소 `x : A`를 도입하고
-함수의 등식 `f = g`를 함수값의 등식 `f x = g x`로 바꾼다.
-
-```savedLean
-example (A B : Type) (f g : A → B)
-    (h : ∀ x : A, f x = g x) :
-    f = g := by
-  funext x
-  exact h x
-```
-
-1. 처음 목표인 `f = g`는 두 함수 자체가 같다는 명제이고, `h`는 모든 원소에서 함수값이 같다는 명제의 증명이다.
-2. `funext x`를 쓰면 `x : A`가 도입되고, 목표는 이 원소에서의 등식 `f x = g x`가 된다.
-3. `h x`는 전칭명제의 증명 `h`를 원소 `x`에서 사용한 것이므로 바로 그 등식의 증명이다.
-   따라서 `exact h x`로 증명을 마친다.
-
-{anchor "sets-proposition-extensionality"}[]이제 같은 방법으로 집합의 등식을 증명해 보자.
-두 집합은 `A → Prop`의 함수이므로 먼저 `funext x`로 원소 하나에서의 값을 비교할 수 있다.
-다음 코드는 이 단계에서 멈춘 미완성 증명이다.
-
-```tryLean +error -keep
-example {A : Type _} {S T : Set A}
-    (h : ∀ x, x ∈ S ↔ x ∈ T) :
-    S = T := by
-  funext x
-  have hx : S x ↔ T x := h x
-```
-
-이때 남은 목표와 가정에서 얻을 수 있는 증명을 나란히 적으면 다음과 같다.
-
-:::table +header (align := left)
-*
-  * 구분
-  * 명제
-*
-  * `funext x` 이후의 목표
-  * `S x = T x`
-*
-  * 이미 얻은 증명 `hx`의 명제
-  * `S x ↔ T x`
-:::
-
-`h x`로 얻은 동치에 `hx`라는 이름을 붙였으므로 `S x ↔ T x`의 증명은 이미 가지고 있다.
-그러나 목표는 `S x = T x`이므로 `exact hx`로는 증명을 마칠 수 없다.
-함수의 외연성으로 원소 하나에서의 비교까지는 왔지만,
-그 원소에서 주어진 동치를 명제의 등식으로 바꾸는 단계가 남은 것이다.
-
-`P ↔ Q`와 `P = Q`는 Lean에서 서로 다른 형태의 명제이다.
-`P ↔ Q`는 두 방향의 함의이고, `P = Q`는 명제 `P`와 `Q`가 같다는 등식이다.
-이 둘을 연결하는 원리가 *명제의 외연성*이며, Lean에서는 `propext`라고 한다.
-`propext`에 `P ↔ Q`의 증명을 주면 `P = Q`의 증명을 얻는다.
-
-```savedLean
-example
-    (P Q : Prop)
-    (h : P ↔ Q) :
-    P = Q := by
-  apply propext
-  exact h
-```
-
-`apply propext`는 결론 `P = Q`를 얻기 위해 필요한 전제 `P ↔ Q`를 새 목표로 삼는다.
-이 새 목표는 가정 `h`로 증명할 수 있으므로 `exact h`로 증명을 마친다.
-여기서는 두 명제의 정의를 펼쳐 비교하는 대신, 동치의 증명 `h`를 근거로 등식을 얻었다.
-
-## 집합의 외연성
-%%%
-tag := "sets-proving-set-equality"
-%%%
-
-이제 `∀ x, x ∈ S ↔ x ∈ T`에서 `S = T`를 보이자.
-`funext`로 집합의 등식을 원소별 명제의 등식으로 바꾸고,
-`propext`로 그 등식을 원소 조건의 동치를 보이는 목표로 바꾸면 주어진 가정을 사용할 수 있다.
-
-*정리* 모든 원소 $`x`에 대하여 $`x \in S \iff x \in T`이면 $`S = T`이다.
+{anchor "sets-proving-set-equality"}[]*정리* 모든 원소 $`x`에 대하여 $`x\in S\leftrightarrow x\in T`이면 $`S=T`이다.
 
 ```savedLean
 @[ext] theorem set_ext {A : Type _} {S T : Set A}
-    (h : ∀ x, x ∈ S ↔ x ∈ T) : S = T := by
-  funext x
-  apply propext
-  exact h x
+    (h : ∀ x, x ∈ S ↔ x ∈ T) :
+    S = T := by
+  apply ProofExamples.predicate_ext
+  exact h
 ```
 
-1. 처음 목표인 `S = T`는 함수 `S`와 `T`의 등식이다.
-2. `funext x`로 임의의 원소 `x : A`를 도입하면 목표는 함수값의 등식 `S x = T x`가 된다.
-   원소 기호로 쓰면 두 명제 `x ∈ S`와 `x ∈ T`가 같다는 목표이다.
-3. `apply propext`를 쓰면 목표가 `S x ↔ T x`, 곧 `x ∈ S ↔ x ∈ T`로 바뀐다.
-4. `h x`는 전칭명제의 증명 `h`를 원소 `x`에서 사용한 것으로, 이 동치의 증명이다.
-   따라서 `exact h x`로 모든 단계가 끝난다.
+`ext`는 등식을 원소별 조건이나 값의 비교로 바꾸는 전술이다.
+집합의 등식에서 `ext x`를 쓰면 임의의 원소 `x`에 대해 `x ∈ S ↔ x ∈ T`를 증명하는 목표가 남는다.
+정리 앞의 `@[ext]`는 이 전술이 `set_ext`를 찾아 사용하도록 등록하는 표시이다.
 
-`ext`는 `funext`나 `apply propext`처럼 등식인 목표를 두 대상의 값이나 조건을 비교하는 목표로 바꾸는 전술이다.
-함수의 등식에서 `ext x`는 `funext x`를 대신하며,
-집합의 등식에서는 `funext x`와 `apply propext`를 차례로 쓰는 과정을 대신하여 `x ∈ S ↔ x ∈ T`를 목표로 남긴다.
+{anchor "sets-equality-from-subsets"}[]*정리* $`S\subseteq T`이고 $`T\subseteq S`이면 $`S=T`이다.
 
-```savedLean
-example (A B : Type) (f g : A → B)
-    (h : ∀ x : A, f x = g x) :
-    f = g := by
-  ext x
-  exact h x
-```
-
-정리 앞의 `@[ext]`는 `ext`가 이 정리를 찾아 사용하도록 등록하는 표시이다.
-
-{anchor "sets-equality-from-subsets"}[]*정리* $`S \subseteq T`이고 $`T \subseteq S`이면 $`S = T`이다.
-
-*증명* 임의의 원소 $`x`에 대하여 첫 번째 포함 관계로 $`x \in S \Rightarrow x \in T`를 얻고,
-두 번째 포함 관계로 그 역방향을 얻는다.
-따라서 두 집합의 원소 조건이 동치이므로 두 집합은 같다.
+*증명* 두 포함 관계는 각 원소에서 두 방향의 함의를 제공한다.
+따라서 그 원소가 두 집합에 속한다는 조건은 동치이다.
 
 ```savedLean
 theorem set_eq_of_subset {A : Type} (S T : Set A)
@@ -604,34 +373,13 @@ theorem set_eq_of_subset {A : Type} (S T : Set A)
   · exact hTS x
 ```
 
-`ext x`를 쓰면 임의의 원소 `x`에 대한 목표 `x ∈ S ↔ x ∈ T`가 남는다.
-`constructor`로 이 동치를 두 방향의 함의로 나누면,
-정방향은 `hST x`로, 역방향은 `hTS x`로 증명할 수 있다.
+`ext x` 뒤에는 `x ∈ S ↔ x ∈ T`가 남고, `constructor`로 나눈 두 목표에 각각의 포함 관계를 사용한다.
 
-## 등식과 원소별 비교
-%%%
-tag := "sets-equality-comparisons"
-%%%
-
-이미 알고 있는 등식으로 목표나 가정을 바꾸는 전술이 `rw`이다.
-함수의 등식 `h : f = g`에서 `f x = g x`를 얻으려면 등식에 따라 `f`를 `g`로 바꾸면 된다.
-사용할 등식은 대괄호 안에 적는다.
+{anchor "sets-equality-comparisons"}[]집합의 등식도 `rw`로 사용할 수 있다.
+아래에서는 가정 `hxS` 안의 집합을 바꾸어 `x ∈ T`의 증명을 얻는다.
 
 ```savedLean
-example
-    (A B : Type) (f g : A → B) (x : A)
-    (h : f = g) :
-    f x = g x := by
-  rw [h]
-```
-
-`rw [h]`는 목표의 `f`를 `g`로 바꾸고, 남은 등식 `g x = g x`는 양변이 같으므로 증명을 마친다.
-집합의 등식도 같은 방법으로 사용한다.
-아래에서는 `hxS : x ∈ S`에 등식 `hST : S = T`를 사용하여 `hxS : x ∈ T`를 얻는다.
-
-```savedLean
-example {A : Type} (S T : Set A)
-    (x : A)
+example {A : Type} (S T : Set A) (x : A)
     (hST : S = T)
     (hxS : x ∈ S) :
     x ∈ T := by
@@ -639,27 +387,132 @@ example {A : Type} (S T : Set A)
   exact hxS
 ```
 
-`at hxS`는 등식을 사용할 가정을 지정한다.
+## 포함 관계의 반례
+%%%
+tag := "sets-subset-counterexamples"
+%%%
 
-등식의 방향만 바꾸려면 `symm`을 사용한다.
-목표가 `b = a`일 때 `symm`을 쓰면 `a = b`가 새 목표가 되므로,
-주어진 등식 `h : a = b`로 증명을 마칠 수 있다.
+$`S`가 $`T`의 부분집합이 아니라면 $`S`에는 속하지만 $`T`에는 속하지 않는 원소가 존재한다.
+포함 관계는 `∀ x, x ∈ S → x ∈ T`이므로 앞 장에서 증명한 `exists_counterexample`을 적용할 수 있다.
 
 ```savedLean
-example (a b : Nat)
-    (h : a = b) :
-    b = a := by
-  symm
-  exact h
+theorem not_subset_iff {A : Type} (S T : Set A) :
+    (¬ S ⊆ T) ↔ ∃ x, x ∈ S ∧ x ∉ T := by
+  constructor
+  · intro h
+    apply ProofExamples.exists_counterexample
+    exact h
+
+  · intro h hST
+    rcases h with ⟨x, hxS, hxNotT⟩
+    apply hxNotT
+    exact hST x hxS
 ```
 
-`symm at h`는 목표 대신 가정 `h`의 등식 방향을 바꾼다.
+정방향은 전칭명제와 함의의 부정을 차례로 바꾸어 반례를 얻는다.
+역방향은 반례를 포함 관계에 사용하면 서로 모순되는 두 원소 조건을 얻는 논증이다.
+
+## 원소의 타입과 러셀의 역설
+%%%
+tag := "advanced-set-types"
+%%%
+
+수학에서는 $`\{1, 2\}`처럼 집합을 쓰면서 원소가 속하는 범위를 따로 표시하지 않기도 한다.
+그러나 Lean에서 집합을 술어로 정의하려면 어떤 타입의 원소에 그 조건을 적용할지 정해야 하므로
+`Set A`의 `A`로 그 범위를 나타낸다.
+
+원소의 범위를 구별하는 것은 집합을 아무 제한 없이 만드는 데서 생기는 모순과도 관련이 있다.
+모든 집합을 원소로 갖는 집합 `U`가 있고,
+그 안에서 조건을 만족하는 원소들을 골라 집합을 만들 수 있다고 가정해 보자.
+그러면 다음과 같은 집합을 만들게 된다.
+
+$$`R = \{S \in U : S \notin S\}.`
+
+`R`은 자기 자신에 속하지 않는 집합들을 모은 것이다.
+`U`는 모든 집합을 포함한다고 가정했으므로 `R`도 `U`에 속한다.
+이제 `R`이 자기 자신에 속하는지 물어 보자.
+
+`R`이 자기 자신에 속한다고 하면 `R`의 원소 조건에 따라 자기 자신에 속하지 않아야 한다.
+반대로 자기 자신에 속하지 않는다고 하면 `R`도 `U`의 원소이고 그 조건을 만족하므로 `R`에 속해야 한다.
+어느 쪽으로 생각해도 모순이 생기며, 이를 *러셀의 역설*이라고 한다.
+
+이러한 모순을 피하려면 모든 집합을 한꺼번에 모으는 방식과
+조건으로 집합을 만드는 방식을 아무 제한 없이 함께 허용해서는 안 된다.
+이 교재에서는 원소의 타입 `A`를 먼저 정하고, 그 타입 위의 조건으로 집합을 만든다.
+`S : Set A`는 `A`의 원소에 적용하는 함수이므로
+타입이 다른 `S` 자신을 그대로 원소로 넣는 식은 쓸 수 없다.
+
+집합을 원소로 갖는 집합을 만들 때는 원소의 타입도 집합의 타입으로 정한다.
+예를 들어 `U : Set (Set Nat)`라고 하면 `U`의 원소는 `Set Nat` 타입의 집합, 곧 자연수의 집합이다.
+이렇게 원소와 집합의 타입을 구별하므로 러셀의 역설에 등장한 `S ∈ S`를 그대로 만들 수 없다.
+
+# 집합 연산
+%%%
+tag := "sets-operations"
+%%%
+
+집합을 합치거나 공통 원소를 모을 때는 그 원소 조건을 논리합이나 논리곱으로 결합한다.
+여집합과 차집합에는 부정을 사용한다. 각 정의에서 원소 조건을 확인한 뒤 앞 장의 논리 규칙으로 성질을 증명하자.
+
+## 교집합
+%%%
+tag := "sets-intersections-and-conjunctions"
+file := "intersections-and-conjunctions"
+%%%
+
+*정의* $`S`와 $`T`에 모두 속하는 원소로 이루어진 집합을 *교집합*이라고 한다.
+
+원소가 두 집합에 모두 속한다는 조건은 논리곱 `x ∈ S ∧ x ∈ T`이다.
+
+```savedLean
+def inter {A : Type} (S T : Set A) : Set A :=
+  fun x => x ∈ S ∧ x ∈ T
+instance {A : Type} : Inter (Set A) where
+  inter := Ample.inter
+```
+
+`S ∩ T`는 `inter S T`이며, 원소 조건은 `x ∈ S ∧ x ∈ T`이다.
+따라서 교집합의 원소라는 증명에서도 `.left`와 `.right`로 두 집합에 속한다는 사실을 각각 얻는다.
+이를 사용하여 교집합이 $`S`의 부분집합임을 보이자.
+`intro x hx` 뒤에는 `hx : x ∈ S ∩ T`가 주어지며, 그 첫째 성분이 목표 `x ∈ S`의 증명이다.
+
+```savedLean
+theorem inter_subset_left {A : Type} (S T : Set A) :
+    S ∩ T ⊆ S := by
+  intro x hx
+  exact hx.left
+```
+
+*문제 2* 교집합이 두 번째 집합의 부분집합임을 증명하라.
+
+```savedLean -keep
+theorem exercise_inter_subset_right
+    {A : Type} (S T : Set A) :
+    S ∩ T ⊆ T := by
+  sorry
+```
+
+이번에는 두 원소 조건의 순서를 바꾸어 교집합의 교환법칙을 보이자.
+
+*정리* $`x \in S \cap T`이면 $`x \in T \cap S`이다.
+
+*증명* $`x \in S \cap T`라고 하면 $`x \in S`와 $`x \in T`를 모두 얻는다.
+이 두 사실의 순서를 바꾸어 묶으면 $`x \in T \cap S`이다.
+
+```savedLean
+theorem inter_comm_forward {A : Type} (S T : Set A)
+    (x : A) :
+    x ∈ S ∩ T → x ∈ T ∩ S := by
+  intro hx
+  constructor
+  · exact hx.right
+  · exact hx.left
+```
 
 ## 교집합의 교환법칙
 
-{anchor "sets-intersection-equivalence"}[]앞의 정리에서는 $`x \in S \cap T`에서 $`x \in T \cap S`를 얻는 한 방향을 증명했다.
-이 정리에서 $`S`와 $`T`의 순서를 바꾸면 역방향도 얻으므로,
-두 방향을 묶어 원소 조건의 동치를 증명할 수 있다.
+{anchor "sets-intersection-equivalence"}[]`inter_comm_forward`에서 `S`, `T`를 바꾸면 역방향도 얻는다.
+두 함의를 묶으면 원소 조건의 동치이며, `ext x`로 이 동치를 사용하면 집합의 등식을 얻는다.
 
 *정리* $`x \in S \cap T`일 필요충분조건은 $`x \in T \cap S`이다.
 
@@ -671,11 +524,6 @@ theorem inter_comm {A : Type} (S T : Set A) (x : A) :
   · exact inter_comm_forward T S x
 ```
 
-첫 번째 목표에서는 `inter_comm_forward S T x`로 정방향의 함의를 얻고,
-두 번째 목표에서는 `inter_comm_forward T S x`로 역방향의 함의를 얻는다.
-
-이를 집합의 등식으로 쓰려면 `ext x`를 사용한다.
-
 ```savedLean
 theorem inter_comm_eq {A : Type} (S T : Set A) :
     S ∩ T = T ∩ S := by
@@ -683,7 +531,7 @@ theorem inter_comm_eq {A : Type} (S T : Set A) :
   exact inter_comm S T x
 ```
 
-# 합집합과 논리합
+## 합집합
 %%%
 tag := "sets-unions-and-disjunctions"
 file := "unions-and-disjunctions"
@@ -691,9 +539,7 @@ file := "unions-and-disjunctions"
 
 *정의* $`S` 또는 $`T`에 속하는 원소로 이루어진 집합을 *합집합*이라고 한다.
 
-합집합을 Lean으로 정의하려면 `x ∈ S`와 `x ∈ T` 중 적어도 하나가 성립한다는 조건을 나타내야 한다.
-이를 위해 두 명제 $`P`와 $`Q` 중 적어도 하나가 성립한다는 명제인 *논리합* `P ∨ Q`를 사용하며
-합집합의 원소 조건은 `x ∈ S ∨ x ∈ T`로 쓴다.
+두 집합 중 적어도 하나에 속한다는 조건은 논리합 `x ∈ S ∨ x ∈ T`이다.
 
 ```savedLean
 def union {A : Type} (S T : Set A) : Set A :=
@@ -714,9 +560,7 @@ theorem subset_union_left {A : Type} (S T : Set A) :
   exact hx
 ```
 
-목표는 `x ∈ S ∨ x ∈ T`이고, 가정 `hx`는 `x ∈ S`이다.
-따라서 `left`로 왼쪽 명제를 선택하면 이 가정으로 증명할 수 있으며,
-오른쪽 명제를 선택할 때는 `right`를 쓴다.
+원소 조건의 왼쪽인 `x ∈ S`를 가정으로 갖고 있으므로 `left`로 그쪽을 증명한다.
 
 *정리* $`S`와 $`T`가 모두 $`U`의 부분집합이면 그 합집합도 $`U`의 부분집합이다.
 
@@ -735,12 +579,9 @@ theorem union_subset {A : Type} (S T U : Set A)
   | inr hxT => exact hTU x hxT
 ```
 
-이번에는 가정 `hx`가 `x ∈ S ∨ x ∈ T`이므로
-`cases hx`로 $`x \in S`인 경우와 $`x \in T`인 경우를 나누어 생각한다.
-`inl`은 첫 번째 경우, `inr`은 두 번째 경우이다.
-첫 번째 경우에는 `hSU`, 두 번째 경우에는 `hTU`를 적용하여 $`x \in U`를 얻는다.
+`cases hx`로 어느 집합에 속하는지에 따라 나누고 각 집합의 포함 관계를 사용한다.
 
-## 포함 관계와 교집합의 계산
+### 포함 관계와 교집합의 계산
 
 *정리* $`S\subseteq T`이면 $`S\cap T=S`이다.
 
@@ -835,7 +676,7 @@ theorem exercise_inter_union_absorb_via_subset {A : Type}
   sorry
 ```
 
-## 교집합의 분배법칙
+### 교집합의 분배법칙
 %%%
 tag := "sets-intersection-distributes-over-union"
 %%%
@@ -898,58 +739,21 @@ example {A : Type}
 역방향에서는 가정 자체가 논리합이므로 `cases hx`로 나눈 뒤
 각 경우에 `constructor`로 `x ∈ S`와 `x ∈ T ∪ U`를 보인다.
 
-# 여집합과 부정
+## 여집합
 %%%
 tag := "sets-complements-and-negation"
 file := "complements-and-negation"
 %%%
 
 *정의* $`A`의 원소 중 집합 $`S`에 속하지 않는 원소로 이루어진 집합을
-$`S`의 *여집합*이라고 하며 $`S^{\mathsf{c}}`로 나타낸다.
+$`S`의 *여집합*이라고 하며 $`S^{\mathsf c}`로 나타낸다.
 
-여집합을 구할 때는 어떤 전체집합을 기준으로 삼는지 정해져 있어야 한다.
-가령 $`S = \{1, 2\}`의 여집합은 자연수 전체를 기준으로 하면 $`\{0, 3, 4, \ldots\}`이고,
-정수 전체를 기준으로 하면 여기에 음의 정수들도 포함된다.
-Lean에서는 `S : Set A`의 `A`가 원소의 범위를 정하므로
-여집합도 같은 타입 `A`의 원소들로 이루어진다.
+여집합은 원소의 범위에 따라 달라진다. 가령 $`\{1,2\}`의 여집합은 자연수 전체를 기준으로 하면
+$`\{0,3,4,\ldots\}`이고, 정수 전체를 기준으로 하면 여기에 음의 정수도 포함된다.
+Lean에서는 `S : Set A`의 `A`가 이 범위를 정한다.
 
-이 절에서는 여집합의 원소 조건을 통해 부정의 증명과 사용을 익히고,
-이를 바탕으로 여집합을 두 번 취하면 원래 집합을 얻는다는 성질을 증명한다.
-
-{anchor "sets-negation"}[]여집합을 Lean으로 정의하려면 “$`x`가 $`S`에 속하지 않는다”라는 조건을 명제로 표현해야 한다.
-명제 $`P`가 성립하지 않는다는 명제를 $`P`의 *부정*이라고 하며 Lean에서는 `¬ P`로 쓴다.
-따라서 여집합의 원소 조건은 `¬ (x ∈ S)`이고,
-이를 원소 관계의 기호와 함께 줄여 쓰면 `x ∉ S`이다.
-
-수학에서 $`P`가 성립하지 않음을 보일 때는 $`P`가 성립한다고 가정한 뒤 모순을 이끌어 낸다.
-앞에서 모순을 `False`로 나타냈듯이,
-“`P`를 가정하면 모순이 나온다”는 주장은 함의 `P → False`로 나타낼 수 있으므로,
-Lean에서는 이를 부정 `¬ P`의 정의로 사용한다.
-
-목표가 `¬ P`이면 `P → False`를 증명하면 되므로,
-`intro hP`로 `P`를 가정하고 목표를 `False`로 바꾼다.
-주어진 가정들과 `hP`에서 모순을 이끌어 내면 `P`를 부정하는 증명이 완성된다.
-
-한편 `P`의 증명 `hP`와 그 부정의 증명 `hnotP`가 모두 주어지면 모순을 보일 수 있다.
-`hnotP`의 타입은 `P → False`이므로
-목표가 `False`일 때 `apply hnotP`를 쓰면 `P`가 새 목표가 된다.
-
-```savedLean
-example
-    (P : Prop)
-    (hP : P)
-    (hnotP : ¬ P) :
-    False := by
-  apply hnotP
-  exact hP
-```
-
-`apply hnotP`와 `exact hP`는 `exact hnotP hP` 한 줄로도 쓸 수 있다.
-
-등식의 부정 `¬ (a = b)`는 `a ≠ b`로 줄여 쓴다.
-따라서 두 집합이 다르다는 목표 `S ≠ T`에서도 `intro h`로 `h : S = T`를 가정하고 모순을 보이면 된다.
-
-이제 이 부정을 사용하여 여집합의 원소 조건을 `x ∉ S`로 정하자.
+{anchor "sets-negation"}[]원소가 집합에 속하지 않는다는 조건은 부정 `¬ (x ∈ S)`로 나타내며
+이를 `x ∉ S`로 줄여 쓴다.
 
 ```savedLean
 def compl {A : Type} (S : Set A) : Set A :=
@@ -960,65 +764,29 @@ instance {A : Type} : Complement (Set A) where
 postfix:max "ᶜ" => Complement.complement
 ```
 
-`Sᶜ`는 `compl S`이며,
-`x ∈ Sᶜ`는 `x ∉ S`, 곧 `x ∈ S → False`를 뜻한다.
-증명 상태에서는 여집합의 원소 관계를 `x ∈ Sᶜ`로 표시하며,
-`expand`로 그 정의를 펼치면 `x ∉ S`가 된다.
+`Sᶜ`는 `compl S`이다. `x ∈ Sᶜ`의 정의를 `expand`로 펼치면 `x ∉ S`를 얻는다.
 
-*보기* 한 원소가 $`S`와 그 여집합에 모두 속한다고 가정하면 모순이다.
+{anchor "sets-proving-negation"}[]*정리* $`S\subseteq T`이면 $`T^{\mathsf c}\subseteq S^{\mathsf c}`이다.
 
-```savedLean
-example {A : Type}
-     (S : Set A) (x : A)
-    (hx : x ∈ S)
-    (hxc : x ∈ Sᶜ) :
-    False := by
-  apply hxc
-  exact hx
-```
-
-여기서는 앞의 예제에서 `P`를 `x ∈ S`로 바꾼 것이다.
-`hxc`는 `x ∉ S`, 곧 `x ∈ S → False`의 증명이므로
-`apply hxc`로 필요한 전제를 목표로 삼고 `exact hx`로 그 증명을 제시한다.
-
-## 부정의 증명
-%%%
-tag := "sets-proving-negation"
-file := "proving-negation"
-%%%
-
-여집합을 취하면 포함 관계의 방향이 바뀐다는 것을 증명하자.
-원소가 집합에 속하지 않음을 보여야 하므로 그 집합에 속한다고 가정하여 모순을 얻는 방법을 사용한다.
-
-*정리* $`S \subseteq T`이면 $`T^{\mathsf{c}} \subseteq S^{\mathsf{c}}`이다.
-
-*증명* 임의의 원소 $`x \in T^{\mathsf{c}}`를 택하면 $`x \notin T`이다.
-만약 $`x \in S`라고 가정하면 $`S \subseteq T`에 따라 $`x \in T`를 얻으므로 앞의 가정과 모순이다.
-따라서 $`x \notin S`, 곧 $`x \in S^{\mathsf{c}}`이며, 원하는 포함 관계가 성립한다.
+*증명* 임의의 원소 $`x`에서 포함 관계는 $`x\in S\Rightarrow x\in T`이다.
+그 대우를 사용하면 $`x\notin T\Rightarrow x\notin S`이므로 원하는 포함 관계를 얻는다.
 
 ```savedLean
 theorem compl_subset_compl {A : Type} (S T : Set A)
     (hST : S ⊆ T) :
     Tᶜ ⊆ Sᶜ := by
   intro x hxTc
-  intro hxS
-  have hxT : x ∈ T := by
-    exact hST x hxS
-
-  exact hxTc hxT
+  apply ProofExamples.contrapositive (x ∈ S) (x ∈ T) (hST x)
+  exact hxTc
 ```
 
-Lean에서도 같은 순서로 가정을 도입하고 모순을 얻으며, 각 줄의 역할은 다음과 같다.
-
-1. `intro x hxTc`: 임의의 원소 `x`에 대하여 `x ∈ Tᶜ`를 가정하고, `x ∈ Sᶜ`를 새 목표로 삼는다.
-2. `intro hxS`: 목표는 `x ∈ S → False`이므로 `x ∈ S`를 가정하며 이제 보일 것은 `False`이다.
-3. `have hxT : x ∈ T := by`: 포함 관계의 증명 `hST`를 사용하여 `x ∈ T`를 보이고, 그 증명에 `hxT`라는 이름을 붙인다.
-4. `exact hxTc hxT`: `hxTc`는 `x ∈ T → False`의 증명이므로 여기에 `hxT`를 적용하여 `False`를 얻는다.
+`hST x`는 이 원소에서의 함의이며, 대우의 결론은 `x ∉ T → x ∉ S`이다.
+그 전제를 가정 `hxTc`로 확인한다.
 
 *문제 5* (드모르간 법칙)
 
 $`(S\cup T)^{\mathsf c}=S^{\mathsf c}\cap T^{\mathsf c}`임을 증명하라.
-원소 조건을 이용하여 합집합에 속하지 않는다는 말이 두 집합 각각에 속하지 않는다는 말과 동치임을 보이라.
+원소 조건을 직접 비교하거나 앞 장의 `not_or_iff`를 사용할 수 있다.
 
 ```savedLean -keep
 theorem exercise_compl_union {A : Type} (S T : Set A) :
@@ -1026,129 +794,31 @@ theorem exercise_compl_union {A : Type} (S T : Set A) :
   sorry
 ```
 
-## 이중 여집합
+### 이중 여집합
 %%%
 tag := "sets-subset-double-complement"
-file := "subset-double-complement"
 %%%
 
-여집합을 두 번 취한 집합 $`(S^{\mathsf{c}})^{\mathsf{c}}`가 원래 집합 $`S`와 같음을 보이려면,
-두 집합이 서로의 부분집합임을 증명하면 된다.
-먼저 $`S \subseteq (S^{\mathsf{c}})^{\mathsf{c}}`를 보이자.
-
-*증명* 임의의 원소 $`x \in S`를 택하자.
-만약 $`x \in S^{\mathsf{c}}`라고 가정하면 $`x \notin S`이므로 처음의 가정과 모순이다.
-그러므로 $`x \notin S^{\mathsf{c}}`, 곧 $`x \in (S^{\mathsf{c}})^{\mathsf{c}}`이며, 원하는 포함 관계를 얻는다.
+여집합을 두 번 취하면 원래 집합을 얻는다.
+두 방향의 포함 관계는 원소 조건에서 각각 이중 부정의 도입과 제거에 해당한다.
 
 ```savedLean
 theorem subset_compl_compl {A : Type} (S : Set A) :
     S ⊆ Sᶜᶜ := by
   intro x hxS
-  intro hxSc
-  exact hxSc hxS
-```
+  apply ProofExamples.double_negation_intro
+  exact hxS
 
-`intro x hxS`로 $`x \in S`를 가정하면 남은 목표는 `x ∈ Sᶜᶜ`, 곧 `x ∈ Sᶜ → False`이다.
-이를 보이기 위해 `intro hxSc`로 $`x \in S^{\mathsf{c}}`를 가정하면
-`hxSc`는 `x ∈ S → False`의 증명이므로 `hxSc hxS`에서 모순을 얻는다.
-명제의 관점에서 보면 $`P \Rightarrow \neg\neg P`를 증명한 것이며,
-여기까지는 앞에서 배운 부정의 정의만으로 충분하다.
-
-## 배중률과 귀류법
-%%%
-tag := "sets-classical-logic"
-file := "classical-logic"
-%%%
-
-반대 방향인 $`(S^{\mathsf{c}})^{\mathsf{c}} \subseteq S`에서는,
-`x ∈ Sᶜᶜ`를 가정하고 `x ∈ S`를 보여야 한다.
-가정을 펼치면 `¬¬ (x ∈ S)`이므로 이번에는 이중 부정에서 원래 명제를 얻는 추론이 필요하다.
-부정의 정의까지 풀어 보면 가정과 목표는 다음과 같다.
-
-```
-hxScc : (x ∈ S → False) → False
-⊢ x ∈ S
-```
-
-앞의 증명에서는 목표가 함의여서 `intro`로 그 전제를 가정할 수 있었다.
-이번 목표는 `x ∈ S`이므로 같은 방법으로 시작할 수 없다.
-또한 `hxScc`는 `x ∉ S`의 증명을 받아 `False`를 주는 함수이므로,
-이를 사용하려면 먼저 그 부정의 증명이 있어야 한다.
-이 지점에서 원래 명제 `x ∈ S`를 얻기 위해 고전논리의 배중률을 사용하자.
-
-*배중률*은 모든 명제 $`P`에 대하여 $`P \lor \neg P`가 성립한다는 원리로,
-$`P`가 성립하거나 그 부정이 성립한다는 뜻이다.
-`¬¬ P`를 알고 있을 때 배중률에 따라 두 경우로 나누면,
-`P`인 경우에는 원하는 결론을 이미 얻었으며, `¬ P`인 경우에는 주어진 이중 부정과 모순이 생긴다.
-따라서 고전논리에서는 `¬¬ P`로부터 `P`를 얻을 수 있다.
-
-이 경우 구분을 Lean으로 적을 때는 `by_cases h : P`를 사용한다.
-첫 번째 경우에는 `h : P`를, 두 번째 경우에는 `h : ¬ P`를 가정으로 갖고
-각 경우에 원래 목표를 증명한다.
-이중 여집합의 포함 관계에서도 원소 `x`가 `S`에 속하는지에 따라 두 경우를 나누자.
-
-```savedLean
 theorem compl_compl_subset {A : Type} (S : Set A) :
     Sᶜᶜ ⊆ S := by
   intro x hxScc
-  by_cases hxS : x ∈ S
-  · exact hxS
-  · have hFalse : False := by
-      exact hxScc hxS
-
-    contradiction
-```
-
-첫 번째 경우에는 목표 `x ∈ S`의 증명 `hxS`가 주어져 있으므로 이를 그대로 사용한다.
-두 번째 경우의 `hxS`는 `x ∉ S`의 증명이며
-이를 `hxScc : ¬¬ (x ∈ S)`에 적용하면 모순을 얻는다.
-`have hFalse : False := by`로 이 모순의 증명을 가정에 추가하면
-`contradiction`으로 남은 목표 `x ∈ S`를 증명할 수 있다.
-`by_cases`에서는 두 경우 모두 목표가 `x ∈ S`로 유지된다는 점을 확인하라.
-
-이처럼 `¬¬ P`에서 `P`를 얻는 추론을 *이중 부정 제거*(DNE, double negation elimination)라고 한다.
-Lean의 정리 `Classical.not_not`는 `¬¬ P ↔ P`의 증명이므로
-그 정방향인 `Classical.not_not.mp`를 사용하면 이중 부정을 제거할 수 있다.
-같은 포함 관계를 이중 부정 제거 정리로 증명하면 다음과 같다.
-
-```savedLean
-example {A : Type}
-     (S : Set A) :
-    Sᶜᶜ ⊆ S := by
-  intro x hxScc
-  apply Classical.not_not.mp
+  apply ProofExamples.double_negation_elim
   exact hxScc
 ```
 
-`apply Classical.not_not.mp`는 목표를 `¬¬ (x ∈ S)`로 바꾼다.
-이 명제는 `x ∈ Sᶜᶜ`의 정의와 같으므로 가정 `hxScc`로 증명을 마친다.
-정리의 증명에 가정을 직접 적용하면 `exact Classical.not_not.mp hxScc` 한 줄로도 쓸 수 있다.
-
-같은 결론을 귀류법으로도 증명할 수 있다. 고전논리의 *귀류법*에서는 `P`를 보이기 위해 `¬ P`를 가정하고 모순을 이끌어 낸다.
-이 논증으로 `¬¬ P`를 증명한 뒤 이중 부정 제거를 사용하면 원래 목표인 `P`를 얻는다.
-Lean에서는 `by_contra`로 귀류법을 시작할 수 있다.
-아래 증명에서 `by_contra hxNotS`를 쓰면 목표인 `x ∈ S`의 부정을 `hxNotS`로 가정하고
-`False`를 새 목표로 삼아 이 귀류법을 시작한다.
-
-```savedLean
-example {A : Type}
-     (S : Set A) :
-    Sᶜᶜ ⊆ S := by
-  intro x hxScc
-  by_contra hxNotS
-  exact hxScc hxNotS
-```
-
-`hxScc : ¬¬ (x ∈ S)`에 `hxNotS : ¬ (x ∈ S)`를 넣으면 모순을 얻는다.
-
-부정을 증명하는 앞의 방법과 귀류법에서 무엇을 가정했는지 비교하라.
-`¬ P`를 보일 때 `P`를 가정하는 것은 부정의 정의에 따른 것이며,
-`P`를 보일 때 `¬ P`를 가정하는 귀류법에는 이중 부정 제거가 필요하다.
-
-이제 두 집합이 서로의 부분집합임을 보였으므로,
-앞의 정리 `set_eq_of_subset`를 사용하여 이중 여집합의 등식을 얻자.
-
-*정리* 모든 집합 $`S`에 대하여 $`(S^{\mathsf{c}})^{\mathsf{c}} = S`이다.
+첫 증명은 `x ∈ S`에서 `¬¬ (x ∈ S)`를 얻고,
+둘째 증명은 그 반대 방향이므로 앞 장의 고전논리 결과를 사용한다.
+두 포함 관계를 묶으면 집합의 등식이 된다.
 
 ```savedLean
 theorem compl_compl_eq {A : Type} (S : Set A) :
@@ -1156,52 +826,6 @@ theorem compl_compl_eq {A : Type} (S : Set A) :
   apply set_eq_of_subset
   · exact compl_compl_subset S
   · exact subset_compl_compl S
-```
-
-`apply set_eq_of_subset`를 쓰면 목표가 `Sᶜᶜ ⊆ S`와 `S ⊆ Sᶜᶜ`로 나뉜다.
-첫 번째 목표에는 고전논리로 증명한 `compl_compl_subset S`를,
-두 번째 목표에는 부정의 정의로 증명한 `subset_compl_compl S`를 사용하여 등식의 증명을 마친다.
-
-이후의 본문에서는 고전논리를 기본으로 사용하겠다.
-파일에서 다음 선언을 적으면 그 뒤의 증명과 정의에서 고전논리를 사용할 수 있다.
-
-```savedLean
-open scoped Classical
-```
-
-`classical`은 한 증명 안에서 고전논리를 사용할 범위를 정하며
-`open scoped Classical`은 선언한 범위 전체에 같은 설정을 적용한다.
-이 선언은 다른 파일을 가져오는 `import`로 전달되지 않으므로
-이후의 예제 코드와 연습문제 파일에도 같은 선언을 둔다.
-
-자동 표현 정리는 이미 증명한 이중 부정 제거를 사용하여 `¬¬ P`를 `P`로 정리한다.
-아래 `open scoped Ample.Auto`로 이를 켠다. 고전논리 설정은 앞의 선언을 그대로 사용한다.
-따라서 이중 여집합의 원소 조건을 펼친 뒤에는 다음과 같이 포함 관계를 증명할 수 있다.
-자동 표현 정리의 설정과 범위는 {ref "tactic-auto-normalization"}[자동 표현 정리]에서 설명한다.
-
-```savedLean -show
-section
-```
-
-```savedLean
-open scoped Ample.Auto
-```
-
-```savedLean
-example {A : Type}
-     (S : Set A) :
-    Sᶜᶜ ⊆ S := by
-  intro x hxScc
-  expand at hxScc
-  expand at hxScc
-  exact hxScc
-```
-
-두 번의 `expand at hxScc`로 여집합의 원소 조건을 차례로 펼치면 이중 부정이 자동으로 제거된다.
-그러면 가정이 목표 `x ∈ S`와 같은 명제로 정리되므로 `exact hxScc`로 증명을 마친다.
-
-```savedLean -show
-end
 ```
 
 ## 차집합
@@ -1258,39 +882,78 @@ theorem exercise_diff_self_subset_empty
   sorry
 ```
 
-## 원소의 타입과 러셀의 역설
+## 집합족의 합집합과 교집합
 %%%
-tag := "advanced-set-types"
+tag := "sets-indexed-families"
 %%%
 
-수학에서는 $`\{1, 2\}`처럼 집합을 쓰면서 원소가 속하는 범위를 따로 표시하지 않기도 한다.
-그러나 Lean에서 집합을 술어로 정의하려면 어떤 타입의 원소에 그 조건을 적용할지 정해야 하므로
-`Set A`의 `A`로 그 범위를 나타낸다.
 
-원소의 범위를 구별하는 것은 집합을 아무 제한 없이 만드는 데서 생기는 모순과도 관련이 있다.
-모든 집합을 원소로 갖는 집합 `U`가 있고,
-그 안에서 조건을 만족하는 원소들을 골라 집합을 만들 수 있다고 가정해 보자.
-그러면 다음과 같은 집합을 만들게 된다.
+$`S_0=\{0\}`, $`S_1=\{1\}`, $`S_2=\{2\}`, $`\ldots`처럼 집합마다 번호를 붙이면
+그 집합들을 모두 합쳐 자연수 전체를 얻는다. 이처럼 첨자 $`i`마다 집합 $`S_i`가 정해진 것을
+*집합족*이라고 한다. Lean에서는 첨자를 집합으로 보내는 함수 `S : I → Set A`로 나타낸다.
+첨자의 타입 `I`는 자연수일 수도 있고, 두 원소만 갖는 타입일 수도 있다.
 
-$$`R = \{S \in U : S \notin S\}.`
+*정의* 집합족의 *합집합* $`\bigcup_{i\in I}S_i`는 어느 $`S_i`에 속하는 원소들의 집합이며,
+*교집합* $`\bigcap_{i\in I}S_i`는 모든 $`S_i`에 속하는 원소들의 집합이다.
+따라서 합집합의 원소 조건에는 존재명제, 교집합의 원소 조건에는 전칭명제를 사용한다.
 
-`R`은 자기 자신에 속하지 않는 집합들을 모은 것이다.
-`U`는 모든 집합을 포함한다고 가정했으므로 `R`도 `U`에 속한다.
-이제 `R`이 자기 자신에 속하는지 물어 보자.
+```savedLean
+def indexedUnion {I A : Type} (S : I → Set A) : Set A :=
+  fun x => ∃ i, x ∈ S i
 
-`R`이 자기 자신에 속한다고 하면 `R`의 원소 조건에 따라 자기 자신에 속하지 않아야 한다.
-반대로 자기 자신에 속하지 않는다고 하면 `R`도 `U`의 원소이고 그 조건을 만족하므로 `R`에 속해야 한다.
-어느 쪽으로 생각해도 모순이 생기며, 이를 *러셀의 역설*이라고 한다.
+def indexedInter {I A : Type} (S : I → Set A) : Set A :=
+  fun x => ∀ i, x ∈ S i
+```
 
-이러한 모순을 피하려면 모든 집합을 한꺼번에 모으는 방식과
-조건으로 집합을 만드는 방식을 아무 제한 없이 함께 허용해서는 안 된다.
-이 교재에서는 원소의 타입 `A`를 먼저 정하고, 그 타입 위의 조건으로 집합을 만든다.
-`S : Set A`는 `A`의 원소에 적용하는 함수이므로
-타입이 다른 `S` 자신을 그대로 원소로 넣는 식은 쓸 수 없다.
+```savedLean
+scoped syntax "⋃ " ident ", " term : term
+scoped syntax "⋂ " ident ", " term : term
+macro_rules
+  | `(⋃ $i:ident, $S) => `(indexedUnion (fun $i => $S))
+  | `(⋂ $i:ident, $S) => `(indexedInter (fun $i => $S))
+```
 
-집합을 원소로 갖는 집합을 만들 때는 원소의 타입도 집합의 타입으로 정한다.
-예를 들어 `U : Set (Set Nat)`라고 하면 `U`의 원소는 `Set Nat` 타입의 집합, 곧 자연수의 집합이다.
-이렇게 원소와 집합의 타입을 구별하므로 러셀의 역설에 등장한 `S ∈ S`를 그대로 만들 수 없다.
+`⋃ i, S i`와 `⋂ i, S i`는 각각 위의 두 정의에 연결한 표기이다.
+합집합에 속함을 보일 때는 첨자 하나와 그 집합에 속한다는 증명을 제시하고,
+교집합에 속함을 보일 때는 임의의 첨자에서 원소 조건을 증명한다.
+
+*보기* 자연수 $`i`마다 한 원소 집합 $`S_i=\{i\}`를 두면 그 합집합은 자연수 전체이다.
+임의의 자연수 $`x`는 $`S_x`에 속하므로 역방향 포함 관계에서는 첨자로 $`x`를 택하면 된다.
+
+```savedLean
+theorem union_singletons_nat :
+    (⋃ i, (fun x : Nat => x = i)) = whole Nat := by
+  ext x
+  constructor
+  · intro hx
+    trivial
+
+  · intro hx
+    exists x
+```
+
+*문제 7* (집합족과 포함 관계)
+
+(1) 모든 첨자에서 $`S_i\subseteq T_i`이면 두 합집합도 같은 포함 관계를 가짐을 보이라.
+
+(2) 합집합의 여집합은 각 여집합의 교집합과 같음을 증명하라.
+
+```savedLean -keep
+theorem exercise_indexedUnion_mono {I A : Type}
+    (S T : I → Set A)
+    (h : ∀ i, S i ⊆ T i) :
+    indexedUnion S ⊆ indexedUnion T := by
+  sorry
+
+theorem exercise_indexedUnion_complement {I A : Type}
+    (S : I → Set A) :
+    (indexedUnion S)ᶜ = indexedInter (fun i => (S i)ᶜ) := by
+  sorry
+```
+
+첨자가 하나도 없으면 합집합에 속할 원소도 없다. 반면 교집합의 원소 조건은
+확인할 첨자가 없으므로 모든 원소가 만족한다. 따라서 빈 집합족의 합집합은 공집합이고
+교집합은 전체집합이다. 이 경우에도 위의 정의를 그대로 사용한다.
 
 ```savedLean -show
 end Ample
@@ -1310,10 +973,17 @@ open scoped Classical
 namespace Ample
 ```
 
-# 정의역과 공역
+# 상과 역상
 %%%
-tag := "functions-domain-and-codomain"
-file := "domain-and-codomain"
+tag := "functions-images-and-preimages"
+file := "images-and-preimages"
+%%%
+
+{anchor "functions-domain-and-codomain"}[]
+
+## 정의역과 공역
+%%%
+tag := "functions-basic-domains"
 %%%
 
 *정의* 집합 $`A`의 각 원소 $`x`에 집합 $`B`의 원소 $`f(x)` 하나를 대응시키는 것을
@@ -1376,31 +1046,32 @@ example {A B : Type}
 
 두 함수가 다름을 보일 때는 값이 다른 원소 하나를 찾으면 된다.
 예를 들어 `double`과 항등함수는 $`1`에서 각각 $`2`와 $`1`을 갖는다.
-함수가 같다고 가정한 뒤 `rw`로 이 함수값을 비교하면 모순을 얻는다.
+두 함수가 같다고 가정하고 양변에 `fun f => f 1`을 적용하면 $`2=1`이 되어 모순이다.
 `f ≠ g`는 `¬ (f = g)`를 뜻한다.
 
 ```savedLean
 theorem double_ne_identity : double ≠ identity Nat := by
   intro h
-  have hOne : double 1 = identity Nat 1 := by
-    rw [h]
-
+  apply_fun (fun f => f 1) at h
   contradiction
 ```
 
-반대로 모든 원소에서 함수값이 같음을 보여 함수의 같음을 증명할 때는
-{ref "sets-proving-set-equality"}[`ext`]를 사용한다.
+{anchor "sets-function-extensionality"}[]반대로 모든 원소에서 함수값이 같으면 두 함수는 같다.
+이는 앞 장에서 술어를 비교할 때 사용한 *함수의 외연성*이다.
+일반적인 함수에서도 `funext x`로 임의의 원소를 받아 그 함수값을 비교한다.
 
-# 상과 역상
-%%%
-tag := "functions-images-and-preimages"
-file := "images-and-preimages"
-%%%
+```savedLean
+example (A B : Type) (f g : A → B)
+    (h : ∀ x, f x = g x) :
+    f = g := by
+  funext x
+  exact h x
+```
 
-앞의 `double`에서는 자연수 전체의 함수값을 모았다.
-이제 정의역의 부분집합 $`S`를 정하고 $`S`에 속하는 원소들의 함수값만 모아 보자.
+함수의 등식에서도 `ext x`를 쓰면 같은 목표가 남는다.
+집합에서는 이 원소별 비교에 명제의 외연성을 더해 원소 조건의 동치를 비교했던 것이다.
 
-## 상과 존재명제
+## 상
 %%%
 tag := "functions-image"
 %%%
@@ -1425,9 +1096,7 @@ def image {A B : Type} (f : A → B) (S : Set A) : Set B :=
 *보기* $`6`은 함수 `double`의 상에 속한다.
 실제로 자연수 $`3`은 정의역에 속하고 $`\operatorname{double}(3) = 6`이다.
 
-목표를 정의에 따라 펼치면 `∃ n, n ∈ whole Nat ∧ double n = 6`이다.
-이런 존재명제는 조건을 만족하는 원소를 제시하여 증명하며
-전술 `exists 3`으로 원소 `n`을 $`3`으로 택할 수 있다.
+앞 장의 존재명제처럼 `exists 3`으로 이 원소를 제시하자.
 
 ```savedLean
 example :
@@ -1444,18 +1113,8 @@ example :
 상의 정의에 따라 $`x \in S`이고 $`f(x) = y`인 원소 $`x`가 존재한다.
 $`S \subseteq T`에 따라 이 원소는 $`T`에도 속하므로 $`y \in f(T)`이다.
 
-Lean에서는 먼저 `intro y hy`로 임의의 원소 `y`와 가정 `hy : y ∈ image f S`를 도입한다.
-이 가정의 명제를 정의에 따라 펼치면 `∃ x, x ∈ S ∧ f x = y`이므로
-`hy`는 조건에 맞는 원소가 존재한다는 증명이다.
-
-`rcases`를 쓰면 존재명제의 증명에서 원소와 조건의 증명을 꺼낼 수 있다.
-아래의 `rcases hy with ⟨x, hxS, hxy⟩`는 원소를 `x`로 두고
-`x ∈ S`와 `f x = y`의 증명에 각각 `hxS`, `hxy`라는 이름을 붙인다.
-이 패턴에서는 먼저 존재명제에서 원소와 그 원소에 관한 증명을 꺼내고,
-그 증명에 담긴 논리곱을 다시 두 조건으로 나눈다.
-여기서 `x`는 임의로 정한 원소가 아니라 가정 `hy`가 존재를 보장하는 원소이다.
-이후의 추론에서는 함께 얻은 두 조건을 사용할 수 있다.
-여기서 `⟨`와 `⟩`는 각각 `\<`, `\>`로 입력한다.
+`hy : y ∈ image f S`의 정의는 `∃ x, x ∈ S ∧ f x = y`이다.
+앞 장의 `rcases`로 이 존재명제와 논리곱을 분해하면 원소 `x`와 두 조건을 얻는다.
 
 ```savedLean
 theorem image_mono {A B : Type} (f : A → B) (S T : Set A)
@@ -1505,7 +1164,7 @@ example :
 `hx`에 따라 `x ∈ S`와 `x ∈ T`인 두 경우로 나눌 수 있다.
 각 경우에 같은 원소 `x`와 등식 `hEq`를 사용하면 `y ∈ image f S` 또는 `y ∈ image f T`를 얻는다.
 
-*문제 7* (합집합의 상)
+*문제 8* (합집합의 상)
 
 $`f(S\cup T)=f(S)\cup f(T)`임을 증명하라.
 
@@ -1588,7 +1247,7 @@ $`f(1)`이 $`f(S)`에 속함을 보이려면 $`S` 안에서 같은 함수값을 
 그 원소로 $`0`을 택하면 $`0\in S`이고 $`f(0)=f(1)`이다.
 원래 집합 밖의 원소도 집합 안의 원소와 같은 함수값을 가지면 이 역상에 들어간다.
 
-*문제 8* $`S \subseteq T`이면 $`f^{-1}(S) \subseteq f^{-1}(T)`임을 증명하라.
+*문제 9* $`S \subseteq T`이면 $`f^{-1}(S) \subseteq f^{-1}(T)`임을 증명하라.
 
 ```savedLean -keep
 theorem exercise_preimage_subset {A B : Type}
@@ -1598,7 +1257,7 @@ theorem exercise_preimage_subset {A B : Type}
   sorry
 ```
 
-*문제 9* (역상과 집합 연산)
+*문제 10* (역상과 집합 연산)
 
 역상은 교집합과 여집합을 보존한다. 다음 두 등식을 증명하라.
 함수의 단사성이나 전사성을 가정하지 않고 증명하라.
@@ -1616,55 +1275,10 @@ theorem exercise_preimage_compl {A B : Type}
 ```
 
 
-# 집합족의 합집합과 교집합
+## 집합족의 역상
 %%%
-tag := "sets-indexed-families"
+tag := "functions-indexed-preimages"
 %%%
-
-
-$`S_0=\{0\}`, $`S_1=\{1\}`, $`S_2=\{2\}`, $`\ldots`처럼 집합마다 번호를 붙이면
-그 집합들을 모두 합쳐 자연수 전체를 얻는다. 이처럼 첨자 $`i`마다 집합 $`S_i`가 정해진 것을
-*집합족*이라고 한다. Lean에서는 첨자를 집합으로 보내는 함수 `S : I → Set A`로 나타낸다.
-첨자의 타입 `I`는 자연수일 수도 있고, 두 원소만 갖는 타입일 수도 있다.
-
-*정의* 집합족의 *합집합* $`\bigcup_{i\in I}S_i`는 어느 $`S_i`에 속하는 원소들의 집합이며,
-*교집합* $`\bigcap_{i\in I}S_i`는 모든 $`S_i`에 속하는 원소들의 집합이다.
-따라서 합집합의 원소 조건에는 존재명제, 교집합의 원소 조건에는 전칭명제를 사용한다.
-
-```savedLean
-def indexedUnion {I A : Type} (S : I → Set A) : Set A :=
-  fun x => ∃ i, x ∈ S i
-
-def indexedInter {I A : Type} (S : I → Set A) : Set A :=
-  fun x => ∀ i, x ∈ S i
-```
-
-```savedLean
-scoped syntax "⋃ " ident ", " term : term
-scoped syntax "⋂ " ident ", " term : term
-macro_rules
-  | `(⋃ $i:ident, $S) => `(indexedUnion (fun $i => $S))
-  | `(⋂ $i:ident, $S) => `(indexedInter (fun $i => $S))
-```
-
-`⋃ i, S i`와 `⋂ i, S i`는 각각 위의 두 정의에 연결한 표기이다.
-합집합에 속함을 보일 때는 첨자 하나와 그 집합에 속한다는 증명을 제시하고,
-교집합에 속함을 보일 때는 임의의 첨자에서 원소 조건을 증명한다.
-
-*보기* 자연수 $`i`마다 한 원소 집합 $`S_i=\{i\}`를 두면 그 합집합은 자연수 전체이다.
-임의의 자연수 $`x`는 $`S_x`에 속하므로 역방향 포함 관계에서는 첨자로 $`x`를 택하면 된다.
-
-```savedLean
-theorem union_singletons_nat :
-    (⋃ i, (fun x : Nat => x = i)) = whole Nat := by
-  ext x
-  constructor
-  · intro hx
-    trivial
-
-  · intro hx
-    exists x
-```
 
 앞에서 역상에 속한다는 것은 함수값이 주어진 집합에 속한다는 뜻이었다.
 따라서 $`x\in f^{-1}(\bigcup_i S_i)`는 어느 첨자 $`i`에 대해 $`f(x)\in S_i`라는 뜻이고,
@@ -1688,30 +1302,7 @@ theorem preimage_indexedInter {I A B : Type}
 
 두 증명에서 `ext x`로 얻은 동치의 양쪽은 정의를 계산하면 같은 명제이므로 `rfl`로 마친다.
 
-*문제 10* (집합족과 포함 관계)
-
-(1) 모든 첨자에서 $`S_i\subseteq T_i`이면 두 합집합도 같은 포함 관계를 가짐을 보이라.
-
-(2) 합집합의 여집합은 각 여집합의 교집합과 같음을 증명하라.
-
-```savedLean -keep
-theorem exercise_indexedUnion_mono {I A : Type}
-    (S T : I → Set A)
-    (h : ∀ i, S i ⊆ T i) :
-    indexedUnion S ⊆ indexedUnion T := by
-  sorry
-
-theorem exercise_indexedUnion_complement {I A : Type}
-    (S : I → Set A) :
-    (indexedUnion S)ᶜ = indexedInter (fun i => (S i)ᶜ) := by
-  sorry
-```
-
-첨자가 하나도 없으면 합집합에 속할 원소도 없다. 반면 교집합의 원소 조건은
-확인할 첨자가 없으므로 모든 원소가 만족한다. 따라서 빈 집합족의 합집합은 공집합이고
-교집합은 전체집합이다. 이 경우에도 위의 정의를 그대로 사용한다.
-
-# 단사, 전사, 전단사
+# 단사함수와 전사함수
 %%%
 tag := "functions-mapping-properties"
 file := "mapping-properties"
@@ -1818,7 +1409,6 @@ theorem preimage_image_of_injective {A B : Type} (f : A → B)
 `rcases`로 원소 `y`, 원소 조건 `hy`, 함수값의 등식 `hxy`를 얻는다.
 `replace`로 함수값의 등식 `hxy`를 원소의 등식 `y = x`로 바꾼다.
 `rw [← hxy]`로 이 등식을 오른쪽에서 왼쪽으로 사용하면 목표 `x ∈ S`가 `y ∈ S`로 바뀐다.
-`←`는 등식을 반대 방향으로 사용하라는 뜻이며 `\l`로 입력한다.
 
 *보기* $`\{2,3\}`의 상은 $`\{4,6\}`이다. 이 상의 역상을 구하면 원래 집합 $`\{2,3\}`을 얻는다.
 두 번째 사실은 `double`의 단사성에서 바로 따른다.
@@ -1995,7 +1585,259 @@ theorem exercise_surjective_image_whole_iff
   sorry
 ```
 
-# 집합 위의 함수
+## 합성함수
+%%%
+tag := "functions-composition"
+file := "composition"
+%%%
+
+함수 $`f : A \to B`를 적용한 뒤 함수 $`g : B \to C`를 적용하면
+$`A`의 원소에서 $`C`의 원소를 얻는다. 이 과정을 하나의 함수로 정의하자.
+
+*정의* 함수 $`f : A \to B`와 $`g : B \to C`에 대하여
+$`A`의 각 원소 $`x`를 $`g(f(x))`에 대응시키는 함수를 두 함수의 *합성함수*라고 한다.
+이 함수를 $`g \circ f`로 쓰며 그 값은 $`(g \circ f)(x) = g(f(x))`이다.
+
+합성하려면 먼저 적용하는 함수의 공역과 다음 함수의 정의역이 맞아야 한다.
+아래의 정의에서는 `f`의 값이 `B`의 원소이므로 `g`를 적용하여 `C`의 원소를 얻는다.
+
+```savedLean
+def compose {A B C : Type}
+    (g : B → C) (f : A → B) : A → C :=
+  fun x => g (f x)
+local infixr:90 (priority := high) " ∘ " => compose
+```
+
+마지막 선언은 `g ∘ f`를 `compose g f`에 연결하며 기호 `∘`는 `\circ`로 입력한다.
+이 표기에서는 오른쪽의 `f`를 먼저 적용하고 그 값에 왼쪽의 `g`를 적용한다.
+따라서 `(g ∘ f) x = g (f x)`는 정의를 펼쳐 `rfl`로 증명할 수 있다.
+
+```savedLean
+example {A B C : Type}
+    (f : A → B) (g : B → C) (x : A) :
+    (g ∘ f) x = g (f x) := by
+  rfl
+```
+
+*보기* $`f(n) = n + 3`이고 $`g(n) = 2n`이면
+$`(g \circ f)(4) = 2(4 + 3) = 14`이다.
+
+```lean (name := compositionValue)
+#eval (double ∘ (fun n : Nat => n + 3)) 4
+```
+
+```leanOutput compositionValue
+14
+```
+
+{anchor "functions-congruence"}[]
+```savedLean -show
+theorem functions_compose_of_pointwise_equal {A B C : Type}
+    (f : B → C)
+    (g h : A → B)
+    (hgh : ∀ x, g x = h x)
+    (x : A) :
+    f (g x) = f (h x) := by
+  congr : 1
+  exact hgh x
+```
+
+```savedLean -show
+theorem compose_of_pointwise_equal {A B C : Type}
+    (f : B → C)
+    (g h : A → B)
+    (hgh : ∀ x, g x = h x) :
+    f ∘ g = f ∘ h := by
+  ext x
+  exact functions_compose_of_pointwise_equal f g h hgh x
+```
+
+*문제 15* $`f(n) = n + 1`, $`g(n) = 2n`인 두 자연수 함수에 대하여
+$`(g \circ f)(3)`과 $`(f \circ g)(3)`을 계산하고 두 합성함수가 서로 다름을 증명하라.
+세 번째 증명에서는 앞의 두 계산 결과를 사용하라.
+
+```savedLean -keep
+theorem exercise_double_after_successor_at_three :
+    (double ∘ (fun n : Nat => n + 1)) 3 = 8 := by
+  sorry
+
+theorem exercise_successor_after_double_at_three :
+    ((fun n : Nat => n + 1) ∘ double) 3 = 7 := by
+  sorry
+
+theorem exercise_double_successor_noncommute :
+    double ∘ (fun n : Nat => n + 1) ≠
+    (fun n : Nat => n + 1) ∘ double := by
+  sorry
+```
+
+### 합성의 기본 성질
+%%%
+tag := "functions-associativity"
+%%%
+
+*정리* 함수 $`f : A \to B`, $`g : B \to C`, $`h : C \to D`에 대하여
+$`h \circ (g \circ f) = (h \circ g) \circ f`이다.
+
+*증명* 임의의 원소 $`x \in A`를 택하면
+합성함수의 정의에 따라 두 함수의 값은 모두 $`h(g(f(x)))`이다.
+두 함수가 모든 원소에서 같은 값을 가지므로 서로 같다.
+
+```savedLean
+theorem compose_assoc {A B C D : Type}
+    (f : A → B) (g : B → C)
+    (h : C → D) :
+    h ∘ (g ∘ f) = (h ∘ g) ∘ f := by
+  ext x
+  rfl
+```
+
+{anchor "functions-composition-with-identity"}[]*정리* 함수 $`f : A \to B`에 대하여
+$`f \circ \operatorname{id}_A = f`이고 $`\operatorname{id}_B \circ f = f`이다.
+
+*증명* 임의의 원소 $`x \in A`에 대하여
+$`f`를 적용하기 전에 항등함수를 적용해도 결과는 $`f(x)`이며
+$`f`를 적용한 뒤에 항등함수를 적용해도 같은 값을 얻는다.
+
+```savedLean
+theorem compose_identity {A B : Type} (f : A → B) :
+    f ∘ identity A = f := by
+  ext x
+  rfl
+
+theorem identity_compose {A B : Type} (f : A → B) :
+    identity B ∘ f = f := by
+  ext x
+  rfl
+```
+
+첫 번째 등식에는 정의역의 항등함수 `identity A`를,
+두 번째 등식에는 공역의 항등함수 `identity B`를 사용한다.
+
+```savedLean -show
+attribute [simp] compose_identity identity_compose
+```
+
+이 두 성질도 `simp`에 등록되어 있으므로 합성에 들어 있는 항등함수를 다음과 같이 없앨 수 있다.
+
+```savedLean
+example {A B : Type} (f : A → B) :
+    (identity B ∘ f) ∘ identity A = f := by
+  simp
+```
+
+### 합성과 단사·전사
+%%%
+tag := "functions-composition-injectivity"
+%%%
+
+두 단사함수를 합성했을 때도 서로 다른 원소가 서로 다른 함수값을 갖는지 살펴보자.
+
+*정리* 함수 $`f : A \to B`와 $`g : B \to C`가 모두 단사이면
+합성함수 $`g \circ f`도 단사이다.
+
+*증명* $`x, y \in A`에 대하여 $`g(f(x)) = g(f(y))`라고 하자.
+$`g`가 단사이므로 $`f(x) = f(y)`이고 여기에 $`f`의 단사성을 사용하면 $`x = y`이다.
+따라서 $`g \circ f`는 단사이다.
+
+```savedLean
+theorem injective_compose {A B C : Type}
+    (f : A → B) (g : B → C)
+    (hf : Injective f)
+    (hg : Injective g) :
+    Injective (g ∘ f) := by
+  intro x y hxy
+  apply hf
+  apply hg
+  exact hxy
+```
+
+위의 수학적 증명을 목표에서 거슬러 올라가면 Lean 코드의 순서가 된다.
+`x = y`를 보이기 위해 `apply hf`로 `f x = f y`를 새 목표로 삼고
+다시 `apply hg`로 목표를 `g (f x) = g (f y)`로 바꾼다.
+이제 목표가 처음의 가정과 같으므로 `exact hxy`로 증명을 마친다.
+
+{anchor "functions-composition-surjectivity"}[]전사성도 합성에서 유지된다.
+이번에는 두 함수의 전사성을 차례로 사용하여 공역의 원소에 대응하는 정의역의 원소를 찾는다.
+
+*정리* 함수 $`f : A \to B`와 $`g : B \to C`가 모두 전사이면
+합성함수 $`g \circ f`도 전사이다.
+
+*증명* 임의의 원소 $`z \in C`를 택하자.
+$`g`가 전사이므로 $`g(y) = z`인 원소 $`y \in B`가 존재하고
+$`f`가 전사이므로 $`f(x) = y`인 원소 $`x \in A`가 존재한다.
+이때 $`(g \circ f)(x) = g(f(x)) = g(y) = z`이므로 원하는 원소를 얻는다.
+
+{anchor "functions-unpack"}[]`unpack`은 원소와 성질처럼 한 묶음으로 주어진 내용을 분해하는 전술이다.
+앞의 `rcases`는 여러 겹을 한꺼번에 분해할 수 있으며, `unpack`은 한 묶음을 꺼낸다.
+여기서 `hg z`는 `∃ y, g y = z`의 증명이므로
+`unpack hg z with ⟨y, hy⟩`로 원소 `y`와 등식 `hy : g y = z`를 얻는다.
+이어서 `hf y`에서도 같은 방식으로 원소 `x`와 `hx : f x = y`를 얻는다.
+
+```savedLean
+theorem surjective_compose {A B C : Type}
+    (f : A → B) (g : B → C)
+    (hf : Surjective f)
+    (hg : Surjective g) :
+    Surjective (g ∘ f) := by
+  intro z
+  -- g y = z인 y를 고르고, f x = y인 x를 고른다.
+  unpack hg z with ⟨y, hy⟩
+  unpack hf y with ⟨x, hx⟩
+
+  -- 고른 x가 합성함수에서 z로 가는지 확인한다.
+  exists x
+  expand
+  rw [hx]
+  exact hy
+```
+
+`exists x`로 찾은 원소를 제시하고 `expand`로 합성의 정의를 펼치면 목표는 `g (f x) = z`이다.
+여기서 `rw [hx]`로 `f x`를 `y`로 바꾸면 남은 목표 `g y = z`를 `hy`로 증명할 수 있다.
+
+{anchor "functions-composition-bijectivity"}[]*정리* 전단사함수 두 개를 합성하면 전단사함수를 얻는다.
+
+*증명* `constructor`로 목표를 단사성과 전사성으로 나누어 앞의 두 정리를 사용한다.
+가정 `hf : Bijective f`에서는 `hf.inj`로 단사성의 증명을, `hf.surj`로 전사성의 증명을 꺼내며
+`hg`도 같은 방식으로 사용한다.
+
+```savedLean
+theorem bijective_compose {A B C : Type}
+    (f : A → B) (g : B → C)
+    (hf : Bijective f)
+    (hg : Bijective g) :
+    Bijective (g ∘ f) := by
+  constructor
+  · apply injective_compose f g
+    · exact hf.inj
+    · exact hg.inj
+
+  · apply surjective_compose f g
+    · exact hf.surj
+    · exact hg.surj
+```
+
+*문제 16* 합성함수 $`g \circ f`가 단사이면 $`f`도 단사임을 증명하라.
+
+```savedLean -keep
+theorem exercise_injective_of_compose {A B C : Type}
+    (f : A → B) (g : B → C)
+    (h : Injective (g ∘ f)) :
+    Injective f := by
+  sorry
+```
+
+*문제 17* 합성함수 $`g \circ f`가 전사이면 $`g`도 전사임을 증명하라.
+
+```savedLean -keep
+theorem exercise_surjective_of_compose {A B C : Type}
+    (f : A → B) (g : B → C)
+    (h : Surjective (g ∘ f)) :
+    Surjective g := by
+  sorry
+```
+
+# 부분집합 위의 함수
 %%%
 tag := "functions-elements"
 file := "elements"
@@ -2018,14 +1860,14 @@ Lean에서는 우선 앞에서 정의한 `double : Nat → Nat`을 사용하고
 
 ```savedLean
 def evens : Set Nat := fun n => ∃ k : Nat, n = 2 * k
-theorem double_mem_evens (n : Nat) :
+theorem double_in_evens (n : Nat) :
     double n ∈ evens := by
   exists n
 ```
 
 목표의 원소 조건은 `∃ k : Nat, double n = 2 * k`이다.
 `exists n`으로 $`k=n`을 택하면 `double`의 정의에 따라 등식이 성립한다.
-이제 `double`은 함수값을 정하고 `double_mem_evens`는 그 값이 `evens`에 속함을 보인다.
+이제 `double`은 함수값을 정하고 `double_in_evens`는 그 값이 `evens`에 속함을 보인다.
 
 {anchor "functions-domain-condition"}[]정의역이 부분집합이면 그 집합의 원소라는 조건도 사용할 수 있다.
 예를 들어 양의 자연수의 집합 $`S=\{n\in\mathbb{N}:0<n\}`에서
@@ -2041,7 +1883,7 @@ $`T`를 `aboveTwo`로 정의하고 먼저 모든 자연수에서 $`n+2`를 계�
 ```savedLean
 def aboveTwo : Set Nat := fun n => 2 < n
 def shiftTwo (n : Nat) : Nat := n + 2
-theorem shiftTwo_mem_aboveTwo (n : Nat)
+theorem shiftTwo_in_aboveTwo (n : Nat)
     (hn : n ∈ positives) :
     shiftTwo n ∈ aboveTwo := by
   apply Nat.add_lt_add_right (k := 2)
@@ -2133,27 +1975,27 @@ def functions_element_from_membership {A : Type}
 
 {anchor "functions-subtype-maps"}[]이제 앞의 두 함수를 원소 조건까지 포함한 타입으로 나타내자.
 자연수에서 짝수 집합으로 가는 함수의 타입은 `Nat → Elem evens`이다.
-각 `n : Nat`에 대해 값 `double n`과 그 값이 짝수라는 증명 `double_mem_evens n`을 함께 돌려주면 된다.
+각 `n : Nat`에 대해 값 `double n`과 그 값이 짝수라는 증명 `double_in_evens n`을 함께 돌려주면 된다.
 증명 단계를 직접 적을 때는 다음과 같이 `property := by` 아래에 적는다.
 
 ```savedLean
 def doubleToEvens (n : Nat) : Elem evens :=
   { val := double n
     property := by
-      exact double_mem_evens n }
+      exact double_in_evens n }
 ```
 
 양의 자연수에서 $`2`보다 큰 자연수로 가는 함수는
 `Elem positives → Elem aboveTwo`로 정의한다.
 이때 인수 `s`에서 자연수 값 `s.val`과 양수라는 증명 `s.property`를 꺼내
-앞의 정리 `shiftTwo_mem_aboveTwo`에 함께 넣는다.
+앞의 정리 `shiftTwo_in_aboveTwo`에 함께 넣는다.
 
 ```savedLean
 def shiftTwoOnPositives (s : Elem positives) :
     Elem aboveTwo :=
   { val := shiftTwo s.val
     property := by
-      apply shiftTwo_mem_aboveTwo s.val
+      apply shiftTwo_in_aboveTwo s.val
       exact s.property }
 
 example :
@@ -2170,7 +2012,7 @@ example :
 인수에서 `S`의 원소 값과 원소 조건의 증명을 꺼내고
 함수값을 만들 때는 `T`의 원소 값과 원소 조건의 증명을 함께 제시한다.
 
-# 부분타입의 원소 비교
+## 부분타입의 원소 비교
 %%%
 tag := "functions-element-equality"
 file := "element-comparison"
@@ -2205,16 +2047,15 @@ attribute [ample_norm_hyp] elem_eq_iff
 ```
 
 `s = t`라는 목표에 `ext`를 사용하면 새 목표는 `s.val = t.val`이다.
-거꾸로 `h : s = t`가 주어졌을 때 `indisc at h`는 이를 값의 등식으로 바꾼다.
-`ext`가 등식을 증명하기 위해 필요한 비교를 남긴다면, `indisc`은 이미 주어진 등식에서 그 비교를 얻는다.
-같은 대상은 값이나 조건으로 비교해도 구별되지 않는다는 뜻에서 이를 *동일자의 구별 불가능성*이라고 한다.
+`h : s = t`가 주어졌다면 양변에서 값을 꺼내는 함수 `fun x => x.val`을 적용하여
+`s.val = t.val`을 얻을 수 있다. 앞에서 배운 `apply_fun`으로 이 함수를 지정하자.
 
 ```savedLean
 example {A : Type}
     (S : Set A) (s t : Elem S)
     (h : s = t) :
     s.val = t.val := by
-  indisc at h
+  apply_fun (fun x => x.val) at h
   exact h
 ```
 
@@ -2237,7 +2078,6 @@ theorem elem_val_injective {A : Type} (S : Set A) :
 전사성을 보일 때 `y : Elem evens`의 `y.property`는
 `∃ n, y.val = 2 * n`의 증명이다. `unpack y.property with ⟨n, hn⟩`은
 이 존재명제에서 원소 `n`과 등식 `hn`을 꺼낸다.
-앞의 `rcases`가 여러 겹을 한꺼번에 분해한다면 `unpack`은 한 묶음을 분해한다.
 
 ```savedLean
 theorem doubleToEvens_bijective :
@@ -2245,7 +2085,7 @@ theorem doubleToEvens_bijective :
   constructor
   · intro x y hxy
     apply double_injective
-    indisc at hxy
+    apply_fun (fun x => x.val) at hxy
     exact hxy
 
   · intro y
@@ -2264,7 +2104,7 @@ theorem doubleToEvens_bijective :
 뒤의 {ref "cardinality-countable-sets"}[가산무한집합]에서는 이 전단사를 사용하여
 자연수 전체와 짝수 집합의 크기를 비교한다.
 
-# 함수의 제한
+## 함수의 제한
 %%%
 tag := "functions-restriction"
 file := "restrictions"
@@ -2307,7 +2147,7 @@ theorem restrict_injective {A B : Type}
 `ext`로 원소 값을 비교한 뒤 `apply hf s.val t.val`을 쓰면 목표는 `f s.val = f t.val`이다.
 이는 `hst`에서 `restrict`의 정의를 펼친 명제이므로 `exact hst`로 증명을 마친다.
 
-## 공역의 제한
+### 공역의 제한
 %%%
 tag := "functions-codomain-image"
 %%%
@@ -2343,256 +2183,7 @@ theorem toImage_surjective {A B : Type} (f : A → B) :
 여기서 얻은 원소 `x`를 제시하고 `ext`로 원소 값만 비교하면
 남은 목표는 `rcases`에서 얻은 등식 `hxy`와 같다.
 
-# 합성함수
-%%%
-tag := "functions-composition"
-file := "composition"
-%%%
-
-함수 $`f : A \to B`를 적용한 뒤 함수 $`g : B \to C`를 적용하면
-$`A`의 원소에서 $`C`의 원소를 얻는다. 이 과정을 하나의 함수로 정의하자.
-
-*정의* 함수 $`f : A \to B`와 $`g : B \to C`에 대하여
-$`A`의 각 원소 $`x`를 $`g(f(x))`에 대응시키는 함수를 두 함수의 *합성함수*라고 한다.
-이 함수를 $`g \circ f`로 쓰며 그 값은 $`(g \circ f)(x) = g(f(x))`이다.
-
-합성하려면 먼저 적용하는 함수의 공역과 다음 함수의 정의역이 맞아야 한다.
-아래의 정의에서는 `f`의 값이 `B`의 원소이므로 `g`를 적용하여 `C`의 원소를 얻는다.
-
-```savedLean
-def compose {A B C : Type}
-    (g : B → C) (f : A → B) : A → C :=
-  fun x => g (f x)
-local infixr:90 (priority := high) " ∘ " => compose
-```
-
-마지막 선언은 `g ∘ f`를 `compose g f`에 연결하며 기호 `∘`는 `\circ`로 입력한다.
-이 표기에서는 오른쪽의 `f`를 먼저 적용하고 그 값에 왼쪽의 `g`를 적용한다.
-따라서 `(g ∘ f) x = g (f x)`는 정의를 펼쳐 `rfl`로 증명할 수 있다.
-
-```savedLean
-example {A B C : Type}
-    (f : A → B) (g : B → C) (x : A) :
-    (g ∘ f) x = g (f x) := by
-  rfl
-```
-
-*보기* $`f(n) = n + 3`이고 $`g(n) = 2n`이면
-$`(g \circ f)(4) = 2(4 + 3) = 14`이다.
-
-```lean (name := compositionValue)
-#eval (double ∘ (fun n : Nat => n + 3)) 4
-```
-
-```leanOutput compositionValue
-14
-```
-
-{anchor "functions-congruence"}[]
-```savedLean -show
-theorem functions_compose_of_pointwise_equal {A B C : Type}
-    (f : B → C)
-    (g h : A → B)
-    (hgh : ∀ x, g x = h x)
-    (x : A) :
-    f (g x) = f (h x) := by
-  congr : 1
-  exact hgh x
-```
-
-```savedLean -show
-theorem compose_of_pointwise_equal {A B C : Type}
-    (f : B → C)
-    (g h : A → B)
-    (hgh : ∀ x, g x = h x) :
-    f ∘ g = f ∘ h := by
-  ext x
-  exact functions_compose_of_pointwise_equal f g h hgh x
-```
-
-*문제 15* $`f(n) = n + 1`, $`g(n) = 2n`인 두 자연수 함수에 대하여
-$`(g \circ f)(3)`과 $`(f \circ g)(3)`을 계산하고 두 합성함수가 서로 다름을 증명하라.
-세 번째 증명에서는 앞의 두 계산 결과를 사용하라.
-
-```savedLean -keep
-theorem exercise_double_after_successor_at_three :
-    (double ∘ (fun n : Nat => n + 1)) 3 = 8 := by
-  sorry
-
-theorem exercise_successor_after_double_at_three :
-    ((fun n : Nat => n + 1) ∘ double) 3 = 7 := by
-  sorry
-
-theorem exercise_double_successor_noncommute :
-    double ∘ (fun n : Nat => n + 1) ≠
-    (fun n : Nat => n + 1) ∘ double := by
-  sorry
-```
-
-## 합성의 기본 성질
-%%%
-tag := "functions-associativity"
-%%%
-
-*정리* 함수 $`f : A \to B`, $`g : B \to C`, $`h : C \to D`에 대하여
-$`h \circ (g \circ f) = (h \circ g) \circ f`이다.
-
-*증명* 임의의 원소 $`x \in A`를 택하면
-합성함수의 정의에 따라 두 함수의 값은 모두 $`h(g(f(x)))`이다.
-두 함수가 모든 원소에서 같은 값을 가지므로 서로 같다.
-
-```savedLean
-theorem compose_assoc {A B C D : Type}
-    (f : A → B) (g : B → C)
-    (h : C → D) :
-    h ∘ (g ∘ f) = (h ∘ g) ∘ f := by
-  ext x
-  rfl
-```
-
-{anchor "functions-composition-with-identity"}[]*정리* 함수 $`f : A \to B`에 대하여
-$`f \circ \operatorname{id}_A = f`이고 $`\operatorname{id}_B \circ f = f`이다.
-
-*증명* 임의의 원소 $`x \in A`에 대하여
-$`f`를 적용하기 전에 항등함수를 적용해도 결과는 $`f(x)`이며
-$`f`를 적용한 뒤에 항등함수를 적용해도 같은 값을 얻는다.
-
-```savedLean
-theorem compose_identity {A B : Type} (f : A → B) :
-    f ∘ identity A = f := by
-  ext x
-  rfl
-
-theorem identity_compose {A B : Type} (f : A → B) :
-    identity B ∘ f = f := by
-  ext x
-  rfl
-```
-
-첫 번째 등식에는 정의역의 항등함수 `identity A`를,
-두 번째 등식에는 공역의 항등함수 `identity B`를 사용한다.
-
-```savedLean -show
-attribute [simp] compose_identity identity_compose
-```
-
-이 두 성질도 `simp`에 등록되어 있으므로 합성에 들어 있는 항등함수를 다음과 같이 없앨 수 있다.
-
-```savedLean
-example {A B : Type} (f : A → B) :
-    (identity B ∘ f) ∘ identity A = f := by
-  simp
-```
-
-## 합성과 단사·전사
-%%%
-tag := "functions-composition-injectivity"
-%%%
-
-두 단사함수를 합성했을 때도 서로 다른 원소가 서로 다른 함수값을 갖는지 살펴보자.
-
-*정리* 함수 $`f : A \to B`와 $`g : B \to C`가 모두 단사이면
-합성함수 $`g \circ f`도 단사이다.
-
-*증명* $`x, y \in A`에 대하여 $`g(f(x)) = g(f(y))`라고 하자.
-$`g`가 단사이므로 $`f(x) = f(y)`이고 여기에 $`f`의 단사성을 사용하면 $`x = y`이다.
-따라서 $`g \circ f`는 단사이다.
-
-```savedLean
-theorem injective_compose {A B C : Type}
-    (f : A → B) (g : B → C)
-    (hf : Injective f)
-    (hg : Injective g) :
-    Injective (g ∘ f) := by
-  intro x y hxy
-  apply hf
-  apply hg
-  exact hxy
-```
-
-위의 수학적 증명을 목표에서 거슬러 올라가면 Lean 코드의 순서가 된다.
-`x = y`를 보이기 위해 `apply hf`로 `f x = f y`를 새 목표로 삼고
-다시 `apply hg`로 목표를 `g (f x) = g (f y)`로 바꾼다.
-이제 목표가 처음의 가정과 같으므로 `exact hxy`로 증명을 마친다.
-
-{anchor "functions-composition-surjectivity"}[]전사성도 합성에서 유지된다.
-이번에는 두 함수의 전사성을 차례로 사용하여 공역의 원소에 대응하는 정의역의 원소를 찾는다.
-
-*정리* 함수 $`f : A \to B`와 $`g : B \to C`가 모두 전사이면
-합성함수 $`g \circ f`도 전사이다.
-
-*증명* 임의의 원소 $`z \in C`를 택하자.
-$`g`가 전사이므로 $`g(y) = z`인 원소 $`y \in B`가 존재하고
-$`f`가 전사이므로 $`f(x) = y`인 원소 $`x \in A`가 존재한다.
-이때 $`(g \circ f)(x) = g(f(x)) = g(y) = z`이므로 원하는 원소를 얻는다.
-
-`unpack hg z`로 `g y = z`인 원소 `y`를 얻고,
-`unpack hf y`로 `f x = y`인 원소 `x`를 얻는다.
-
-```savedLean
-theorem surjective_compose {A B C : Type}
-    (f : A → B) (g : B → C)
-    (hf : Surjective f)
-    (hg : Surjective g) :
-    Surjective (g ∘ f) := by
-  intro z
-  -- g y = z인 y를 고르고, f x = y인 x를 고른다.
-  unpack hg z with ⟨y, hy⟩
-  unpack hf y with ⟨x, hx⟩
-
-  -- 고른 x가 합성함수에서 z로 가는지 확인한다.
-  exists x
-  expand
-  rw [hx]
-  exact hy
-```
-
-`exists x`로 찾은 원소를 제시하고 `expand`로 합성의 정의를 펼치면 목표는 `g (f x) = z`이다.
-여기서 `rw [hx]`로 `f x`를 `y`로 바꾸면 남은 목표 `g y = z`를 `hy`로 증명할 수 있다.
-
-{anchor "functions-composition-bijectivity"}[]*정리* 전단사함수 두 개를 합성하면 전단사함수를 얻는다.
-
-*증명* `constructor`로 목표를 단사성과 전사성으로 나누어 앞의 두 정리를 사용한다.
-가정 `hf : Bijective f`에서는 `hf.inj`로 단사성의 증명을, `hf.surj`로 전사성의 증명을 꺼내며
-`hg`도 같은 방식으로 사용한다.
-
-```savedLean
-theorem bijective_compose {A B C : Type}
-    (f : A → B) (g : B → C)
-    (hf : Bijective f)
-    (hg : Bijective g) :
-    Bijective (g ∘ f) := by
-  constructor
-  · apply injective_compose f g
-    · exact hf.inj
-    · exact hg.inj
-
-  · apply surjective_compose f g
-    · exact hf.surj
-    · exact hg.surj
-```
-
-*문제 16* 합성함수 $`g \circ f`가 단사이면 $`f`도 단사임을 증명하라.
-
-```savedLean -keep
-theorem exercise_injective_of_compose {A B C : Type}
-    (f : A → B) (g : B → C)
-    (h : Injective (g ∘ f)) :
-    Injective f := by
-  sorry
-```
-
-*문제 17* 합성함수 $`g \circ f`가 전사이면 $`g`도 전사임을 증명하라.
-
-```savedLean -keep
-theorem exercise_surjective_of_compose {A B C : Type}
-    (f : A → B) (g : B → C)
-    (h : Surjective (g ∘ f)) :
-    Surjective g := by
-  sorry
-```
-
-# 집합의 곱과 함수
+# 집합의 곱과 합
 %%%
 tag := "preliminaries-products"
 file := "products"
@@ -2612,7 +2203,7 @@ file := "pairs-and-currying"
 
 수학에서는 두 원소를 받는 함수를 $`f(x,y)`로 쓰기도 한다.
 Lean에서도 두 원소를 순서쌍 `(x, y)` 하나로 묶어 함수에 넣을 수 있으며,
-타입 `A`, `B`의 원소로 만든 순서쌍의 타입은 `A × B`이다.
+타입 `A`, `B`의 원소로 만든 순서쌍의 타입은 `Prod A B`이며 이를 `A × B`로 쓴다.
 `×`는 `\times`로 입력한다.
 
 순서쌍에서 한 성분을 꺼내는 함수를 *사영*(projection)이라고 한다.
@@ -2702,25 +2293,24 @@ example {A B : Type} (a c : A) (b d : B)
   · exact hb
 ```
 
-반대로 순서쌍이 같다는 가정이 주어지면 각 성분의 등식을 얻을 수 있다.
-`indisc at h with ha hb`는 가정 `h : (a, b) = (c, d)`에서
-`ha : a = c`와 `hb : b = d`를 얻는 전술이다.
-예를 들어 두 성분의 자리를 바꾼 순서쌍도 서로 같음을 보이자.
-목표의 `(b, a)`에는 등식 `h`의 왼쪽인 `(a, b)`가 그대로 나타나지 않으므로
-먼저 각 성분의 등식을 얻어 대입하면 편리하다.
+순서쌍이 같다는 가정에서는 양변의 첫 성분과 둘째 성분을 각각 꺼낼 수 있다.
+`fun p => p.1`은 첫 성분을, `fun p => p.2`는 둘째 성분을 꺼내는 함수이다.
+`with ha`처럼 이름을 붙이면 원래 등식을 남겨 두고 적용 결과를 `ha`로 사용할 수 있다.
+다음은 두 성분의 자리를 바꾼 순서쌍도 같음을 보이는 예이다.
 
 ```savedLean
 example {A B : Type} (a c : A) (b d : B)
     (h : (a, b) = (c, d)) :
     (b, a) = (d, c) := by
-  indisc at h with ha hb
+  apply_fun (fun p => p.1) at h with ha
+  apply_fun (fun p => p.2) at h with hb
   rw [ha, hb]
 ```
 
-여기서 `indisc`은 원래 등식 `h`를 유지하며 성분의 등식 두 개에 각각 이름을 붙인다.
-이후 `rw [ha, hb]`로 `a`를 `c`로, `b`를 `d`로 바꾸면 양변이 같아진다.
+두 함수의 적용으로 `ha : a = c`와 `hb : b = d`를 얻는다.
+`rw [ha, hb]`로 이 두 등식을 사용하면 양변이 같아진다.
 
-`ext`와 `indisc`은 기본적으로 비교 규칙을 한 번 적용한다.
+`ext`는 기본적으로 비교 규칙을 한 번 적용한다.
 순서쌍 안에 다시 순서쌍이 있으면 먼저 바깥의 두 성분을 비교하며,
 안쪽 성분은 다음 호출에서 비교한다. 필요한 경우 `ext : 2`로 두 겹을 비교할 수 있다.
 
@@ -2820,7 +2410,8 @@ theorem productMap_injective {A B C D : Type}
     Injective (productMap f g) := by
   intro x y hxy
   -- 함수값의 두 성분을 각각 비교한다.
-  indisc at hxy with hfirst hsecond
+  apply_fun (fun p => p.1) at hxy with hfirst
+  apply_fun (fun p => p.2) at hxy with hsecond
   ext
   · apply hf
     exact hfirst
@@ -2829,7 +2420,7 @@ theorem productMap_injective {A B C D : Type}
     exact hsecond
 ```
 
-`indisc at hxy with hfirst hsecond`로 함수값의 두 성분이 같음을 얻는다.
+`apply_fun`에 두 성분을 꺼내는 함수를 각각 지정하여 함수값의 성분별 등식을 얻는다.
 이 두 등식에 `hf`와 `hg`를 사용하면 원래 순서쌍의 각 성분을 비교할 수 있다.
 
 *보기* $`f`와 $`g`가 각각 전사이면 `productMap f g`도 전사이다.
@@ -2875,7 +2466,7 @@ theorem productMap_bijective {A B C D : Type}
 각 성분을 바꾸는 대응이 전단사이면 순서쌍 전체를 바꾸는 대응도 전단사이다.
 
 
-# 집합의 합과 함수 공간
+## 집합의 합과 함수 공간
 %%%
 tag := "functions-sums-spaces"
 %%%
@@ -2883,7 +2474,8 @@ tag := "functions-sums-spaces"
 
 서로 다른 두 반의 학생 명단에 같은 이름이 있을 수 있다. 어느 반에서 왔는지 함께 기록하면
 이들을 구별하여 한 명단에 모을 수 있다. 집합의 *서로소인 합*도 원소에 출처를 붙이는 방식으로 구성한다.
-Lean에서는 두 타입의 합을 `A ⊕ B`로 나타내며, `⊕`는 `\oplus`로 입력한다.
+두 타입의 합은 `Sum A B`이며 Lean에서는 이를 `A ⊕ B`로 쓴다.
+`⊕`는 `\oplus`로 입력한다.
 왼쪽에서 온 원소는 `Sum.inl a`, 오른쪽에서 온 원소는 `Sum.inr b`이다.
 
 같은 자연수라도 `(Sum.inl 0 : Nat ⊕ Nat)`와 `Sum.inr 0`은 서로 다르다.
@@ -3022,9 +2614,7 @@ theorem swapPair_bijective {A B : Type} :
     Bijective (swapPair : A × B → B × A) := by
   constructor
   · intro p q hpq
-    replace hpq :
-        swapPair (swapPair p) = swapPair (swapPair q) := by
-      rw [hpq]
+    apply_fun (fun r => swapPair r) at hpq
 
     rw [swapPair_twice, swapPair_twice] at hpq
     exact hpq
@@ -3308,8 +2898,7 @@ theorem inverseMap_bijective {A B : Type} (f : A → B)
   constructor
   · intro x y hxy
     -- 같은 두 역함수 값에 f를 적용한다.
-    replace hxy : f (g x) = f (g y) := by
-      rw [hxy]
+    apply_fun f at hxy
 
     -- f와 역함수를 차례로 적용하면 원래 원소이다.
     rw [inverseMap_right f,
@@ -3322,7 +2911,7 @@ theorem inverseMap_bijective {A B : Type} (f : A → B)
     exact inverseMap_left f
 ```
 
-단사성을 보일 때는 `replace`로 `hxy : g x = g y`를 `f (g x) = f (g y)`로 바꾼다.
+단사성을 보일 때는 `apply_fun f at hxy`로 등식의 양변에 `f`를 적용한다.
 `g`는 `inverseMap f hf`로 정의되어 있으므로 `inverseMap_right`으로 양변을 각각 `x`, `y`로 바꿀 수 있다.
 전사성을 보일 때는 `exists (f x)`로 원소를 택하면 목표가 `g (f x) = x`가 된다.
 `g`의 정의에 따라 이 목표에도 `inverseMap_left`를 사용할 수 있다.
@@ -3343,9 +2932,9 @@ theorem bijective_of_inverse {A B : Type}
     Bijective f := by
   constructor
   · intro x y hxy
-    have h : g (f x) = g (f y) := by rw [hxy]
-    rw [hleft, hleft] at h
-    exact h
+    apply_fun g at hxy
+    rw [hleft, hleft] at hxy
+    exact hxy
 
   · intro y
     exists g y
@@ -3354,6 +2943,10 @@ theorem bijective_of_inverse {A B : Type}
 
 이를 집합의 합에 적용하자. 각 출처에서 전단사의 역함수를 사용하면
 `sumMap f g`의 역방향을 만들 수 있다.
+
+아래의 `simp [sumMap, inverseMap_left f]`는 `sumMap`의 정의를 펼치고
+`inverseMap_left f`를 정리 규칙에 추가하여 식을 정리한다.
+이처럼 대괄호에 정의·정리·가정을 적으면 해당 `simp` 호출에서 기본 규칙과 함께 사용할 수 있다.
 
 ```savedLean
 theorem sumMap_bijective {A B C D : Type}
@@ -3375,7 +2968,7 @@ theorem sumMap_bijective {A B C D : Type}
     | inr d => simp [sumMap, inverseMap_right g]
 ```
 
-# 연습문제
+## 연습문제
 %%%
 tag := "functions-exercises"
 file := "exercises"
@@ -3427,8 +3020,6 @@ theorem exercise_positives_ne_twoThree :
     positives ≠ twoThree := by
   sorry
 ```
-
-*힌트* (1)에서는 양수이면서 $`2`도 $`3`도 아닌 자연수를 하나 택하라.
 
 *문제 25* (공집합인 차집합)
 

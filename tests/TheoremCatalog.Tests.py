@@ -6,21 +6,29 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
-from theorem_catalog import exercise_candidates
+from theorem_catalog import chapter_names, exercise_candidates
 
 candidates = exercise_candidates()
-assert len(candidates) == 148
+assert len(candidates) == 154
 assert {'Int.add_comm', 'Int.sub_add_cancel'} <= set(candidates['exercise_congruent_one'])
 assert 'Ample.congruent_add_right' in candidates['exercise_congruent_add_left']
 assert 'Ample.congruent_add_right' in candidates['exercise_nextParity_respects']
 assert 'Ample.parityClass_zero_ne_one' in candidates['exercise_parityClass_three_one']
 assert 'Ample.quotientLift_unique' not in candidates['exercise_parityClass_three_one']
 assert 'Nat.add_lt_add_right' in candidates['exercise_add_three_preserves_lt']
+assert 'ProofExamples.not_imp_iff' in candidates['exercise_exists_forall_swap']
+assert 'ProofExamples.not_forall_iff' in candidates['exercise_forall_implication']
+assert 'ProofExamples.equality_iff_all_predicates' not in candidates['exercise_forall_implication']
 assert 'Ample.fin_injective_surjective' in candidates['exercise_fin_injective_bijective']
 assert 'Ample.cardinal_nat_add' in candidates['exercise_three_boxes_sum']
 assert 'Ample.cardinal_nat_mul' in candidates['exercise_three_boxes_product']
 assert 'Ample.cardinal_product' in candidates['exercise_cardinal_product_sum']
 assert 'Ample.cardinal_arrow' in candidates['exercise_splitFunction_bijective']
+sizes, size_names = chapter_names('CardinalityChapter')
+for name, output in [('cardinal_product', 'cardinalProductType'),
+                     ('cardinal_arrow', 'cardinalArrowType')]:
+    introduction = next(position for position, full in size_names if full == 'Ample.' + name)
+    assert introduction >= sizes.index('```leanOutput ' + output), 'A hidden proof alone does not introduce its result'
 assert 'Ample.cardinal_set' in candidates['exercise_three_powerSet']
 assert 'Ample.cardinal_nat_pow' not in candidates['exercise_two_to_three_functions']
 assert 'Ample.sameBlock_class' in candidates['exercise_overlapping_not_partition']

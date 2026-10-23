@@ -18,6 +18,15 @@ const [key] = Object.entries(manifest).find(([, value]) => value.exercise && val
     await wrapper.locator('..').getByRole('button', {name:'풀기', exact:true}).click();
     const input = wrapper.locator('textarea');
     const status = wrapper.locator('.book-run-status');
+    async function finished(text) {
+      await page.waitForFunction(({key, text}) => {
+        const status = document.querySelector(`[data-snippet="${key}"] .book-run-status`)?.textContent;
+        return status?.includes(text) || status === '실행 실패';
+      }, {key, text}, {timeout:180000});
+      assert((await status.innerText()).includes(text), await wrapper.locator('.book-live-editor').innerText());
+    }
+    // Wait for the checked catalog rather than querying during initial setup.
+    await finished('증명 중');
     const theoremSearch = wrapper.getByRole('searchbox', {name:'정리 검색'});
     await theoremSearch.fill('parityClass_zero_ne_one');
     const theorem = wrapper.locator('.book-theorem');
@@ -28,14 +37,6 @@ const [key] = Object.entries(manifest).find(([, value]) => value.exercise && val
     await theoremSearch.fill('quotientLift_unique');
     assert.equal(await theorem.count(), 0, 'Later theorems must not be suggested');
     await theoremSearch.fill('');
-    async function finished(text) {
-      await page.waitForFunction(({key, text}) => {
-        const status = document.querySelector(`[data-snippet="${key}"] .book-run-status`)?.textContent;
-        return status?.includes(text) || status === '실행 실패';
-      }, {key, text}, {timeout:180000});
-      assert((await status.innerText()).includes(text), await wrapper.locator('.book-live-editor').innerText());
-    }
-    await finished('증명 중');
     console.log('PASS: browser context is ready');
     await input.fill('have h := parityClass_zero_ne_one_misspelled\nsorry');
     await finished('오류');
@@ -43,6 +44,10 @@ const [key] = Object.entries(manifest).find(([, value]) => value.exercise && val
     console.log('PASS: missing theorem in have is shown');
     await wrapper.locator('.book-diagnostics .book-error').first().click();
     assert((await input.evaluate(node => node.value.slice(0,node.selectionStart))).includes('have h :='));
+    await input.fill('rw [parityClass_zero_ne_one_misspelled]');
+    await finished('오류');
+    assert((await wrapper.locator('.book-diagnostics').innerText()).includes('Unknown identifier `parityClass_zero_ne_one_misspelled`'));
+    console.log('PASS: a missing rewrite theorem retains its diagnostic');
     await input.fill('have h : 0 = 1 := by\n  rfl\nsorry');
     await finished('오류');
     await page.waitForFunction(key => document.querySelector(`[data-snippet="${key}"] .book-diagnostics`)?.textContent.includes('failed'),key);

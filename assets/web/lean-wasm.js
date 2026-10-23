@@ -31,46 +31,57 @@ export function createLeanRuntime(baseURL, onProgress = () => {}) {
   async function boot() {
     if (worker) throw new Error('Reload the page before starting another runtime');
     if (!crossOriginIsolated) throw new Error('Cross-origin isolation is required by this runtime');
-    const started = performance.now();
-    const timings = [];
-    const mark = stage => timings.push({stage, elapsedMs: performance.now() - started});
-    onProgress('Loading runtime and library…');
-    worker = new Worker(new URL('worker.js?assetBase=runtime', base));
-    worker.onmessage = ({data}) => {
-      if (data.type === 'profile') runtimeProfile.push(data);
-      if (data.type === 'stdout' || data.type === 'stderr') output.push(data.data);
-      if (data.type === 'import_progress') onProgress(`Loading modules: ${data.loaded}/${data.total}`);
-      if (pending && (data.type === pending.expected || data.type === 'error')) {
-        const current = pending;
-        pending = null;
-        clearTimeout(current.timer);
-        if (data.type === 'error') current.reject(new Error(data.data));
-        else current.resolve({...data, output: [...output]});
-      }
-    };
-    worker.onerror = event => {
-      if (pending) {
-        clearTimeout(pending.timer);
-        pending.reject(new Error(event.message));
-        pending = null;
-      }
-    };
-    const manifest = await (await fetch(new URL('library.json', base))).json();
-    mark('manifest');
-    libraryManifest = Array.isArray(manifest) ? manifest : manifest.files;
-    libraryPacks = manifest.packs || [];
-    const files = await fetchLibrary(libraryManifest.filter(name => name === 'Init.olean' || name.startsWith('Init/')));
-    mark('initial-library-fetched');
-    await request({type: 'load_library', files}, 'library_received', 180000, files.map(file => file.data));
-    await request({type: 'start_worker'}, 'worker_ready');
-    mark('runtime-ready');
-    // Measure the first import separately from later editing cycles.
-    const warmup = await compile('#check Nat');
-    mark('initial-import');
-    if (!warmup.success) throw new Error(JSON.stringify(warmup));
-    onProgress('Ready');
-    ready = true;
-    return {bootMs: performance.now() - started, libraryFiles: files.length, warmup, timings, runtimeProfile};
+    try {
+      const started = performance.now();
+      const timings = [];
+      const mark = stage => timings.push({stage, elapsedMs: performance.now() - started});
+      onProgress('Loading runtime and library…');
+      worker = new Worker(new URL('worker.js?assetBase=runtime', base));
+      worker.onmessage = ({data}) => {
+        if (data.type === 'profile') runtimeProfile.push(data);
+        if (data.type === 'stdout' || data.type === 'stderr') output.push(data.data);
+        if (data.type === 'import_progress') onProgress(`Loading modules: ${data.loaded}/${data.total}`);
+        if (pending && (data.type === pending.expected || data.type === 'error')) {
+          const current = pending;
+          pending = null;
+          clearTimeout(current.timer);
+          if (data.type === 'error') current.reject(new Error(data.data));
+          else current.resolve({...data, output: [...output]});
+        }
+      };
+      worker.onerror = event => {
+        if (pending) {
+          clearTimeout(pending.timer);
+          pending.reject(new Error(event.message));
+          pending = null;
+        }
+      };
+      const manifest = await (await fetch(new URL('library.json', base))).json();
+      mark('manifest');
+      libraryManifest = Array.isArray(manifest) ? manifest : manifest.files;
+      libraryPacks = manifest.packs || [];
+      const files = await fetchLibrary(libraryManifest.filter(name => name === 'Init.olean' || name.startsWith('Init/')));
+      mark('initial-library-fetched');
+      await request({type: 'load_library', files}, 'library_received', 180000, files.map(file => file.data));
+      files.forEach(file => loadedFiles.add(file.name));
+      await request({type: 'start_worker'}, 'worker_ready');
+      mark('runtime-ready');
+      // Measure the first import separately from later editing cycles.
+      const warmup = await compile('#check Nat');
+      mark('initial-import');
+      if (!warmup.success) throw new Error(JSON.stringify(warmup));
+      onProgress('Ready');
+      ready = true;
+      return {bootMs: performance.now() - started, libraryFiles: files.length, warmup, timings, runtimeProfile};
+    } catch (error) {
+      // A failed boot must be restartable, without retaining a partial worker.
+      worker?.terminate();
+      worker = undefined;
+      ready = false;
+      loadedFiles.clear();
+      importSets.clear();
+      throw error;
+    }
   }
 
   async function fetchLibrary(manifest) {
@@ -83,7 +94,6 @@ export function createLeanRuntime(baseURL, onProgress = () => {}) {
         const response = await fetch(new URL(`library/${name}`, base));
         if (!response.ok) throw new Error(`Cannot load ${name}: ${response.status}`);
         files.push({name, data: await response.arrayBuffer()});
-        loadedFiles.add(name);
       }
     }));
     return files;
@@ -109,7 +119,6 @@ export function createLeanRuntime(baseURL, onProgress = () => {}) {
         for (const entry of pack.entries) if (wanted.has(entry.path)) {
           if (entry.offset < 0 || entry.offset + entry.bytes > raw.byteLength) throw new Error(`Invalid pack entry: ${entry.path}`);
           files.push({name: entry.path, data: raw.slice(entry.offset, entry.offset + entry.bytes)});
-          loadedFiles.add(entry.path);
         }
         onProgress(`Loading library packs: ${++finished}/${packs.length}`);
       }
@@ -142,6 +151,9 @@ export function createLeanRuntime(baseURL, onProgress = () => {}) {
         const files = await fetchLibrary(additional);
         const staged = await request({type: 'add_files', files}, 'files_added', 180000, files.map(file => file.data));
         if (staged.count !== files.length) throw new Error('Not all requested library files could be staged');
+        // Fetching a batch can fail after another pack has finished. Commit the
+        // loaded set only when this complete batch reaches the worker.
+        files.forEach(file => loadedFiles.add(file.name));
       }
     }
     const libraryMs = performance.now() - started;

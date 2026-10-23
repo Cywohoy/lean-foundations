@@ -22,30 +22,75 @@ number := false
   * 뜻
   * 입력
 *
-  * {ref "intro-propositions-and-goals"}[Lean과 증명: 명제와 술어]
-  * `→`
-  * 함수의 타입 또는 명제의 함의
-  * `\to`
-*
-  * {ref "intro-propositions-and-goals"}[Lean과 증명: 명제와 술어]
+  * {ref "intro-propositions-and-goals"}[증명의 기초: 명제]
   * `=`
   * 두 대상의 같음
   * 그대로 입력
 *
-  * {ref "intro-predicates"}[Lean과 증명: 명제와 술어]
-  * `↦`
-  * 수학식에서 원소와 함수값의 대응
-  * `\mapsto`
-*
-  * {ref "proofs-assumptions-and-goals"}[Lean과 증명: 가정과 목표]
+  * {ref "proofs-assumptions-and-goals"}[증명의 기초: 가정과 목표]
   * `⊢`
   * 증명 화면의 목표 표시
   * `\vdash`
 *
-  * {ref "proofs-universal-statements"}[Lean과 증명: 전칭명제]
+  * {ref "proofs-named-theorems"}[증명의 기초: 함의]
+  * `→`
+  * 함수의 타입 또는 명제의 함의
+  * `\to`
+*
+  * {ref "logic-conjunction"}[증명의 기초: 논리곱]
+  * `·`
+  * 목표별 증명의 시작
+  * `\.`
+*
+  * {ref "logic-conjunction"}[증명의 기초: 논리곱]
+  * `∧`
+  * 논리곱
+  * `\and`
+*
+  * {ref "logic-disjunction"}[증명의 기초: 논리합]
+  * `∨`
+  * 논리합
+  * `\or`
+*
+  * {ref "logic-equivalence"}[증명의 기초: 동치]
+  * `↔`
+  * 두 명제의 동치
+  * `\iff`
+*
+  * {ref "logic-negation"}[증명의 기초: 부정]
+  * `¬`
+  * 명제의 부정
+  * `\neg`
+*
+  * {ref "logic-negation"}[증명의 기초: 부정]
+  * `≠`
+  * 두 대상이 같지 않음
+  * `\ne`
+*
+  * {ref "intro-predicates"}[증명의 기초: 술어]
+  * `↦`
+  * 수학식에서 원소와 함수값의 대응
+  * `\mapsto`
+*
+  * {ref "proofs-universal-statements"}[증명의 기초: 전칭명제]
   * `∀`
   * 모든 원소에 대한 전칭명제
   * `\forall`
+*
+  * {ref "logic-existence"}[증명의 기초: 존재명제]
+  * `⟨`, `⟩`
+  * 묶인 대상의 성분을 분해하는 패턴
+  * `\<`, `\>` (`\langle`, `\rangle`도 가능)
+*
+  * {ref "logic-existence"}[증명의 기초: 존재명제]
+  * `∃`
+  * 어떤 원소가 존재한다는 명제
+  * `\exists`
+*
+  * {ref "logic-equality-substitution"}[증명의 기초: 등식의 치환]
+  * `←`
+  * `rw`에서 등식을 반대 방향으로 사용
+  * `\l` (`\leftarrow`도 가능)
 *
   * {ref "sets-sets-as-predicates"}[집합과 함수: 술어와 집합]
   * `ℕ`
@@ -67,90 +112,45 @@ number := false
   * 포함 관계
   * `\subseteq`
 *
-  * {ref "sets-intersections-and-conjunctions"}[교집합과 논리곱]
-  * `·`
-  * 목표별 증명의 시작
-  * `\.`
-*
-  * {ref "sets-intersections-and-conjunctions"}[교집합과 논리곱]
+  * {ref "sets-intersections-and-conjunctions"}[집합과 함수: 교집합]
   * `∩`
   * 교집합
   * `\cap`
 *
-  * {ref "sets-intersections-and-conjunctions"}[교집합과 논리곱]
-  * `∧`
-  * 논리곱
-  * `\and`
-*
-  * {ref "sets-equivalence"}[집합과 함수: 동치]
-  * `↔`
-  * 두 명제의 동치
-  * `\iff`
-*
-  * {ref "sets-unions-and-disjunctions"}[합집합과 논리합]
+  * {ref "sets-unions-and-disjunctions"}[집합과 함수: 합집합]
   * `∪`
   * 합집합
   * `\cup`
 *
-  * {ref "sets-unions-and-disjunctions"}[합집합과 논리합]
-  * `∨`
-  * 논리합
-  * `\or`
-*
-  * {ref "sets-complements-and-negation"}[여집합과 부정]
-  * `¬`
-  * 명제의 부정
-  * `\neg`
-*
-  * {ref "sets-complements-and-negation"}[여집합과 부정]
+  * {ref "sets-complements-and-negation"}[집합과 함수: 여집합]
   * `∉`
   * 원소 관계의 부정
   * `\notin`
 *
-  * {ref "sets-complements-and-negation"}[여집합과 부정]
+  * {ref "sets-complements-and-negation"}[집합과 함수: 여집합]
   * `ᶜ`
   * 여집합의 위첨자
   * `\^c`
-*
-  * {ref "sets-complements-and-negation"}[집합과 함수: 여집합과 부정]
-  * `≠`
-  * 두 대상이 같지 않음
-  * `\ne`
 *
   * {ref "sets-differences"}[집합과 함수: 차집합]
   * `\`
   * 차집합
   * 역슬래시 하나를 그대로 입력
 *
-  * {ref "functions-image"}[집합과 함수: 상과 존재명제]
-  * `⟨`, `⟩`
-  * 묶인 대상의 성분을 분해하는 패턴
-  * `\<`, `\>` (`\langle`, `\rangle`도 가능)
-*
-  * {ref "functions-image"}[집합과 함수: 상과 존재명제]
-  * `∃`
-  * 어떤 원소가 존재한다는 명제
-  * `\exists`
-*
   * {ref "sets-indexed-families"}[집합과 함수: 집합족]
   * `⋃`, `⋂`
   * 집합족의 합집합과 교집합
   * `\bigcup`, `\bigcap`
 *
-  * {ref "functions-injectivity"}[집합과 함수: 단사함수]
-  * `←`
-  * `rw`에서 등식을 반대 방향으로 사용
-  * `\l` (`\leftarrow`도 가능)
+  * {ref "functions-composition"}[집합과 함수: 합성함수]
+  * `∘`
+  * 함수의 합성
+  * `\circ`
 *
   * {ref "functions-subtypes"}[집합과 함수: 부분타입]
   * `//`
   * `{x : A // P x}`에서 부분타입의 원소 조건
   * 슬래시 두 개를 그대로 입력
-*
-  * {ref "functions-composition"}[집합과 함수: 합성함수]
-  * `∘`
-  * 함수의 합성
-  * `\circ`
 *
   * {ref "intro-pairs-and-currying"}[집합과 함수: 순서쌍]
   * `×`
@@ -179,7 +179,7 @@ number := false
 *
   * {ref "preliminaries-congruence"}[수와 동치관계: 나머지와 합동]
   * `≡`
-  * `a ≡ b [ZMOD n]`에서 정수의 합동
+  * `a ≡ b [MOD n]`에서 정수의 합동
   * `\==`
 *
   * {ref "numbers-finite-sums"}[수와 동치관계: 유한합과 유한곱]

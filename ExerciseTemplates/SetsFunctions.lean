@@ -2,7 +2,7 @@ import AlgebraBook.SetsFunctions
 
 open scoped Ample Classical
 open scoped Ample.Auto
-open Ample
+open Ample ProofExamples
 local infixr:90 (priority := high) " ∘ " => Ample.compose
 
 namespace Exercises.SetsFunctions
@@ -47,6 +47,17 @@ theorem exercise_diff_self_subset_empty
     S \ S ⊆ ∅ := by
   sorry
 
+theorem exercise_indexedUnion_mono {I A : Type}
+    (S T : I → Set A)
+    (h : ∀ i, S i ⊆ T i) :
+    indexedUnion S ⊆ indexedUnion T := by
+  sorry
+
+theorem exercise_indexedUnion_complement {I A : Type}
+    (S : I → Set A) :
+    (indexedUnion S)ᶜ = indexedInter (fun i => (S i)ᶜ) := by
+  sorry
+
 theorem exercise_image_union {A B : Type}
     (f : A → B) (S T : Set A) :
     image f (S ∪ T) = image f S ∪ image f T := by
@@ -66,17 +77,6 @@ theorem exercise_preimage_inter {A B : Type} (f : A → B)
 theorem exercise_preimage_compl {A B : Type}
     (f : A → B) (T : Set B) :
     preimage f Tᶜ = (preimage f T)ᶜ := by
-  sorry
-
-theorem exercise_indexedUnion_mono {I A : Type}
-    (S T : I → Set A)
-    (h : ∀ i, S i ⊆ T i) :
-    indexedUnion S ⊆ indexedUnion T := by
-  sorry
-
-theorem exercise_indexedUnion_complement {I A : Type}
-    (S : I → Set A) :
-    (indexedUnion S)ᶜ = indexedInter (fun i => (S i)ᶜ) := by
   sorry
 
 def practiceFourSix : Set Nat := fun n => n = 4 ∨ n = 6

@@ -16,10 +16,10 @@ for chapter in CHAPTERS:
         scopes+="open IntroExamples ProofExamples\n"
     else:
         scopes+="open scoped Ample.Auto\n"
-        scopes+="open Ample\nlocal infixr:90 (priority := high) \" ∘ \" => Ample.compose\n"
+        scopes+="open Ample ProofExamples\nlocal infixr:90 (priority := high) \" ∘ \" => Ample.compose\n"
     if chapter=="NumbersRelations":
         scopes+='local infix:50 (priority := high) " ∣ " => Ample.Divides\n'
-        scopes+='local notation:50 a " ≡ " b " [ZMOD " n "]" => Ample.Congruent n a b\n'
+        scopes+='local notation:50 a " ≡ " b " [MOD " n "]" => Ample.Congruent n a b\n'
     code=f"import AlgebraBook.{chapter}\n\n{scopes}\nnamespace Exercises.{chapter}\n\n"
     code+="\n\n".join(chunks)+f"\n\nend Exercises.{chapter}\n"
     (target/(chapter+".lean")).write_text(code,encoding="utf-8")

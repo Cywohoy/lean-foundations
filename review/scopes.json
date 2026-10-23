@@ -1,0 +1,697 @@
+{
+  "schema": 1,
+  "units": [
+    {
+      "id": "book",
+      "title": "Lean으로 배우는 기초 수학",
+      "level": "book",
+      "parent": null,
+      "sources": [],
+      "checks": [
+        "structure"
+      ]
+    },
+    {
+      "id": "proof",
+      "title": "1. 증명의 기초",
+      "level": "chapter",
+      "parent": "book",
+      "sources": [],
+      "checks": [
+        "structure",
+        "boundary"
+      ]
+    },
+    {
+      "id": "proof-00",
+      "title": "도입부와 선언",
+      "level": "section",
+      "parent": "proof",
+      "sources": [
+        {
+          "path": "AlgebraBook/Proof.lean",
+          "before": "\n# 명제와 증명\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "proof-01",
+      "title": "명제와 증명",
+      "level": "section",
+      "parent": "proof",
+      "sources": [
+        {
+          "path": "AlgebraBook/Proof.lean",
+          "after": "\n# 명제와 증명\n",
+          "before": "\n# 함의\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "proof-02",
+      "title": "함의",
+      "level": "section",
+      "parent": "proof",
+      "sources": [
+        {
+          "path": "AlgebraBook/Proof.lean",
+          "after": "\n# 함의\n",
+          "before": "\n# 명제의 결합\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "proof-03",
+      "title": "명제의 결합",
+      "level": "section",
+      "parent": "proof",
+      "sources": [
+        {
+          "path": "AlgebraBook/Proof.lean",
+          "after": "\n# 명제의 결합\n",
+          "before": "\n# 부정과 고전논리\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "proof-04",
+      "title": "부정과 고전논리",
+      "level": "section",
+      "parent": "proof",
+      "sources": [
+        {
+          "path": "AlgebraBook/Proof.lean",
+          "after": "\n# 부정과 고전논리\n",
+          "before": "\n# 술어와 양화사\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "proof-05",
+      "title": "술어와 양화사",
+      "level": "section",
+      "parent": "proof",
+      "sources": [
+        {
+          "path": "AlgebraBook/Proof.lean",
+          "after": "\n# 술어와 양화사\n",
+          "before": "\n# 등식\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "proof-06",
+      "title": "등식",
+      "level": "section",
+      "parent": "proof",
+      "sources": [
+        {
+          "path": "AlgebraBook/Proof.lean",
+          "after": "\n# 등식\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "sets",
+      "title": "2. 집합과 함수",
+      "level": "chapter",
+      "parent": "book",
+      "sources": [],
+      "checks": [
+        "structure",
+        "boundary"
+      ]
+    },
+    {
+      "id": "sets-00",
+      "title": "도입부와 선언",
+      "level": "section",
+      "parent": "sets",
+      "sources": [
+        {
+          "path": "AlgebraBook/SetsFunctions.lean",
+          "before": "\n# 집합의 표현\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "sets-01",
+      "title": "집합의 표현",
+      "level": "section",
+      "parent": "sets",
+      "sources": [
+        {
+          "path": "AlgebraBook/SetsFunctions.lean",
+          "after": "\n# 집합의 표현\n",
+          "before": "\n# 집합 연산\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "sets-02",
+      "title": "집합 연산",
+      "level": "section",
+      "parent": "sets",
+      "sources": [
+        {
+          "path": "AlgebraBook/SetsFunctions.lean",
+          "after": "\n# 집합 연산\n",
+          "before": "\n# 상과 역상\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "sets-03",
+      "title": "상과 역상",
+      "level": "section",
+      "parent": "sets",
+      "sources": [
+        {
+          "path": "AlgebraBook/SetsFunctions.lean",
+          "after": "\n# 상과 역상\n",
+          "before": "\n# 단사함수와 전사함수\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "sets-04",
+      "title": "단사함수와 전사함수",
+      "level": "section",
+      "parent": "sets",
+      "sources": [
+        {
+          "path": "AlgebraBook/SetsFunctions.lean",
+          "after": "\n# 단사함수와 전사함수\n",
+          "before": "\n# 부분집합 위의 함수\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "sets-05",
+      "title": "부분집합 위의 함수",
+      "level": "section",
+      "parent": "sets",
+      "sources": [
+        {
+          "path": "AlgebraBook/SetsFunctions.lean",
+          "after": "\n# 부분집합 위의 함수\n",
+          "before": "\n# 집합의 곱과 합\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "sets-06",
+      "title": "집합의 곱과 합",
+      "level": "section",
+      "parent": "sets",
+      "sources": [
+        {
+          "path": "AlgebraBook/SetsFunctions.lean",
+          "after": "\n# 집합의 곱과 합\n",
+          "before": "\n# 역함수\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "sets-07",
+      "title": "역함수",
+      "level": "section",
+      "parent": "sets",
+      "sources": [
+        {
+          "path": "AlgebraBook/SetsFunctions.lean",
+          "after": "\n# 역함수\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "relations",
+      "title": "3. 수와 동치관계",
+      "level": "chapter",
+      "parent": "book",
+      "sources": [],
+      "checks": [
+        "structure",
+        "boundary"
+      ]
+    },
+    {
+      "id": "relations-00",
+      "title": "도입부와 선언",
+      "level": "section",
+      "parent": "relations",
+      "sources": [
+        {
+          "path": "AlgebraBook/NumbersRelations.lean",
+          "before": "\n# 수학적 귀납법\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "relations-01",
+      "title": "수학적 귀납법",
+      "level": "section",
+      "parent": "relations",
+      "sources": [
+        {
+          "path": "AlgebraBook/NumbersRelations.lean",
+          "after": "\n# 수학적 귀납법\n",
+          "before": "\n# 나누어떨어짐\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "relations-02",
+      "title": "나누어떨어짐",
+      "level": "section",
+      "parent": "relations",
+      "sources": [
+        {
+          "path": "AlgebraBook/NumbersRelations.lean",
+          "after": "\n# 나누어떨어짐\n",
+          "before": "\n# 정수의 합동\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "relations-03",
+      "title": "정수의 합동",
+      "level": "section",
+      "parent": "relations",
+      "sources": [
+        {
+          "path": "AlgebraBook/NumbersRelations.lean",
+          "after": "\n# 정수의 합동\n",
+          "before": "\n# 유한합과 유한곱\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "relations-04",
+      "title": "유한합과 유한곱",
+      "level": "section",
+      "parent": "relations",
+      "sources": [
+        {
+          "path": "AlgebraBook/NumbersRelations.lean",
+          "after": "\n# 유한합과 유한곱\n",
+          "before": "\n# 동치관계\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "relations-05",
+      "title": "동치관계",
+      "level": "section",
+      "parent": "relations",
+      "sources": [
+        {
+          "path": "AlgebraBook/NumbersRelations.lean",
+          "after": "\n# 동치관계\n",
+          "before": "\n# 몫집합\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "relations-06",
+      "title": "몫집합",
+      "level": "section",
+      "parent": "relations",
+      "sources": [
+        {
+          "path": "AlgebraBook/NumbersRelations.lean",
+          "after": "\n# 몫집합\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "cardinality",
+      "title": "4. 집합의 크기",
+      "level": "chapter",
+      "parent": "book",
+      "sources": [],
+      "checks": [
+        "structure",
+        "boundary"
+      ]
+    },
+    {
+      "id": "cardinality-00",
+      "title": "도입부와 선언",
+      "level": "section",
+      "parent": "cardinality",
+      "sources": [
+        {
+          "path": "AlgebraBook/CardinalityChapter.lean",
+          "before": "\n# 기수\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "cardinality-01",
+      "title": "기수",
+      "level": "section",
+      "parent": "cardinality",
+      "sources": [
+        {
+          "path": "AlgebraBook/CardinalityChapter.lean",
+          "after": "\n# 기수\n",
+          "before": "\n# 유한집합\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "cardinality-02",
+      "title": "유한집합",
+      "level": "section",
+      "parent": "cardinality",
+      "sources": [
+        {
+          "path": "AlgebraBook/CardinalityChapter.lean",
+          "after": "\n# 유한집합\n",
+          "before": "\n# 비둘기집 원리\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "cardinality-03",
+      "title": "비둘기집 원리",
+      "level": "section",
+      "parent": "cardinality",
+      "sources": [
+        {
+          "path": "AlgebraBook/CardinalityChapter.lean",
+          "after": "\n# 비둘기집 원리\n",
+          "before": "\n# 기수 연산\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "cardinality-04",
+      "title": "기수 연산",
+      "level": "section",
+      "parent": "cardinality",
+      "sources": [
+        {
+          "path": "AlgebraBook/CardinalityChapter.lean",
+          "after": "\n# 기수 연산\n",
+          "before": "\n# 무한집합\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "cardinality-05",
+      "title": "무한집합",
+      "level": "section",
+      "parent": "cardinality",
+      "sources": [
+        {
+          "path": "AlgebraBook/CardinalityChapter.lean",
+          "after": "\n# 무한집합\n",
+          "before": "\n# 멱집합\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "cardinality-06",
+      "title": "멱집합",
+      "level": "section",
+      "parent": "cardinality",
+      "sources": [
+        {
+          "path": "AlgebraBook/CardinalityChapter.lean",
+          "after": "\n# 멱집합\n",
+          "before": "\n# 크기 비교의 자동화\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "cardinality-07",
+      "title": "크기 비교의 자동화",
+      "level": "section",
+      "parent": "cardinality",
+      "sources": [
+        {
+          "path": "AlgebraBook/CardinalityChapter.lean",
+          "after": "\n# 크기 비교의 자동화\n"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "proof",
+        "exercise",
+        "runtime"
+      ]
+    },
+    {
+      "id": "tactics",
+      "title": "전술 부록",
+      "level": "section",
+      "parent": "book",
+      "sources": [
+        {
+          "path": "AlgebraBook/Tactics.lean"
+        }
+      ],
+      "checks": [
+        "context",
+        "content"
+      ]
+    },
+    {
+      "id": "symbols",
+      "title": "기호 부록",
+      "level": "section",
+      "parent": "book",
+      "sources": [
+        {
+          "path": "AlgebraBook/Symbols.lean"
+        }
+      ],
+      "checks": [
+        "context",
+        "content"
+      ]
+    },
+    {
+      "id": "home",
+      "title": "첫 화면과 읽기 안내",
+      "level": "explanation",
+      "parent": "book",
+      "sources": [
+        {
+          "path": "AlgebraBook.lean"
+        }
+      ],
+      "checks": [
+        "context",
+        "content",
+        "runtime"
+      ]
+    }
+  ]
+}

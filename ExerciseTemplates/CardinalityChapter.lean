@@ -2,7 +2,7 @@ import AlgebraBook.CardinalityChapter
 
 open scoped Ample Classical
 open scoped Ample.Auto
-open Ample
+open Ample ProofExamples
 local infixr:90 (priority := high) " ∘ " => Ample.compose
 
 namespace Exercises.CardinalityChapter
@@ -132,11 +132,13 @@ theorem exercise_cardinal_power_sum (A B C : Type) :
   sorry
 
 theorem exercise_three_boxes_sum :
-    cardinal (Fin 1 ⊕ (Fin 2 ⊕ Fin 3)) = 6 := by
+    cardinal (Fin 1 ⊕ (Fin 2 ⊕ Fin 3)) =
+      ∑ i < 3, ((i + 1 : Nat) : Cardinal) := by
   sorry
 
 theorem exercise_three_boxes_product :
-    cardinal (Fin 1 × (Fin 2 × Fin 3)) = 6 := by
+    cardinal (Fin 1 × (Fin 2 × Fin 3)) =
+      ∏ i < 3, ((i + 1 : Nat) : Cardinal) := by
   sorry
 
 theorem exercise_infinite_finite_ne_cardinal {A B : Type}

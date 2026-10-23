@@ -8,15 +8,6 @@ namespace Exercises.Proof
 theorem exercise_four_square : 4 * 4 = 16 := by
   sorry
 
-theorem exercise_four_solves_square :
-    solvesSquare 16 4 := by
-  sorry
-
-theorem exercise_square_proof (a n : Nat)
-    (h : solvesSquare a n) :
-    n * n = a := by
-  sorry
-
 theorem exercise_add_three_preserves_lt (a b : Nat)
     (h : a < b) :
     a + 3 < b + 3 := by
@@ -37,6 +28,29 @@ theorem exercise_implication_chain
     P → (P → Q) → (Q → R) → R := by
   sorry
 
+theorem exercise_logic_iff_trans (P Q R : Prop)
+    (hPQ : P ↔ Q)
+    (hQR : Q ↔ R) :
+    P ↔ R := by
+  sorry
+
+theorem exercise_logic_and_or_distrib (P Q R : Prop) :
+    (P ∧ (Q ∨ R)) ↔ ((P ∧ Q) ∨ (P ∧ R)) := by
+  sorry
+
+theorem exercise_implication_cases (P Q : Prop) :
+    (P → Q) ↔ (¬ P ∨ Q) := by
+  sorry
+
+theorem exercise_four_solves_square :
+    solvesSquare 16 4 := by
+  sorry
+
+theorem exercise_square_proof (a n : Nat)
+    (h : solvesSquare a n) :
+    n * n = a := by
+  sorry
+
 theorem exercise_relation_specialization_apply
     (A : Type) (R : A → A → Prop) (a b : A) :
     (∀ x : A, ∀ y : A, R x y) → R a b := by
@@ -45,6 +59,12 @@ theorem exercise_relation_specialization_apply
 theorem exercise_relation_specialization
     (A : Type) (R : A → A → Prop) (a b : A) :
     (∀ x : A, ∀ y : A, R x y) → R a b := by
+  sorry
+
+theorem exercise_exists_forall_swap (A B : Type)
+    (R : A → B → Prop)
+    (h : ∃ x : A, ∀ y : B, R x y) :
+    ∀ y : B, ∃ x : A, R x y := by
   sorry
 
 theorem exercise_forall_implication
@@ -98,6 +118,15 @@ theorem exercise_relation_iterate_twice {A : Type}
     (a b : A)
     (hab : R a b) :
     R (f (f a)) (f (f b)) := by
+  sorry
+
+theorem exercise_no_largest_nat :
+    ¬ ∃ m : Nat, ∀ n : Nat, n < m := by
+  sorry
+
+theorem exercise_predicate_conjunction_comm (A : Type)
+    (P Q : A → Prop) :
+    (fun x => P x ∧ Q x) = (fun x => Q x ∧ P x) := by
   sorry
 
 end Exercises.Proof

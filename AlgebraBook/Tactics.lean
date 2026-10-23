@@ -17,6 +17,33 @@ number := false
 `unpack h`와 `cases h`는 처음부터 가정을 받는 명령이므로 `at`을 쓰지 않는다.
 코드의 새 이름은 실제 문제에 맞게 바꾸어 사용하라.
 
+:::table +header (align := left)
+*
+  * 역할
+  * 전술
+*
+  * {ref "tactic-hypotheses"}[가정과 정리]
+  * `intro`, `apply`, `exact`
+*
+  * {ref "tactic-local-definitions"}[대상과 중간 증명]
+  * `set`, `let`, `have`, `replace`, `suffices`
+*
+  * {ref "tactic-conjunctions"}[구성과 분해]
+  * `constructor`, `and_intros`, `exists`, `unpack`, `cases`, `rcases`, `left`, `right`, `trivial`, `contradiction`
+*
+  * {ref "tactic-unfold-auto"}[정의와 등식]
+  * `expand`, `dsimp`, `change`, `rfl`, `rw`, `symm`, `calc`, `simp`
+*
+  * {ref "tactic-equality-comparison-rules"}[전체와 성분의 비교]
+  * `ext`, `funext`, `apply_fun`
+*
+  * {ref "tactic-cases-and-induction"}[경우 구분과 귀납법]
+  * `by_cases`, `by_contra`, `induction`
+*
+  * {ref "tactic-arith"}[계산과 자동화]
+  * `decide`, `arith`, `card`
+:::
+
 ```savedImport
 import AlgebraBook.CardinalityChapter
 ```
@@ -92,7 +119,8 @@ tag := "tactic-conjunctions"
 %%%
 
 `constructor`는 논리곱을 두 명제로, 동치를 두 방향의 함의로 나눈다.
-나뉜 목표는 `·` 뒤에서 각각 증명한다. `and_intros`는 여러 겹의 논리곱을 한 번에 나눈다.
+나뉜 목표는 `·` 뒤에서 각각 증명한다.
+{ref "logic-conjunction"}[1장의 논리곱]에서 배운 `and_intros`는 여러 겹의 논리곱을 한 번에 나눈다.
 `unpack h with ⟨hP, hQ⟩`는 논리곱의 증명에서 두 증명을 꺼낸다.
 
 ```savedLean
@@ -144,6 +172,13 @@ tag := "tactic-unfold-auto"
 `rfl`은 정의와 계산에 따라 양변이 같은 등식을 증명한다.
 `rw [h]`는 등식의 왼쪽을 오른쪽으로 바꾸며, `rw [← h]`는 반대 방향으로 바꾼다.
 `rw [h] at hx`는 가정 `hx`에 사용한다.
+{ref "relations-relation-rewriting"}[동치관계의 재작성]에서는 `hab : R a b`로
+목표의 `R a c`를 `R b c`로 바꾸는 방법을 다루었다.
+`rw [hab] at hac`는 가정의 조건을 같은 방식으로 바꾼다.
+연산 안에서 바꿀 때는 그 연산이 관계를 보존한다는 성질이 필요하다.
+필요한 성질이 준비되지 않으면 어느 연산의 보존 규칙을 찾지 못했는지 오류에 표시된다.
+추가 전제가 목표로 남으면 그 전제를 먼저 증명한다.
+
 `symm`은 목표 등식의 방향을, `symm at h`는 가정 `h`의 등식 방향을 바꾼다.
 `calc`는 각 등식의 증명을 제시하면서 등식을 이어 쓴다.
 
@@ -159,8 +194,7 @@ example (a b c : Nat)
 
 `simp`는 등록된 정리를 정해진 방향으로 사용하여 식을 정리한다.
 정의를 한 층 확인하려는 `expand`와 달리 이미 증명된 여러 성질이 적용될 수 있다.
-`simp only [h]`는 지정한 정리 `h`만 사용한다. 유한곱의 기수를 계산할 때처럼
-반복해서 나타나는 식을 한 가지 정리로 바꿀 때 사용할 수 있다.
+`simp [f, h]`는 정의 `f`를 펼치고 정리나 가정 `h`를 기본 규칙에 추가하여 식을 정리한다.
 
 # 전체와 성분의 비교
 %%%
@@ -181,10 +215,22 @@ example {A B : Type} (a c : A) (b d : B)
   · exact hb
 ```
 
-`indisc at h`는 등식인 가정에서 비교 조건을 얻는다.
-`indisc at h with ha hb`처럼 이름을 붙이면 원래 등식을 유지하고 두 성분의 등식을 얻는다.
-`ext`와 `indisc`은 기본적으로 한 겹만 비교하며 `: 2`로 두 겹을 지정한다.
-`rw`로 바로 필요한 식을 바꿀 수 있는 곳에서는 등식을 먼저 분해할 필요가 없다.
+`ext`는 기본적으로 비교 규칙을 한 번 적용하며, `ext : 2`는 두 번 적용한다.
+
+{anchor "tactic-apply-fun"}[]등식의 양변에 같은 함수를 적용할 때는 `apply_fun`을 쓴다.
+`apply_fun (fun x => x.val) at h`는 가정 `h : s = t`를 `h : s.val = t.val`로 바꾼다.
+`with hval`을 붙이면 원래 가정을 남겨 두고 새 등식을 `hval`로 사용한다.
+
+```savedLean
+example {A B : Type} (a c : A) (b d : B)
+    (h : (a, b) = (c, d)) :
+    a = c := by
+  apply_fun (fun p => p.1) at h with hfirst
+  exact hfirst
+```
+
+함수 적용 뒤의 `(a, b).1`은 `a`로 계산된다.
+몫 원소나 기수의 등식에서 관계를 얻을 때는 `parityClass_eq_iff`, `cardinal_eq_iff` 같은 정리를 사용한다.
 
 # 경우 구분과 귀납법
 %%%
@@ -203,7 +249,7 @@ tag := "tactic-cases-and-induction"
 이유와 실제 목표의 차이는 본문의 비둘기집 원리 증명에서 확인할 수 있다.
 `induction i using Fin.lastCases with`는 `Fin (n + 1)`의 원소를
 마지막 번호인 `last` 경우와 앞의 번호인 `cast i` 경우로 나눈다.
-유한한 집합족의 합과 곱에서 마지막 항을 구별할 때 이 방식을 사용한다.
+함수의 개수를 셀 때 마지막 번호에서의 함수값을 분리하는 증명에 사용한다.
 
 # 계산과 자동화
 %%%
@@ -215,6 +261,8 @@ tag := "tactic-arith"
 
 `arith`는 자연수·정수의 산술 규칙과 현재 가정을 연결한다.
 선형 등식·부등식, 다항식 등식, 등록된 곱의 비교와 몫·나머지·나누어떨어짐을 다룬다.
+정수 합동식의 덧셈·뺄셈·곱셈과 자연수 지수의 거듭제곱도 계산하며,
+합동을 나머지와 배수 조건에 연결하여 산술 가정을 함께 사용한다.
 모든 산술 명제를 증명하는 것은 아니므로 실패하면 필요한 중간 부등식이나 경우 구분을 제시하라.
 
 `card`는 기수의 등식·부등식과 유한성·무한성에 관한 등록 정리를 사용한다.

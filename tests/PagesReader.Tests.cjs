@@ -44,8 +44,8 @@ async function main() {
       'NanumSquareNeo must actually load, rather than silently fall back');
     assert.equal(await page.locator('main h1').first().evaluate(node=>getComputedStyle(node).textAlign),'left');
     const proof = page.locator('.book-example').filter({hasText: '@[ext] theorem set_ext'});
-    await proof.locator('.tactic > label').filter({hasText: /^funext x$/}).click();
-    assert.ok((await proof.locator('.book-step-state').innerText()).includes('S x = T x'));
+    await proof.locator('.tactic > label').filter({hasText: /^apply ProofExamples.predicate_ext$/}).click();
+    assert.ok((await proof.locator('.book-step-state').innerText()).includes('x ∈ S ↔ x ∈ T'));
     const reference = proof.locator('.hl.lean.block a[href]').first();
     assert.equal(await reference.evaluate(node=>getComputedStyle(node).textDecorationLine),'none',
       'Lean reference links should not underline every identifier');

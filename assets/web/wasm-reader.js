@@ -82,6 +82,9 @@ export function createBrowserBackend(siteRoot) {
       boot ||= runtime.boot().then(result => {
         window.dispatchEvent(new Event('book-lean-ready'));
         return result;
+      }).catch(error => {
+        boot = undefined;
+        throw error;
       });
       await boot;
       const snippet = await snippetData(payload.snippet);

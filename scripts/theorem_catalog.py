@@ -14,6 +14,18 @@ def chapter_names(chapter):
     introduced = {}
     for mention in re.finditer(r'`([A-Za-z_][A-Za-z0-9_.]*)`', prose):
         introduced.setdefault(mention[1], mention.start())
+    # A displayed, checked type introduces its theorem just as a prose statement
+    # does. A hidden #check without a corresponding output teaches nothing.
+    checks = {m[1]: (m[2], m.start()) for m in re.finditer(
+        r'^```lean[^\n]*\(name := (\w+)\)[^\n]*\n(?:set_option format\.width \d+ in\n)?#check ([A-Za-z_][A-Za-z0-9_.]*)\n```', source, re.M)}
+    for output in re.finditer(r'^```leanOutput (\w+)\n(.*?)^```', source, re.M | re.S):
+        if output[1] not in checks:
+            continue
+        name, position = checks[output[1]]
+        displayed = re.match(r'([A-Za-z_][A-Za-z0-9_.]*)\s', output[2])
+        if displayed and displayed[1].rsplit('.', 1)[-1] == name.rsplit('.', 1)[-1]:
+            for spelling in (name, displayed[1]):
+                introduced.setdefault(spelling, max(position, output.start()))
     visible = list(source)
     for match in re.finditer(r'^```(\w+)([^\n]*)\n(.*?)^```[^\n]*', source, re.M | re.S):
         kind, flags, body = match.group(1, 2, 3)

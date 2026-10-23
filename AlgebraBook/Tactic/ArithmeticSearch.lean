@@ -1,2 +1,0 @@
-import Ample.Tactic.ArithmeticSearch
-import AlgebraBook.Compatibility

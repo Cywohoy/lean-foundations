@@ -1,8 +1,9 @@
-# Browser Lean experiment
+# Browser Lean runtime
 
-The runtime measurements below record the original port's tests. They are not
-new measurements of the four-chapter book. The book-specific checks and their
-current results are recorded in `../../REVIEW.md`.
+This directory contains the Lean 4.35 WASM toolchain build, browser frontend
+tests, and a standalone test host. The book uses the same runtime in its
+exercise editor. See [deployment](../../DEPLOYMENT.md) for publishing and
+[test guidance](../../tests/README.md) for book-level checks.
 
 ## Four-chapter book contexts
 
@@ -36,35 +37,13 @@ serves static files; proof text is never submitted to a compiler server. The
 same transport is used by the published textbook's browser editor; its normal
 native Lean toolchain remains available for local preview and authoring.
 
-## Matching Lean 4.35 build
-
-The experiment builds Lean 4.35.0 for WASM, rebuilds all 44 public Ample modules
-with a matching native 32-bit compiler, and executes Ample in Chrome. It does
-not require a downgrade of the book or changes to Ample's source.
-
-| Check | Result |
-| --- | --- |
-| Core proofs | `intro`, `apply`, `exact`, a tactic macro, and the actual subset-transitivity source run successfully |
-| Invalid proof | `rfl` rejects `2 + 2 = 5` |
-| Imports | `import Lean`, `import Ample.Tactic.Classical`, and `import Ample` succeed |
-| Ample tactics | `by_contra`, `arith`, `expand`, `ext`, `indisc`, and `card` execute successfully |
-| Automatic normalization | `open scoped Ample.Auto` works in the browser |
-| Cursor queries | Show assumptions and goals before and after tactics, including an empty `by` block and a completed proof |
-| Editing | Automatically checks after edits; distinguishes an unfinished proof and `sorry` from a completed proof |
-| Matching native regressions | All 39 existing Ample regression files pass on the native 32-bit toolchain |
-| Frontend regressions | Ten checks cover cursor positions, UTF-16, module headers, errors, placeholders, and Ample proof states |
-
-The browser suite also tests cross-origin isolation through a COI Service Worker
-on a server without COOP/COEP headers. This is a local feasibility test; the
-reader-level tests also exercise editing and goal queries under the Pages prefix.
+## Frontend and runtime constraints
 
 The frontend uses Lean's info trees and `InfoTree.goalsAt?`, rather than guessing
 goals from diagnostics. Coordinates are zero-based UTF-16, as in LSP. Environment
 caches distinguish ordinary files from `module` files and retain full import
 specifications. Treating an ordinary Ample import as a `module` import would
 be rejected by Lean 4.35.
-
-## Performance and remaining work
 
 Failed searches must return Lean diagnostics rather than terminate the Worker.
 Lean 4.35's `grind` retains native stack frames in its continuation-based search
@@ -80,43 +59,16 @@ arithmetic-progression exercise, the original `suffices ... by arith` failure,
 the remaining goal, and a corrected proof in the same Worker. It also checks
 successful polynomial, product-bound, division, and divisibility calculations.
 
-The initial matching build prioritizes compatibility. Its artifacts are large:
-
-| Artifact | Bytes |
-| --- | ---: |
-| WASM binary | 122,719,317 |
-| JavaScript runtime glue | 130,275 |
-| Library data, including interpreter code | 465,079,324 |
-| Compressed library packs | 178,288,690 |
-
-Library data is split into 29 gzip packs with SHA-256 and decoded-size checks.
+Library data is split into gzip packs with SHA-256 and decoded-size checks.
 Only Init is loaded at startup; the remaining libraries are loaded on the first
 explicit import. This version does not compute a minimal closure per import.
 
-Profiling found that Emscripten 4.0.22 enumerated roughly 228,000 exports on
-every dynamic symbol lookup, including failed lookups and functions already
-registered in the WASM table. This accounted for almost all of a 61–63 second
-boot. `optimize-runtime.py` moves that enumeration into the one branch that
-needs its index: registering a new table function for pthread catch-up. It
+`optimize-runtime.py` defers Emscripten's export enumeration until registering a
+new table function for pthread catch-up, avoiding repeated work at boot. It
 preserves the index protocol and does not assume that exports never change.
 Unexpected SDK output fails the transform rather than receiving a guessed edit.
 `runtime-tests.cjs` checks missing, non-enumerable, inherited, stub, data, existing,
 new, and subsequently appended exports against the actual generated function.
-
-After that change, a fresh Chrome context on loopback produced these timings:
-
-| Stage | Observed time |
-| --- | ---: |
-| Boot, including initial library transfer and Init import | 4.04 seconds |
-| First `import Lean`, including remaining library transfer | 2.65 seconds |
-| First `import Ample` and arithmetic proof | 0.90 seconds |
-| Later Ample proof checks | 10–19 milliseconds |
-
-The whole proof suite, cursor queries, and automatic checking pass after the
-optimization, including the Service Worker path under `/lean-algebra/wasm/`.
-These are local desktop observations, not internet or mobile benchmarks. The
-complete current payload is still about 301 MB before compressing the WASM
-binary; cold network transfer remains an important deployment concern.
 
 The upstream Worker reserves 2 GiB of shared WASM memory on desktop. This is a
 virtual-memory configuration, not a resident-RAM measurement. Mobile behavior
@@ -231,19 +183,6 @@ timings, and browser version. HTTP proof submission fails the test.
 `--project-path` tests under `/lean-algebra/wasm/`.
 `--profile-boot --boot-only` records a Chrome Worker CPU profile and boot report
 without the full proof suite.
-
-## Historical 4.33 baseline
-
-The previous downloaded fixture ran core proofs but rejected the book's native
-64-bit Lean 4.35 Ample artifacts. It also lacked the Lean library closure and
-cursor queries. Those failures motivated the matching build; do not reuse the
-old fixture as its library.
-
-For that baseline only, unset the four artifact/runtime environment variables,
-run `node tmp/wasm/upstream/tests/fetch-artifacts.mjs`, and invoke
-`browser-tests.cjs` without `--matching-toolchain`. The fixture fetcher checks
-upstream SHA-256 values. The deliberate incompatible-header probe needs a
-normal native build of Ample.
 
 ## Pins and licenses
 

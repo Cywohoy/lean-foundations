@@ -35,7 +35,7 @@ namespace Ample
 local infixr:90 (priority := high) " ∘ " => compose
 ```
 
-# 자연수와 귀납법
+# 수학적 귀납법
 %%%
 tag := "preliminaries-induction"
 file := "induction"
@@ -90,7 +90,7 @@ theorem exercise_one_add_induction
   sorry
 ```
 
-# 짝수와 함수의 상
+## 짝수와 함수의 상
 %%%
 tag := "preliminaries-even-induction"
 file := "parity"
@@ -198,7 +198,7 @@ theorem five_not_even : ¬ IsEvenNat 5 := by
 `apply even_ne_odd k 2`로 모순을 보이는 데 필요한 등식 `2 * k = 5`를 목표로 삼고,
 `symm`으로 목표를 `5 = 2 * k`로 바꾼 뒤 `hk`를 제시한다.
 
-## 함수의 상과 짝수
+### 함수의 상과 짝수
 %%%
 tag := "preliminaries-double-image"
 %%%
@@ -209,7 +209,7 @@ tag := "preliminaries-double-image"
 ```savedLean
 theorem double_is_even (n : Nat) :
     IsEvenNat (double n) := by
-  exact double_mem_evens n
+  exact double_in_evens n
 
 theorem five_not_in_double_image :
     5 ∉ image double (whole Nat) := by
@@ -225,7 +225,7 @@ theorem five_not_in_double_image :
   exact hEven
 ```
 
-첫 증명은 앞 장의 `double_mem_evens n`을 사용한다.
+첫 증명은 앞 장의 `double_in_evens n`을 사용한다.
 `IsEvenNat (double n)`과 `double n ∈ evens`는 정의상 같은 명제이다.
 
 두 번째 증명에서는 `hy : 5 ∈ image double (whole Nat)`를 가정하고 모순을 보인다.
@@ -293,7 +293,7 @@ theorem exercise_double_mul_even (b : Nat) :
   sorry
 ```
 
-# 정수와 나누어떨어짐
+# 나누어떨어짐
 %%%
 tag := "preliminaries-divisibility"
 file := "divisibility"
@@ -351,7 +351,7 @@ theorem divides_refl (a : Int) : a ∣ a := by
 `exists 1`을 쓰면 목표가 `a = a * 1`이 되며
 `rw [Int.mul_one]`으로 오른쪽을 `a`로 바꾸면 증명이 끝난다.
 
-{anchor "preliminaries-simp"}[]{ref "proofs-simp"}[앞에서 배운 `simp`]는 정수에서도
+{anchor "preliminaries-simp"}[]앞에서 배운 {ref "proofs-simp"}[`simp`]는 정수에서도
 `Int.mul_one`, `Int.add_zero`, `Int.zero_mul` 같은 기본 법칙을 사용하여 식을 정리한다.
 
 *문제 4* 모든 정수 $`a`에 대하여 $`a\mid0`임을 증명하라.
@@ -465,7 +465,7 @@ theorem exercise_three_ne_negative_three :
   sorry
 ```
 
-# 나머지와 합동
+# 정수의 합동
 %%%
 tag := "preliminaries-congruence"
 file := "congruence"
@@ -503,14 +503,14 @@ $`a\equiv b\pmod n`으로 나타낸다.
 ```savedLean
 def Congruent (n : Int) : Int → Int → Prop :=
   fun a b => ∃ k : Int, a = b + n * k
-local notation:50 a " ≡ " b " [ZMOD " n "]" =>
+local notation:50 a " ≡ " b " [MOD " n "]" =>
   Congruent n a b
 ```
 
 법 `n`을 정하면 `Congruent n`의 타입은 `Int → Int → Prop`이다.
 앞의 술어가 원소 하나에 명제를 대응시켰던 것처럼,
 여기서는 두 정수 `a`, `b`에 합동이라는 명제를 대응시킨다.
-수학식 $`a\equiv b\pmod{n}`을 Lean에서는 `a ≡ b [ZMOD n]`으로 쓴다.
+수학식 $`a\equiv b\pmod{n}`을 Lean에서는 `a ≡ b [MOD n]`으로 쓴다.
 기호 `≡`는 `\==`로 입력한다.
 
 *보기* $`23=2+7\cdot3`이므로 $`23\equiv2\pmod7`이다.
@@ -518,7 +518,7 @@ local notation:50 a " ≡ " b " [ZMOD " n "]" =>
 
 ```savedLean
 theorem preliminaries_congruent_twenty_three_two :
-    23 ≡ 2 [ZMOD 7] := by
+    23 ≡ 2 [MOD 7] := by
   exists 3
 ```
 
@@ -533,21 +533,21 @@ theorem preliminaries_congruent_twenty_three_two :
 셋째 성질에서는 $`a=b+nk`와 $`b=c+nl`을 이어서 $`a=c+n(l+k)`를 얻으므로 $`l+k`를 택하면 된다.
 
 ```savedLean
-theorem congruent_refl (n a : Int) : a ≡ a [ZMOD n] := by
+theorem congruent_refl (n a : Int) : a ≡ a [MOD n] := by
   exists 0
   rw [Int.mul_zero, Int.add_zero]
 
 theorem congruent_symm (n a b : Int)
-    (h : a ≡ b [ZMOD n]) :
-    b ≡ a [ZMOD n] := by
+    (h : a ≡ b [MOD n]) :
+    b ≡ a [MOD n] := by
   unpack h with ⟨k, hk⟩
   exists (-k)
   rw [hk, Int.mul_neg, Int.add_neg_cancel_right]
 
 theorem congruent_trans (n a b c : Int)
-    (hab : a ≡ b [ZMOD n])
-    (hbc : b ≡ c [ZMOD n]) :
-    a ≡ c [ZMOD n] := by
+    (hab : a ≡ b [MOD n])
+    (hbc : b ≡ c [MOD n]) :
+    a ≡ c [MOD n] := by
   unpack hab with ⟨k, hk⟩
   unpack hbc with ⟨l, hl⟩
   exists (l + k)
@@ -572,11 +572,11 @@ $`-5=2+7\cdot(-1)`에서 $`-5\equiv2\pmod7`을 얻고 그 방향을 바꾸면
 $`23\equiv2\equiv-5\pmod7`로 두 합동을 연결할 수 있다.
 
 ```savedLean
-theorem congruent_neg_five_two : -5 ≡ 2 [ZMOD 7] := by
+theorem congruent_neg_five_two : -5 ≡ 2 [MOD 7] := by
   exists (-1)
 
 theorem congruent_twenty_three_neg_five :
-    23 ≡ -5 [ZMOD 7] := by
+    23 ≡ -5 [MOD 7] := by
   apply congruent_trans 7 23 2 (-5)
   · exact preliminaries_congruent_twenty_three_two
   · apply congruent_symm 7 (-5) 2
@@ -584,7 +584,7 @@ theorem congruent_twenty_three_neg_five :
 ```
 
 추이성의 중간 정수는 $`2`이다.
-두 번째 목표는 `2 ≡ -5 [ZMOD 7]`이므로 방금 얻은 합동에 대칭성을 사용한다.
+두 번째 목표는 `2 ≡ -5 [MOD 7]`이므로 방금 얻은 합동에 대칭성을 사용한다.
 따라서 두 정수의 차이를 새로 계산하지 않고 앞의 합동들을 이어서 결론을 얻는다.
 
 합동의 식을 정리할 때는 덧셈의 순서를 바꾸거나 더한 수를 다시 빼기도 한다.
@@ -597,18 +597,22 @@ example (a b : Int) : b + (a - b) = a := by
   rw [Int.add_comm b, Int.sub_add_cancel]
 ```
 
-{anchor "preliminaries-congruence-zero-and-one"}[]*문제 6* (법이 0이나 1인 합동)
+{anchor "preliminaries-congruence-zero-and-one"}[]
+*문제 6* (법이 0이나 1인 합동)
+
 합동의 정의는 법이 $`0`이나 $`1`인 경우도 포함한다.
+
 (1) 법이 $`0`이면 합동과 등식이 같음을 보이라.
+
 (2) 법이 $`1`이면 모든 정수가 서로 합동임을 보이라.
 
 ```savedLean -keep
 theorem exercise_congruent_zero_iff (a b : Int) :
-    a ≡ b [ZMOD 0] ↔ a = b := by
+    a ≡ b [MOD 0] ↔ a = b := by
   sorry
 
 theorem exercise_congruent_one (a b : Int) :
-    a ≡ b [ZMOD 1] := by
+    a ≡ b [MOD 1] := by
   sorry
 ```
 
@@ -620,8 +624,8 @@ $`a+t=(b+t)+nk`이므로 같은 정수 $`k`를 사용할 수 있다.
 
 ```savedLean
 theorem congruent_add_right (n a b t : Int)
-    (h : a ≡ b [ZMOD n]) :
-    a + t ≡ b + t [ZMOD n] := by
+    (h : a ≡ b [MOD n]) :
+    a + t ≡ b + t [MOD n] := by
   unpack h with ⟨k, hk⟩
   exists k
   rw [hk, Int.add_assoc, Int.add_comm (n * k) t,
@@ -637,12 +641,12 @@ $`t+a\equiv t+b\pmod n`임을 증명하라.
 ```savedLean -keep
 theorem exercise_congruent_add_left
     (n a b t : Int)
-    (h : a ≡ b [ZMOD n]) :
-    t + a ≡ t + b [ZMOD n] := by
+    (h : a ≡ b [MOD n]) :
+    t + a ≡ t + b [MOD n] := by
   sorry
 ```
 
-# 산술 연습문제
+## 산술 연습문제
 %%%
 tag := "preliminaries-exercises"
 file := "exercises"
@@ -656,11 +660,11 @@ $`37\equiv23\pmod7`을 증명하라.
 
 ```savedLean -keep
 theorem exercise_congruent_thirty_seven_two :
-    37 ≡ 2 [ZMOD 7] := by
+    37 ≡ 2 [MOD 7] := by
   sorry
 
 theorem exercise_congruent_thirty_seven_twenty_three :
-    37 ≡ 23 [ZMOD 7] := by
+    37 ≡ 23 [MOD 7] := by
   sorry
 ```
 
@@ -673,18 +677,18 @@ $`20\equiv2\pmod3`을 보이라.
 
 ```savedLean -keep
 theorem exercise_congruent_divisor (n d a b : Int)
-    (h : a ≡ b [ZMOD n * d]) :
-    a ≡ b [ZMOD n] := by
+    (h : a ≡ b [MOD n * d]) :
+    a ≡ b [MOD n] := by
   sorry
 
-theorem exercise_twenty_mod_six : 20 ≡ 2 [ZMOD 6] := by
+theorem exercise_twenty_mod_six : 20 ≡ 2 [MOD 6] := by
   sorry
 
-theorem exercise_twenty_mod_three : 20 ≡ 2 [ZMOD 3] := by
+theorem exercise_twenty_mod_three : 20 ≡ 2 [MOD 3] := by
   sorry
 ```
 
-# 산술 계산의 자동화
+## 산술 계산의 자동화
 %%%
 tag := "preliminaries-arith"
 file := "arithmetic-automation"
@@ -716,6 +720,144 @@ example
 ```
 
 이 증명에서도 $`a+0=a`와 $`a+b=b+a`라는 덧셈의 법칙을 사용한다.
+
+합동식도 같은 전술로 계산할 수 있다. 합동의 정의에서 $`a=b+nk`인 정수 $`k`를 얻으면
+$`a-b=nk`이므로 $`n\mid(a-b)`이다. 역방향에서도 같은 정수 $`k`를 사용할 수 있다.
+이 연결을 Lean으로 증명하자. 두 등식 사이의 계산에는 방금 배운 `arith`를 쓴다.
+
+```savedLean
+theorem congruent_iff_dvd_sub (n a b : Int) :
+    Congruent n a b ↔ n ∣ a - b := by
+  constructor
+  · intro h
+    unpack h with ⟨k, hk⟩
+    exists k
+    arith
+  · intro h
+    unpack h with ⟨k, hk⟩
+    exists k
+    arith
+```
+
+```savedLean -show
+theorem congruent_iff_emod_eq (n a b : Int) :
+    Congruent n a b ↔ a % n = b % n := by
+  exact (congruent_iff_dvd_sub n a b).trans
+    (Int.dvd_iff_emod_eq_zero.trans Int.emod_eq_emod_iff_emod_sub_eq_zero.symm)
+
+theorem congruent_add (n a b c d : Int)
+    (hab : Congruent n a b) (hcd : Congruent n c d) :
+    Congruent n (a + c) (b + d) := by
+  rcases hab with ⟨k, hk⟩
+  rcases hcd with ⟨l, hl⟩
+  exists k + l
+  arith
+
+theorem congruent_mul (n a b c d : Int)
+    (hab : Congruent n a b) (hcd : Congruent n c d) :
+    Congruent n (a * c) (b * d) := by
+  rcases hab with ⟨k, hk⟩
+  rcases hcd with ⟨l, hl⟩
+  exists b * l + d * k + n * k * l
+  arith
+
+theorem congruent_neg (n a b : Int)
+    (hab : Congruent n a b) :
+    Congruent n (-a) (-b) := by
+  rcases hab with ⟨k, hk⟩
+  exists -k
+  arith
+
+theorem congruent_sub (n a b c d : Int)
+    (hab : Congruent n a b) (hcd : Congruent n c d) :
+    Congruent n (a - c) (b - d) := by
+  rcases hab with ⟨k, hk⟩
+  rcases hcd with ⟨l, hl⟩
+  exists k - l
+  arith
+
+theorem congruent_pow (n a b : Int) (k : Nat)
+    (hab : Congruent n a b) :
+    Congruent n (a ^ k) (b ^ k) := by
+  induction k with
+  | zero =>
+    rw [Int.pow_zero, Int.pow_zero]
+    exact congruent_refl n 1
+  | succ k ih =>
+    rw [Int.pow_succ, Int.pow_succ]
+    apply congruent_mul n _ _ _ _ ih hab
+
+theorem congruent_cancel_add (n a b c : Int)
+    (hab : Congruent n (a + c) (b + c)) :
+    Congruent n a b := by
+  rcases hab with ⟨k, hk⟩
+  exists k
+  arith
+
+theorem congruent_weaken_product (n d a b : Int)
+    (hab : Congruent (n * d) a b) :
+    Congruent n a b := by
+  rcases hab with ⟨k, hk⟩
+  exists d * k
+  arith
+
+theorem congruent_of_dvd (m n a b : Int)
+    (hd : Dvd.dvd n m) (hab : Congruent m a b) :
+    Congruent n a b := by
+  rcases hd with ⟨d, hd⟩
+  rcases hab with ⟨k, hk⟩
+  exists d * k
+  rw [hd] at hk
+  rw [hk, Int.mul_assoc]
+
+theorem congruent_dvd_sub (n a b : Int)
+    (hab : Congruent n a b) : n ∣ a - b :=
+  (congruent_iff_dvd_sub n a b).mp hab
+
+theorem congruent_of_dvd_sub (n a b : Int)
+    (hab : n ∣ a - b) : Congruent n a b :=
+  (congruent_iff_dvd_sub n a b).mpr hab
+
+theorem congruent_emod_eq (n a b : Int)
+    (hab : Congruent n a b) : a % n = b % n :=
+  (congruent_iff_emod_eq n a b).mp hab
+
+theorem congruent_sub_emod_zero (n a b : Int)
+    (hab : Congruent n a b) : (a - b) % n = 0 :=
+  Int.emod_eq_zero_of_dvd (congruent_dvd_sub n a b hab)
+
+theorem divides_dvd (n m : Int)
+    (h : Divides n m) : Dvd.dvd n m := h
+
+attribute [ample_arith_simp] congruent_iff_emod_eq
+attribute [ample_arith_apply] congruent_add congruent_mul congruent_neg congruent_sub congruent_pow
+attribute [ample_arith_grind →] congruent_cancel_add congruent_weaken_product congruent_of_dvd
+attribute [ample_arith_prepare] congruent_dvd_sub congruent_emod_eq congruent_sub_emod_zero
+  congruent_of_dvd_sub divides_dvd Int.emod_eq_zero_of_dvd
+```
+
+나머지로 표현하면 이 조건은 $`a\bmod n=b\bmod n`과도 동치이다.
+`arith`는 합동의 조건을 나누어떨어짐과 나머지의 성질에 연결하여 계산한다.
+앞에서 직접 증명한 $`23\equiv2\pmod7`을 다음과 같이 확인할 수 있다.
+
+```savedLean
+example : 23 ≡ 2 [MOD 7] := by
+  arith
+```
+
+두 합동식을 더하거나 곱해도 같은 법에 대한 합동이 성립한다.
+예를 들어 $`a=b+nk`, $`c=d+nl`이면 $`a+c=(b+d)+n(k+l)`이며,
+곱에서도 $`ac-bd=(a-b)c+b(c-d)`가 $`n`의 배수이다.
+이 성질로 같은 법의 합동식에 덧셈·뺄셈·곱셈을 반복하여 적용할 수 있다.
+
+```savedLean
+example (n a b : Int)
+    (hab : a ≡ b [MOD n]) :
+    3 * a * a + 2 * a + 1 ≡
+      3 * b * b + 2 * b + 1 [MOD n] := by
+  arith
+```
+
 전술의 사용 범위와 더 많은 예는 {ref "tactic-arith"}[부록의 산술식 계산]에 정리했다.
 
 자연수 $`a`, $`m`에 대하여 $`a<m`이면 $`a\bmod m=a`이다.
@@ -752,17 +894,19 @@ local infixr:90 (priority := high) " ∘ " => compose
 ```
 
 ```savedLean -show
-local notation:50 a " ≡ " b " [ZMOD " n "]" => Congruent n a b
+local notation:50 a " ≡ " b " [MOD " n "]" => Congruent n a b
 ```
 
 *문제 10* (두 법에 대한 합동)
 
 $`a\equiv b\pmod6`이라는 조건은 $`2`와 $`3`을 법으로 각각 합동이라는 두 조건과 동치임을 증명하라.
-역방향에서는 두 합동의 정의에서 얻은 정수들을 조합하여 $`6`의 배수로 나타내는 계수를 찾아야 한다.
+정방향에는 문제 9의 결과를 사용하라.
+역방향에서는 두 합동의 정의에서 얻은 정수들을 조합하여 $`6`의 배수로 나타내는 계수를 명시하라.
+계수를 정한 뒤 남는 등식은 `arith`로 확인할 수 있다.
 
 ```savedLean -keep
 theorem exercise_congruent_six_iff_two_three (a b : Int) :
-    a ≡ b [ZMOD 6] ↔ a ≡ b [ZMOD 2] ∧ a ≡ b [ZMOD 3] := by
+    a ≡ b [MOD 6] ↔ a ≡ b [MOD 2] ∧ a ≡ b [MOD 3] := by
   sorry
 ```
 
@@ -776,6 +920,11 @@ tag := "numbers-finite-sums"
 처음 $`n`개의 값을 더한 결과에 다음 값 하나를 더하면 처음 $`n+1`개의 합을 얻는다.
 유한합을 귀납적으로 정의할 때도 이 관계를 사용한다.
 곱에서는 새 값을 곱하며, 아무 값도 더하거나 곱하지 않은 시작값은 각각 $`0`, $`1`로 둔다.
+
+자연수와 정수에 같은 정의를 사용할 수 있도록 더하거나 곱할 값의 타입을 `M`으로 두자.
+`[OfNat M 0]`과 `[Add M]`은 `M`에 값 `0`과 덧셈이 준비되어 있다는 조건이며,
+곱에서는 `[OfNat M 1]`과 `[Mul M]`로 `1`과 곱셈을 요구한다.
+대괄호 안의 인수는 Lean이 타입 `M`에 맞추어 찾아 채우므로 합이나 곱을 사용할 때 따로 적지 않는다.
 
 ```savedLean
 def finiteSum {M : Type _} [OfNat M 0] [Add M] :
@@ -802,8 +951,7 @@ macro_rules
 ```
 
 `∑ i < n, f i`는 $`\sum_{i=0}^{n-1}f(i)`이고 `∏ i < n, f i`는 $`\prod_{i=0}^{n-1}f(i)`이다.
-두 정의의 `M`은 더하거나 곱할 값의 타입이다. 자연수와 정수에 모두 사용할 수 있도록
-덧셈과 $`0`, 곱셈과 $`1`을 인수의 조건으로 받았다. 여기서는 자연수의 합과 곱부터 계산하자.
+이 표기로 자연수의 합과 곱을 계산하면 다음과 같다.
 
 ```savedLean
 example : (∑ i < 3, i + 1) = 6 := by rfl
@@ -931,8 +1079,7 @@ end IsEquivalence
 
 *풀이* 앞에서 증명한 `congruent_refl n`, `congruent_symm n`, `congruent_trans n`이
 각각 반사성·대칭성·추이성의 증명이다.
-논리곱으로 묶인 여러 조건을 한 번에 나누는 전술 `and_intros`를 사용하자.
-이 전술은 나뉜 목표가 다시 논리곱이면 그 목표도 나눈다.
+앞에서 배운 `and_intros`로 세 조건을 나누고 각각의 증명을 제시하자.
 
 ```savedLean
 theorem congruent_equivalence (n : Int) :
@@ -972,7 +1119,110 @@ theorem exercise_equal_values_equivalence {A B : Type}
   sorry
 ```
 
-# 동치류와 대표원
+## 동치관계에서의 재작성
+%%%
+tag := "relations-relation-rewriting"
+%%%
+
+동치관계 $`R`에서 $`R(a,b)`이면 임의의 원소 $`c`에 대하여 $`R(a,c)`와 $`R(b,c)`도 서로 동치이다.
+실제로 $`R(a,c)`이면 대칭성으로 $`R(b,a)`를 얻고 추이성으로 $`R(b,c)`를 얻는다.
+반대 방향에서는 $`R(a,b)`와 $`R(b,c)`에 추이성을 사용한다.
+
+```savedLean
+theorem relation_left_iff {A : Type} (R : Relation A)
+    (hR : IsEquivalence R) (a b c : A)
+    (hab : R a b) :
+    R a c ↔ R b c := by
+  constructor
+  · intro hac
+    have hba : R b a := by
+      apply hR.symm
+      exact hab
+
+    apply hR.trans hba
+    exact hac
+
+  · intro hbc
+    apply hR.trans hab
+    exact hbc
+```
+
+```savedLean -show
+namespace IsEquivalence
+@[ample_rewrite] theorem rewriteLaws
+    {A : Type _} {R : Relation A} (hR : IsEquivalence R) :
+    Rewriting.Laws R :=
+  ⟨hR.refl, hR.symm, hR.trans⟩
+end IsEquivalence
+
+@[ample_rewrite] theorem congruent_rewriteLaws (n : Int) :
+    Rewriting.Laws (Congruent n) :=
+  ⟨congruent_refl n,
+    fun h => congruent_symm n _ _ h,
+    fun h k => congruent_trans n _ _ _ h k⟩
+
+@[ample_rewrite] theorem congruent_add_action (n : Int) :
+    Rewriting.Action2 (Congruent n) (Congruent n) (Congruent n)
+      (fun a b : Int => a + b) :=
+  ⟨fun h k => congruent_add n _ _ _ _ h k⟩
+
+@[ample_rewrite] theorem congruent_mul_action (n : Int) :
+    Rewriting.Action2 (Congruent n) (Congruent n) (Congruent n)
+      (fun a b : Int => a * b) :=
+  ⟨fun h k => congruent_mul n _ _ _ _ h k⟩
+
+@[ample_rewrite] theorem congruent_neg_action (n : Int) :
+    Rewriting.Action (Congruent n) (Congruent n) (fun a : Int => -a) :=
+  ⟨fun h => congruent_neg n _ _ h⟩
+
+@[ample_rewrite] theorem congruent_sub_action (n : Int) :
+    Rewriting.Action2 (Congruent n) (Congruent n) (Congruent n)
+      (fun a b : Int => a - b) :=
+  ⟨fun h k => congruent_sub n _ _ _ _ h k⟩
+
+@[ample_rewrite] theorem congruent_pow_action (n : Int) :
+    Rewriting.Action2 (Congruent n) (@Eq Nat) (Congruent n)
+      (fun (a : Int) (k : Nat) => a ^ k) := by
+  constructor
+  intro a b k l hab hkl
+  cases hkl
+  exact congruent_pow n a b k hab
+```
+
+이 동치에 따라 `R a c`를 `R b c`로 바꾸어 증명할 수 있다.
+교재의 `rw`는 관계의 성질로 두 조건이 동치임을 확인하여 이 재작성을 수행한다.
+`hab : R a b`와 `hbc : R b c`가 주어지면 다음과 같이 쓴다.
+
+```savedLean
+example {A : Type} (R : Relation A)
+    (hR : IsEquivalence R) (a b c : A)
+    (hab : R a b)
+    (hbc : R b c) :
+    R a c := by
+  rw [hab]
+  -- 목표: R b c
+  exact hbc
+```
+
+가정을 바꿀 때는 `rw [hab] at hac`로 쓰며,
+`hac : R a c`가 `hac : R b c`로 바뀐다.
+합동식에서는 덧셈·곱셈처럼 합동을 보존하는 연산 안에서도 사용할 수 있다.
+
+```savedLean
+example (n a b : Int)
+    (hab : a ≡ b [MOD n]) :
+    a * a ≡ b * b [MOD n] := by
+  rw [hab]
+  -- 목표: b * b ≡ b * b [MOD n]
+  exact congruent_refl n (b * b)
+```
+
+동치인 원소가 반드시 같은 원소인 것은 아니다.
+가령 법 $`2`에서 $`0`과 $`2`는 합동이지만, 정수의 등식 $`0=0`에서 왼쪽 $`0`을 $`2`로 바꿀 수는 없다.
+나눗셈도 일반적으로 합동을 보존하지 않는다. $`0/2=0`, $`2/2=1`은 법 $`2`에서 합동이 아니다.
+`rw`를 사용하려면 바꾸려는 조건이나 연산이 해당 관계를 보존해야 한다.
+
+## 동치류와 대표원
 %%%
 tag := "preliminaries-equivalence-classes"
 file := "equivalence-classes"
@@ -1045,14 +1295,14 @@ example :
 ```
 
 `apply`에 합동 관계와 그 관계가 동치관계라는 증명을 주면
-남은 목표는 `23 ≡ -5 [ZMOD 7]`이다.
+남은 목표는 `23 ≡ -5 [MOD 7]`이다.
 이는 앞의 보기 `congruent_twenty_three_neg_five`에서 증명한 합동이므로
 그 결과를 사용하면 두 동치류의 등식을 얻는다.
 
 *문제 13* 모든 원소는 자신의 동치류에 속함을 증명하라.
 
 ```savedLean -keep
-theorem exercise_mem_own_equivalenceClass {A : Type}
+theorem exercise_in_own_equivalenceClass {A : Type}
     (R : Relation A)
     (hR : IsEquivalence R)
     (a : A) :
@@ -1075,7 +1325,7 @@ theorem exercise_relation_of_classes_equal {A : Type}
 *힌트* 반사성으로 $`a\in[a]_R`를 얻은 뒤 두 동치류가 같다는 가정을 사용하라.
 
 
-# 집합의 분할
+## 집합의 분할
 %%%
 tag := "relations-partitions"
 %%%
@@ -1100,7 +1350,7 @@ def IsPartition {A : Type} : Set (Set A) → Prop :=
 첫 조건은 각 블록에 원소가 있음을, 둘째 조건은 블록들이 전체집합을 덮음을 나타낸다.
 셋째 조건은 겹치는 두 블록이 같다는 뜻이다.
 `h : IsPartition blocks`에서 세 조건을 꺼낼 때는 각각
-`h.nonempty`, `h.cover`, `h.eq_of_mem`으로 사용할 수 있다.
+`h.nonempty`, `h.cover`, `h.eq_of_in`으로 사용할 수 있다.
 
 ```savedLean -show
 namespace IsPartition
@@ -1114,7 +1364,7 @@ theorem cover {A : Type} {blocks : Set (Set A)}
     ∃ S, S ∈ blocks ∧ x ∈ S := by
   exact h.right.left x
 
-theorem eq_of_mem {A : Type} {blocks : Set (Set A)}
+theorem eq_of_in {A : Type} {blocks : Set (Set A)}
     (h : IsPartition blocks) (S T : Set A)
     (hS : S ∈ blocks) (hT : T ∈ blocks)
     (hmeet : ∃ x, x ∈ S ∧ x ∈ T) : S = T := by
@@ -1135,19 +1385,22 @@ theorem equivalenceClasses_partition {A : Type}
     IsPartition
       (fun S => ∃ a, S = equivalenceClass R a) := by
   and_intros
-  · intro S hS
+  · -- 동치류 [a]에는 대표원 a가 속한다.
+    intro S hS
     rcases hS with ⟨a, ha⟩
     rw [ha]
     exists a
     exact hR.refl a
 
-  · intro x
+  · -- 각 원소는 자신의 동치류에 속한다.
+    intro x
     exists equivalenceClass R x
     constructor
     · exists x
     · exact hR.refl x
 
-  · intro S T hS hT hmeet
+  · -- 공통 원소에서 두 대표원의 관계를 얻는다.
+    intro S T hS hT hmeet
     rcases hS with ⟨a, ha⟩
     rcases hT with ⟨b, hb⟩
     rcases hmeet with ⟨x, hxS, hxT⟩
@@ -1181,20 +1434,24 @@ theorem sameBlock_equivalence {A : Type}
     (h : IsPartition blocks) :
     IsEquivalence (sameBlock blocks) := by
   and_intros
-  · intro x
+  · -- 각 원소를 덮는 블록을 택한다.
+    intro x
     rcases h.cover x with ⟨S, hS, hx⟩
     exists S
 
-  · intro x y hxy
+  · -- 같은 블록에서 두 원소의 자리를 바꾼다.
+    intro x y hxy
     rcases hxy with ⟨S, hS, hx, hy⟩
     exists S
 
-  · intro x y z hxy hyz
+  · -- 가운데 원소 y를 공유하므로 두 블록은 같다.
+    intro x y z hxy hyz
     rcases hxy with ⟨S, hS, hx, hy⟩
     rcases hyz with ⟨T, hT, hyT, hz⟩
     have hST : S = T := by
-      apply h.eq_of_mem S T hS hT
+      apply h.eq_of_in S T hS hT
       exists y
+
     rw [← hST] at hz
     exists S
 ```
@@ -1214,8 +1471,9 @@ theorem sameBlock_class {A : Type} (blocks : Set (Set A))
   · intro hx
     rcases hx with ⟨T, hT, hx, haT⟩
     have hTS : T = S := by
-      apply h.eq_of_mem T S hT hS
+      apply h.eq_of_in T S hT hS
       exists a
+
     rw [← hTS]
     exact hx
 
@@ -1239,7 +1497,7 @@ theorem exercise_overlapping_not_partition :
   sorry
 ```
 
-# 몫집합과 몫타입
+# 몫집합
 %%%
 tag := "preliminaries-quotients"
 file := "quotients"
@@ -1272,7 +1530,7 @@ def quotientSet {A : Type _} (R : Relation A) :
 `equivalenceClass R a`가 어떤 원소의 동치류임을 보이려면 그 원소로 `a`를 제시하면 된다.
 
 ```savedLean
-theorem equivalenceClass_mem_quotientSet {A : Type _}
+theorem equivalenceClass_in_quotientSet {A : Type _}
     (R : Relation A) (a : A) :
     equivalenceClass R a ∈ quotientSet R := by
   exists a
@@ -1301,9 +1559,14 @@ def QuotientType {A : Type _}
 
 ```savedLean -show
 attribute [reducible] QuotientType
-scoped notation:70 (name := quotientTypeNotation) α " / " R:71 =>
-  QuotientType (A := α) R
+```
 
+```savedLean
+scoped notation:70 (name := quotientTypeNotation)
+  α " / " R:71 => QuotientType (A := α) R
+```
+
+```savedLean -show
 open Lean PrettyPrinter Delaborator SubExpr in
 /-- Display the quotient carrier and relation without unfolding its construction. -/
 def Notation.delabQuotientType : Delab :=
@@ -1321,14 +1584,14 @@ attribute [scoped delab app.Ample.QuotientType] Notation.delabQuotientType
 `S ∈ quotientSet R`는 집합 `S`가 주어지면 쓸 수 있는 명제인 데 비해,
 `A / R`의 원소를 만들려면 이 명제의 증명을 함께 제시해야 한다.
 
-앞에서 증명한 `equivalenceClass_mem_quotientSet R a`를 사용하여
+앞에서 증명한 `equivalenceClass_in_quotientSet R a`를 사용하여
 동치류를 몫타입의 원소로 만들자.
 
 ```savedLean
 def classOf {A : Type _} (R : Relation A) (a : A) :
     A / R :=
   { val := equivalenceClass R a
-    property := equivalenceClass_mem_quotientSet R a }
+    property := equivalenceClass_in_quotientSet R a }
 ```
 
 `classOf R a`의 값은 동치류인 집합 `equivalenceClass R a`이다.
@@ -1385,7 +1648,7 @@ theorem classOf_eq_iff {A : Type _} (R : Relation A)
     (⟦a⟧ : A / R) = ⟦b⟧ ↔ R a b := by
   constructor
   · intro h
-    indisc at h with hSets
+    apply_fun (fun x => x.val) at h with hSets
     have ha : a ∈ equivalenceClass R a := by
       exact hR.refl a
 
@@ -1397,7 +1660,7 @@ theorem classOf_eq_iff {A : Type _} (R : Relation A)
     exact equivalenceClass_eq R hR a b hab
 ```
 
-첫 방향의 `indisc`은 부분타입의 값인 두 집합의 등식 `hSets`를 얻는다.
+첫 방향에서는 `fun x => x.val`을 적용하여 두 동치류의 등식 `hSets`를 얻는다.
 그 등식으로 `ha`의 집합을 바꾸면 `a ∈ equivalenceClass R b`가 되므로
 원하는 관계 `R a b`를 얻는다.
 역방향의 `ext`도 부분타입의 값만 비교하며,
@@ -1420,7 +1683,7 @@ attribute [reducible] Parity
 
 ```savedLean
 theorem parityClass_eq_iff (a b : Int) :
-    parityClass a = parityClass b ↔ a ≡ b [ZMOD 2] := by
+    parityClass a = parityClass b ↔ a ≡ b [MOD 2] := by
   apply classOf_eq_iff (Congruent 2)
   apply congruent_equivalence
 ```
@@ -1429,9 +1692,9 @@ theorem parityClass_eq_iff (a b : Int) :
 attribute [ample_compare] parityClass_eq_iff
 ```
 
-이 비교도 `ext`와 `indisc`에 연결했다.
+이 정리를 `ext`에 연결했다.
 예를 들어 `parityClass 0 = parityClass 2`를 보일 때 `ext`를 사용하면
-목표가 `0 ≡ 2 [ZMOD 2]`로 바뀐다.
+목표가 `0 ≡ 2 [MOD 2]`로 바뀐다.
 $`0=2+2\cdot(-1)`이므로 합동의 정의에 필요한 정수로 $`-1`을 제시하면 된다.
 
 ```savedLean
@@ -1441,18 +1704,18 @@ theorem parityClass_zero_two :
   exists (-1)
 ```
 
-몫 원소의 등식이 가정으로 주어졌다면 `indisc`으로 두 대표원의 합동을 얻을 수 있다.
-다음 예제의 `indisc`은 `h`를 `a ≡ b [ZMOD 2]`의 증명으로 바꾼다.
+몫 원소의 등식에서 대표원의 합동을 얻을 때는 `parityClass_eq_iff`의 정방향을 사용한다.
+합동이라는 목표에 이 정리를 적용하면 두 몫 원소의 등식이 새 목표가 된다.
 
 ```savedLean
 example (a b : Int)
     (h : parityClass a = parityClass b) :
-    a ≡ b [ZMOD 2] := by
-  indisc at h
+    a ≡ b [MOD 2] := by
+  apply (parityClass_eq_iff a b).mp
   exact h
 ```
 
-두 명령 모두 방금 증명한 `parityClass_eq_iff`를 사용한다.
+`ext`로 등식을 증명할 때도 같은 정리의 역방향을 사용한다.
 
 ## 대표원의 선택
 %%%
@@ -1558,7 +1821,7 @@ Lean에서도 `rcases`로 이 정수 `k`와 등식 `hk`를 얻은 뒤 `arith`로
 
 ```savedLean
 theorem congruent_two_same_remainder (a b : Int)
-    (hab : a ≡ b [ZMOD 2]) :
+    (hab : a ≡ b [MOD 2]) :
     a % 2 = b % 2 := by
   rcases hab with ⟨k, hk⟩
   arith
@@ -1700,10 +1963,7 @@ example :
 theorem parityClass_zero_ne_one :
     parityClass 0 ≠ parityClass 1 := by
   intro h
-  replace h :
-      parityRemainder (parityClass 0) =
-        parityRemainder (parityClass 1) := by
-    rw [h]
+  apply_fun parityRemainder at h
 
   rw [parityRemainder_class,
     parityRemainder_class] at h
@@ -1753,7 +2013,7 @@ theorem quotientLift_unique {A B : Type _}
 `quotient_exists_classOf R q`는 `∃ a, q = ⟦a⟧`의 증명이므로
 `unpack`으로 대표원과 등식을 얻은 뒤 `rw`로 두 함수값을 모두 `f a`로 바꾼다.
 
-# 연습문제
+## 연습문제
 %%%
 tag := "relations-exercises"
 file := "exercises"
@@ -1937,7 +2197,7 @@ theorem exercise_parity_double_zero (a : Int) :
   sorry
 
 theorem exercise_parity_double_respects (a b : Int)
-    (_h : a ≡ b [ZMOD 2]) :
+    (_h : a ≡ b [MOD 2]) :
     parityClass (2 * a) = parityClass (2 * b) := by
   sorry
 

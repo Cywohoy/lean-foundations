@@ -4,7 +4,7 @@ defaultTargets = ["AlgebraBook", "textbook"]
 [[require]]
 name = "ample"
 git = "https://github.com/Cywohoy/ample"
-rev = "2ae723ba8d66051b9278701346f70e2270bc95ff"
+rev = "2452e27e9539465f5895abfa922542dc8de7d26f"
 
 [[require]]
 name = "MD4Lean"

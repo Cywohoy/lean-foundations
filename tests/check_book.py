@@ -29,10 +29,25 @@ source="\n".join((root/f"AlgebraBook/{m}.lean").read_text(encoding="utf-8") for 
 expected=re.findall(r"^theorem\s+(exercise_\w+)",source,re.M)
 assert set(expected)<=set(names),(set(expected)-set(names))
 proof=(root/"AlgebraBook/Proof.lean").read_text(encoding="utf-8")
-assert proof.index("#eval 2 + 3")<proof.index("def add")<proof.index("# 명제와 술어")<proof.index("# 계산 결과의 증명")<proof.index("# 정리의 사용")
+assert proof.index("#eval 2 + 3") < proof.index("## 명제\n") < proof.index("## 계산 결과의 증명") < proof.index("# 함의")
+assert proof.index('# 부정과 고전논리') < proof.index('theorem not_or_iff') < proof.index('# 술어와 양화사')
+assert proof.index('# 술어와 양화사') < proof.index('def add') < proof.index('def positive') < proof.index('## 전칭명제\n')
+assert proof.index('## 존재명제') < proof.index('theorem not_forall_iff') < proof.index('# 등식\n')
+assert proof.index('# 등식\n') < proof.index('∀ F : A → Prop') < proof.index('theorem predicate_ext')
+assert 'Nat → Prop' not in proof[:proof.index('# 술어와 양화사')]
+assert proof.index('theorem exercise_four_square') < proof.index('# 함의')
+assert proof.index('def solvesSquare') < proof.index('theorem exercise_four_solves_square')
 assert "identityExplicit" not in proof
 sets=(root/"AlgebraBook/SetsFunctions.lean").read_text(encoding="utf-8")
-assert sets.index("theorem inter_comm_forward")<sets.index("# 동치와 두 방향")
+assert proof.index('tag := "logic-equivalence"') < proof.index('tag := "logic-quantifier-order"')
+assert '# 논리식의 변형' not in proof
+assert proof.index('theorem double_negation_elim') < proof.index('theorem implication_of_contrapositive') < proof.index('theorem not_forall_iff')
+assert proof.index('theorem not_imp_iff') < proof.index('theorem exists_counterexample') < proof.index('theorem predicate_ext')
+assert 'theorem not_forall_iff' not in sets and 'by_contra' not in sets[:sets.index('# 상과 역상')]
+assert [len(re.findall(r'^# ', (root/f"AlgebraBook/{m}.lean").read_text(encoding="utf-8"), re.M)) for m in chapters.values()] == [6,7,6,7]
+assert 'ProofExamples.predicate_ext' in sets and 'ProofExamples.exists_counterexample' in sets
+assert sets.index('def preimage') < sets.index('theorem preimage_indexedUnion')
+assert sets.index('def Bijective') < sets.index('def compose') < sets.index('def Elem')
 assert "def cardinality_fin_three_last" not in sets
 sizes=(root/"AlgebraBook/CardinalityChapter.lean").read_text(encoding="utf-8")
 assert sizes.index('theorem finite_cardinal_unique') < sizes.index('def cardinalityData') < sizes.index('def cardinality (')
@@ -56,9 +71,41 @@ for flags,code in re.findall(r'```savedLean([^\n]*)\n(.*?)```', sizes, re.S):
         assert '-show' not in flags, 'The finite counting proof must expose the mathematical steps it uses'
 assert sizes.index('def finSum') < sizes.index('def finProduct') < sizes.index('noncomputable def add')
 assert 'binaryData' not in sizes
+shown_sizes = '\n'.join(code for flags, code in re.findall(
+    r'```savedLean([^\n]*)\n(.*?)```', sizes, re.S)
+    if '-show' not in flags.split() and '-keep' not in flags.split())
+for operation in ['add', 'mul', 'power']:
+    declaration = re.search(r'noncomputable def ' + operation + r'\b.*?(?=\n(?:noncomputable|theorem|end)\b|\Z)', shown_sizes, re.S)
+    assert declaration and 'quotientLift' in declaration[0], f'{operation}: show its quotient-lift construction'
+# A checked output may expose a theorem's type while its repetitive proof stays
+# in complete hidden code. An unshown #check by itself is not a visible rule.
+named_checks = dict(re.findall(
+    r'```lean[^\n]*\(name := (\w+)\)[^\n]*\n(?:set_option format\.width \d+ in\n)?#check (\w+)\n```', sizes))
+shown_outputs = {name: code for name, code in re.findall(
+    r'```leanOutput (\w+)\n(.*?)```', sizes, re.S)}
+def visible_rule(name):
+    if re.search(r'^theorem ' + name + r'\b', shown_sizes, re.M):
+        return True
+    return any(result == name and re.search(r'^Ample\.' + name + r'\b', shown_outputs.get(output, ''), re.M)
+               for output, result in named_checks.items())
+for result in ['cardinal_sum', 'cardinal_product', 'cardinal_arrow',
+               'sameCardinality_product', 'sameCardinality_arrow']:
+    assert visible_rule(result), f'{result}: keep its hypotheses and conclusion visible'
+assert 'apply cardinal_eq_of_sameCardinality' not in shown_sizes
+assert 'apply sameCardinality_of_cardinal_eq' not in shown_sizes
+assert sizes.index('theorem cardinal_empty_fin_arrow') < sizes.index('theorem cardinal_fin_arrow')
+assert sizes.index('Fin.lastCases 7') < sizes.index('def finFunctionAppend')
+for problem, notation in [('sum', '∑'), ('product', '∏')]:
+    statement = re.search(r'theorem exercise_three_boxes_' + problem + r'\b.*?:= by', sizes, re.S)
+    assert statement and notation in statement[0], 'Connect the three-box exercise to finite arithmetic'
+assert sets.index('대괄호에 정의·정리·가정') < sets.index('theorem sumMap_bijective')
 assert "Advanced:" not in source
 assert sizes.count("# 크기 비교의 자동화")==1
 appendix=(root/"AlgebraBook/Tactics.lean").read_text(encoding="utf-8")
+assert not re.search(r'\bindisc!?\b', source + appendix), 'Use explicit function application or a named comparison theorem'
+assert proof.index('"logic-applying-functions"') < proof.index('## 모든 술어에 대한 양화')
+assert '유한한 집합족의 합과 곱에서' not in appendix
+assert 'simp only' not in appendix
 for syntax in ["apply goal","unpack goals","cases goal","induction at","wlog at"]:
     assert syntax not in appendix
 print(f"Four chapter pages, two appendices, {len(names)} named exercise statements; structure checks passed.")

@@ -1,4 +1,4 @@
-"""Check exported chapter code, regenerated exercises, and optional source."""
+"""Check exported chapter code and regenerated exercises."""
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor,as_completed
 import subprocess, hashlib
@@ -8,7 +8,6 @@ def fingerprint():
 before=fingerprint()
 paths=sorted((root/"_out/example-code").rglob("*.lean"))
 paths+=sorted((root/"ExerciseTemplates").glob("*.lean"))
-paths+=sorted((root/"Supplement").glob("*.lean"))
 assert paths,"Build the book first"
 def run(path):
     result=subprocess.run(["lake","env","lean",str(path)],cwd=root,capture_output=True,text=True,encoding="utf-8")

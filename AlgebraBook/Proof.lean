@@ -1,25 +1,30 @@
 import AlgebraBook.Meta.Lean
 import AlgebraBook.Tactic.Rule
+import AlgebraBook.Tactic.Classical
+import AlgebraBook.Tactic.Auto
 import VersoManual
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 open AlgebraBook
 
-#doc (Manual) "Lean과 증명" =>
+#doc (Manual) "증명의 기초" =>
 
 %%%
 tag := "proof"
 file := "proof"
 %%%
 
-Lean에서는 수를 계산하고 함수를 정의할 수 있으며, 그 성질을 증명할 수도 있다.
-이 장에서는 간단한 계산을 적으며 Lean의 문법을 익힌 뒤,
-가정과 정리를 사용하여 증명을 작성하는 방법을 살펴본다.
+수학의 증명에서는 가정을 세우고, 이미 아는 사실을 사용하여 결론을 얻는다.
+Lean에서는 그 과정에 쓰인 명제와 추론을 코드로 적어 증명을 확인한다.
+간단한 계산의 증명에서 시작하여 “두 사실이 모두 성립한다”, “이 조건이면 저 조건이 성립한다”와 같은 주장을 다룬다.
+이어서 모든 원소나 어떤 원소에 관한 명제를 증명하고, 마지막에는 원소마다 조건을 정하는 술어 자체를 비교한다.
 
 {anchor "introduction"}[]
 ```savedImport
 import AlgebraBook.Tactic.Rule
+import AlgebraBook.Tactic.Classical
+import AlgebraBook.Tactic.Auto
 ```
 
 ```savedLean -show
@@ -27,7 +32,7 @@ open scoped Ample
 namespace IntroExamples
 ```
 
-# 계산과 함수
+# 명제와 증명
 %%%
 tag := "intro-values-and-types"
 %%%
@@ -54,34 +59,11 @@ def five : Nat := three + 2
 `three : Nat`는 `three`가 자연수라는 뜻이고, `:= 3`은 그 값을 $`3`으로 정한다.
 두 번째 정의는 앞의 이름을 사용하므로 `five`의 값은 $`5`이다.
 
-{anchor "intro-function-application"}[]{anchor "intro-defining-functions"}[]
-이번에는 더할 두 수를 매번 바꿀 수 있도록 함수를 정의하자.
-
-```savedLean
-def add (x y : Nat) : Nat := x + y
-```
-
-`(x y : Nat)`는 두 인수가 자연수라는 뜻이고, 뒤의 `: Nat`는 결과의 타입이다.
-수학의 함수값 $`f(x)`는 Lean에서 `f x`로 쓴다.
-따라서 `add 2 3`은 위 함수에 $`2`와 $`3`을 넣은 식이다.
-
-```lean (name := functionSum)
-#eval add 2 3
-```
-
-```leanOutput functionSum
-5
-```
-
-하나의 인수가 복잡한 식이면 괄호로 묶는다.
-`add (2 + 1) 4`에서는 $`2+1`과 $`4`를 더하며,
-`add 2 (add 3 4)`에서는 안쪽 함수값 $`7`과 $`2`를 더한다.
-
 {anchor "intro-comments"}[]코드에 설명을 덧붙일 때는 `--` 뒤에 적는다.
 그 줄의 나머지는 주석이므로 Lean이 코드로 해석하지 않는다.
 여러 줄의 설명은 `/-`와 `-/` 사이에 적을 수 있다.
 
-# 명제와 술어
+## 명제
 %%%
 tag := "intro-propositions-and-goals"
 %%%
@@ -98,49 +80,23 @@ def reversedComparison : Prop := 5 < 3
 
 위 선언은 두 명제를 정의한다. 명제를 적는 것만으로 그 명제가 증명되지는 않는다.
 
-{anchor "intro-predicates"}[]“$`n`은 양의 자연수이다”라는 조건에서는 $`n`에 넣을 수에 따라 명제가 달라진다.
-$`3`을 넣으면 $`0<3`이고, $`0`을 넣으면 $`0<0`이다.
-이처럼 원소마다 명제를 정하는 조건을 *술어*라고 한다.
-
-```savedLean
-def positive : Nat → Prop := fun n => 0 < n
-```
-
-`Nat → Prop`은 자연수를 받아 명제를 돌려주는 함수의 타입이다.
-`fun n => 0 < n`은 수학의 $`n\mapsto(0<n)`을 나타낸다.
-앞의 `add`처럼 `def positive (n : Nat) : Prop := 0 < n`으로 정의해도 같은 술어이며,
-이후에는 함수의 타입을 먼저 적는 형태를 사용하겠다.
-`positive`는 술어이고 `positive 3`은 명제 $`0<3`이다.
-
-같은 방식으로 방정식의 해라는 조건도 나타낼 수 있다.
-자연수 $`a`를 고정하면 각 $`n`에 명제 $`n^2=a`가 대응된다.
-
-```savedLean
-def solvesSquare (a : Nat) : Nat → Prop :=
-  fun n => n * n = a
-```
-
-`solvesSquare 16 4`는 $`4\cdot4=16`이고,
-`solvesSquare 16 3`은 $`3\cdot3=16`이다.
-두 식 모두 명제이지만 첫째만 참이다.
-
-# 계산 결과의 증명
+## 계산 결과의 증명
 %%%
 tag := "intro-proofs-as-values"
 %%%
 
 앞에서 계산한 등식이 맞음을 Lean으로 증명해 보자.
-그 증명에 이름을 붙이면 뒤의 증명에서도 사용할 수 있다.
 
 ```savedLean
-theorem add_two_three : add 2 3 = 5 := by
+example : 2 + 3 = 5 := by
   rfl
 ```
 
-`theorem` 뒤에는 증명의 이름을, `:` 뒤에는 증명할 명제를 적는다.
-`by` 아래에는 증명 단계를 적으며, 이때 쓰는 명령을 *전술*이라고 한다.
-`rfl`은 양변이 정의와 계산에 따라 같음을 확인한다.
-여기서는 왼쪽의 `add 2 3`을 계산하면 오른쪽의 $`5`가 된다.
+`example` 뒤의 `:`에는 증명할 명제를 적고, `by` 아래에는 증명 단계를 적는다.
+이때 쓰는 명령을 *전술*이라고 한다. `rfl`은 양변이 정의와 계산에 따라 같음을 확인하며,
+여기서는 왼쪽의 `2 + 3`을 계산하면 오른쪽의 $`5`가 된다.
+증명에 이름을 붙여 다시 사용할 때는 `example` 대신 `theorem 이름`으로 쓴다.
+따라서 `example`은 설명을 위한 이름 없는 `theorem`이다.
 
 {anchor "intro-proof-value-notation"}[]{anchor "intro-proposition-and-proof"}[]
 명제의 이름과 증명의 이름을 나란히 비교해 보자.
@@ -159,7 +115,6 @@ theorem comparisonProof : 3 < 5 := by decide
 ```
 
 {anchor "intro-presenting-proofs"}[]이미 얻은 증명은 이름으로 다시 사용할 수 있다.
-`example`은 설명을 위한 이름 없는 `theorem`이다.
 
 ```savedLean
 example : 3 < 5 := by
@@ -193,26 +148,13 @@ h : 0 < n
 위쪽의 `h`는 사용할 수 있는 증명이고, `⊢` 뒤는 증명을 요구하는 명제이다.
 웹의 코드 오른쪽 위 ‘단계 보기’나 코드 안의 전술을 누르면 이 상태를 확인할 수 있다.
 
-가정이 `h : positive n`으로 적혀 있어도 `positive n`을 정의에 따라 펼치면 `0 < n`이다.
-따라서 목표 `0 < n`에 같은 증명 `h`를 사용할 수 있다.
+*문제 1* (계산 결과)
 
-*문제 1* (방정식의 해)
-
-먼저 $`4\cdot4=16`을 증명하고 그 결과로 $`4`가 방정식 $`n^2=16`의 해임을 보이라.
-마지막으로 수의 값이 주어지지 않은 경우에도 해라는 가정에서 등식을 얻으라.
+$`4\cdot4=16`을 증명하라.
 아래의 `sorry`는 미완성 증명의 자리이며 실제 증명으로 바꾸어야 한다.
 
 ```savedLean -keep
 theorem exercise_four_square : 4 * 4 = 16 := by
-  sorry
-
-theorem exercise_four_solves_square :
-    solvesSquare 16 4 := by
-  sorry
-
-theorem exercise_square_proof (a n : Nat)
-    (h : solvesSquare a n) :
-    n * n = a := by
   sorry
 ```
 
@@ -237,11 +179,14 @@ namespace ProofExamples
 open IntroExamples
 ```
 
-# 정리의 사용
+# 함의
 %%%
 tag := "proofs-named-theorems"
 file := "named-theorems"
 %%%
+
+“$`P`이면 $`Q`이다”라는 형태의 명제를 *함의*라고 하며 Lean에서는 `P → Q`로 쓴다.
+먼저 이미 증명된 함의를 사용하여 결론을 얻은 뒤, 함의 자체를 증명하는 방법을 살펴보자.
 
 부등식의 양변에 같은 수를 더하면 대소관계가 유지된다.
 예를 들어 $`a<b`를 알고 있을 때 양변에 $`2`를 더하면 $`a+2<b+2`를 얻는다.
@@ -339,7 +284,7 @@ example (a b : Nat)
 ```
 :::
 
-# 식의 정리
+## 식의 정리
 %%%
 tag := "proofs-propositions-and-proofs"
 %%%
@@ -360,7 +305,7 @@ example (a b : Nat) :
 이런 규칙을 반복하여 식을 일정한 형태로 정리하는 과정을 *정규화*라고 한다.
 등식의 양변을 정리한 결과가 같으면 위와 같이 `simp`로 증명을 마칠 수 있다.
 
-# 증명 안의 보조정리
+## 증명 안의 보조정리
 %%%
 tag := "proofs-naming-proofs"
 file := "naming-proofs"
@@ -399,7 +344,7 @@ variable (pythagoras : rightAngled → c * c = 3 * 3 + 4 * 4)
 include pythagoras
 ```
 
-이 증명에서 이 증명에서 사용할 가정과 정리는 다음과 같다.
+이 증명에서 사용할 가정과 정리는 다음과 같다.
 정리의 인수 `hRight`는 이 삼각형이 직각이라는 증명이다.
 
 ```
@@ -462,16 +407,16 @@ theorem exercise_two_shifts_lt (a b c d : Nat)
   sorry
 ```
 
-# 함의의 증명과 사용
+## 함의의 증명과 사용
 %%%
 tag := "proofs-proving-implications"
 file := "proving-implications"
 %%%
 
 양변에 $`2`를 더한 예제에서는 $`a<b`를 가정하여 $`a+2<b+2`를 보였다.
-이처럼 “$`P`이면 $`Q`이다”라는 형태의 명제를 *함의*라고 하며,
-Lean에서는 `P → Q`로 쓴다.
-함의 $`P \Rightarrow Q`를 증명할 때는 $`P`를 가정하고 $`Q`를 보인다.
+그때는 가정을 `(h : a < b)`처럼 인수로 먼저 적었다.
+이제 함의 자체를 `P → Q`라는 목표로 두고, 증명 안에서 가정을 도입해 보자.
+`(h : P) : Q`와 `: P → Q`는 모두 $`P`를 가정하여 $`Q`를 보이는 명제를 나타낸다.
 Lean에서는 목표가 `P → Q`일 때 `intro hP`로 가정 `hP : P`를 도입하며
 이후에는 `Q`가 새 목표가 된다.
 
@@ -524,7 +469,7 @@ example (P Q : Prop) : P → (P → Q) → Q := by
 
 `apply hPQ`와 `exact hP`를 함께 읽으면 “$`P`를 알고 있고 $`P`이면 $`Q`이므로 $`Q`이다”라는 추론이 된다.
 
-# 증명의 적용
+## 증명의 적용
 %%%
 tag := "proofs-proof-application"
 file := "proof-application"
@@ -545,9 +490,8 @@ Lean은 함의의 증명을 이와 같이 전제의 증명을 받아 결론의 �
 인수 `hP : P`를 넣은 함수값 `hPQ hP`의 타입은 `Q`가 된다.
 이때 함수에 넣는 인수는 명제 `P`가 아니라 그 명제의 증명 `hP`이다.
 `P`가 참임을 이미 보였거나 가정으로 알고 있을 때 그 증명을 넣어 `Q`의 증명을 얻는다.
-이러한 함수 적용을 “증명의 적용”이라고 한다.
-`add 2 3`에서 자연수를 넣었듯이 여기서는 `hPQ`에 증명 `hP`를 넣는다.
-어떤 인수가 필요한지는 함수의 타입으로 구별한다.
+수학의 함수값 $`f(x)`를 Lean에서는 `f x`로 쓰므로 여기서 얻는 증명도 `hPQ hP`로 적는다.
+이처럼 함수로 표현한 증명에 필요한 인수를 넣는 것을 “증명의 적용”이라고 한다.
 
 이제 같은 정리를 다음과 같이 증명할 수 있다.
 
@@ -563,24 +507,8 @@ example (P Q : Prop) : P → (P → Q) → Q := by
 `intro hP hPQ`는 두 가정을 차례로 도입하는 명령으로,
 `intro hP`와 `intro hPQ`를 각각 쓰는 것과 같다.
 
-함의를 증명할 때 사용한 `intro`도 이 표현 방식으로 이해할 수 있다.
-`P → Q`를 보이기 위해 `intro hP`로 `P`의 증명을 받은 뒤 `Q`를 증명하면,
-그 전체 과정이 `P`의 증명을 인수로 받는 함수를 구성한다.
-앞에서 증명한 `P → P`는 받은 증명을 그대로 돌려주므로 다음과 같이 쓸 수도 있다.
-
-```savedLean
-example (P : Prop) : P → P :=
-  fun hP => hP
-```
-
-여기서 `hP`의 타입은 `P`이며 함수값도 `P`의 증명이다.
-앞의 `intro hP`와 `exact hP`는 이 함수의 인수와 함수값을 단계별로 정한 것이다.
-
-{anchor "intro-arguments-one-at-a-time"}[]
-앞의 `add x y`는 `(add x) y`로 읽는다. `add x`는 $`x`를 더하는 함수이며
-여기에 $`y`를 넣어 합을 얻으므로 `add`의 타입은 `Nat → (Nat → Nat)`이다.
-보통 괄호를 생략하여 `Nat → Nat → Nat`로 쓴다.
-증명에도 인수를 차례로 넣는 같은 표기를 사용한다.
+함의 `P → Q`를 증명할 때 `intro hP`로 전제의 증명을 받고 `Q`를 증명하면,
+그 전체 과정이 `P`의 증명을 받아 `Q`의 증명을 돌려주는 함수를 구성한다.
 
 {anchor "proofs-theorem-arguments"}[]{ref "proofs-named-theorems"}[부등식의 보기]에서 사용한 정리도 같은 방식으로 읽을 수 있다.
 `Nat.add_lt_add_right`에 부등식 `a < b`의 증명 `h`와 더할 수 `2`를 넣으면
@@ -603,7 +531,7 @@ example (a b : Nat)
 {anchor "proofs-forward-application"}[]`apply hPQ at hP`를 쓰면 가정 `hP : P`에 함의를 적용하여 `hP : Q`로 바꿀 수도 있다.
 이 용법은 {ref "tactic-hypotheses"}[전술 부록]에서 목표에 적용하는 방법과 비교한다.
 
-## 함의의 연결과 중간 증명
+### 함의의 연결과 중간 증명
 %%%
 tag := "proofs-chaining-proof-values"
 %%%
@@ -680,7 +608,625 @@ example (P Q R : Prop) :
 ```
 :::
 
-# 전칭명제의 증명과 사용
+# 명제의 결합
+%%%
+tag := "logic-connectives"
+%%%
+
+“$`3<5`이고 $`5<8`이다”라는 주장을 증명하려면 두 부등식을 모두 확인해야 한다.
+“$`n=2`이거나 $`n=3`이다”라는 주장은 두 등식 중 하나가 성립하면 된다.
+이처럼 명제를 결합하는 방식에 따라 증명에서 해야 할 일도 달라진다.
+명제를 함의·논리곱·논리합·부정 등으로 연결하고 그 사이의 추론을 다루는 논리를 *명제논리*라고 한다.
+
+## 논리곱
+%%%
+tag := "logic-conjunction"
+%%%
+
+두 명제 $`P`, $`Q`가 모두 성립한다는 명제를 *논리곱*이라고 하며 `P ∧ Q`로 쓴다.
+목표가 논리곱이면 `constructor`로 두 목표를 만들고 각각 증명한다.
+각 목표의 증명은 `·` 뒤에 적으며 `·`는 `\.`으로 입력한다.
+
+```savedLean
+theorem three_lt_five_and_five_lt_eight :
+    3 < 5 ∧ 5 < 8 := by
+  constructor
+  · exact comparisonProof
+  · decide
+```
+
+반대로 `h : P ∧ Q`가 주어지면 `h.left`는 `P`의 증명이고 `h.right`는 `Q`의 증명이다.
+두 사실을 사용하는 예로 논리곱의 순서를 바꾸어 보자.
+
+```savedLean
+theorem conjunction_comm (P Q : Prop) :
+    P ∧ Q → Q ∧ P := by
+  intro h
+  constructor
+  · exact h.right
+  · exact h.left
+```
+
+`intro h` 뒤에는 두 사실을 함께 갖고 있다. `constructor`로 나뉜 첫 목표 `Q`에는
+`h.right`를, 둘째 목표 `P`에는 `h.left`를 사용한다.
+
+세 명제의 논리곱 `P ∧ Q ∧ R`는 `P ∧ (Q ∧ R)`로 묶인다.
+`constructor`를 쓰면 먼저 `P`와 `Q ∧ R`로 나뉘므로 둘째 목표에서 한 번 더 나누어야 한다.
+`and_intros`는 이처럼 겹친 논리곱을 모두 나누어 `P`, `Q`, `R`를 각각 목표로 남긴다.
+
+```savedLean
+example (P Q R : Prop)
+    (hP : P)
+    (hQ : Q)
+    (hR : R) :
+    P ∧ Q ∧ R := by
+  and_intros
+  · exact hP
+  · exact hQ
+  · exact hR
+```
+
+## 논리합
+%%%
+tag := "logic-disjunction"
+%%%
+
+“$`n=2`이거나 $`n=3`이다”를 알고 있을 때 $`n<4`를 보이려면 어느 등식이 주어지든 결론을 얻어야 한다.
+이 주장을 나타내는 *논리합* `P ∨ Q`는 $`P`, $`Q` 중 적어도 하나가 성립한다는 뜻이다.
+목표가 논리합이면 `left`나 `right`로 증명할 쪽을 선택한다.
+
+```savedLean
+example : 2 = 2 ∨ 2 = 3 := by
+  left
+  rfl
+```
+
+논리합을 가정으로 받았을 때는 `cases`로 경우를 나눈다.
+아래에서 `inl`은 왼쪽 명제가 주어진 경우이고 `inr`은 오른쪽 명제가 주어진 경우이다.
+
+```savedLean
+theorem disjunction_comm (P Q : Prop) :
+    P ∨ Q → Q ∨ P := by
+  intro h
+  cases h with
+  | inl hP =>
+      right
+      exact hP
+
+  | inr hQ =>
+      left
+      exact hQ
+```
+
+첫 경우에는 `hP : P`를 얻으므로 목표 `Q ∨ P`의 오른쪽을 증명하고,
+둘째 경우에는 `hQ : Q`를 얻으므로 왼쪽을 증명한다.
+논리곱에서는 두 증명을 모두 꺼낼 수 있었지만 논리합에서는 주어진 경우마다 논증을 완성해야 한다.
+
+{anchor "sets-equivalence"}[]{anchor "sets-proving-equivalence"}[]{anchor "sets-using-equivalence"}[]
+
+## 동치
+%%%
+tag := "logic-equivalence"
+%%%
+
+두 조건이 같은 경우에 성립함을 보이려면 양쪽 방향을 모두 확인한다.
+예를 들어 “$`n=2`이거나 $`n=3`이다”와 “$`n=3`이거나 $`n=2`이다”는 서로 같은 조건이다.
+앞 정리를 한 번은 원래 순서로, 한 번은 두 명제를 바꾸어 사용하면 두 방향을 모두 얻는다.
+
+두 명제 $`P`, $`Q` 사이에서 `P → Q`와 `Q → P`가 모두 성립하면 두 명제가 *동치*라고 하며 `P ↔ Q`로 쓴다.
+동치의 목표에서도 `constructor`로 두 방향을 나눈다.
+
+```savedLean
+theorem disjunction_comm_iff (P Q : Prop) :
+    (P ∨ Q) ↔ (Q ∨ P) := by
+  constructor
+  · apply disjunction_comm
+  · apply disjunction_comm
+```
+
+`h : P ↔ Q`가 주어지면 `h.mp`는 정방향 `P → Q`의 증명이고,
+`h.mpr`는 역방향 `Q → P`의 증명이다.
+
+```savedLean
+example (P Q : Prop)
+    (h : P ↔ Q)
+    (hP : P) :
+    Q := by
+  apply h.mp
+  exact hP
+```
+
+*문제 5* (동치의 연결)
+
+$`P\leftrightarrow Q`이고 $`Q\leftrightarrow R`이면 $`P\leftrightarrow R`임을 증명하라.
+각 방향에서 두 동치의 어느 방향을 사용하는지 확인하라.
+
+```savedLean -keep
+theorem exercise_logic_iff_trans (P Q R : Prop)
+    (hPQ : P ↔ Q)
+    (hQR : Q ↔ R) :
+    P ↔ R := by
+  sorry
+```
+
+*문제 6* (분배법칙)
+
+$`P\land(Q\lor R)`일 필요충분조건은 $`(P\land Q)\lor(P\land R)`임을 증명하라.
+
+```savedLean -keep
+theorem exercise_logic_and_or_distrib (P Q R : Prop) :
+    (P ∧ (Q ∨ R)) ↔ ((P ∧ Q) ∨ (P ∧ R)) := by
+  sorry
+```
+
+# 부정과 고전논리
+%%%
+tag := "logic-negation-classical"
+%%%
+
+두 조건을 함께 만족할 수 없음을 보일 때는 그 조건들이 모두 성립한다고 가정한 뒤 모순을 얻는다.
+부정도 이런 방식으로 증명하며, 부정의 부정에서 원래 명제를 얻는 추론으로 나아가면 고전논리가 필요하다.
+
+## 부정의 증명
+%%%
+tag := "logic-negation"
+%%%
+
+항상 참인 명제는 `True`, 모순을 나타내는 명제는 `False`로 쓴다.
+전술 `trivial`은 `True`와 같은 참인 목표를 증명하고,
+`contradiction`은 모순인 가정이 있을 때 남은 목표를 증명한다.
+`True.intro`는 `True`의 증명이며 `False.elim`은 모순에서 임의의 결론을 얻는 원리이다.
+
+```savedLean
+example : True := by
+  trivial
+
+example (P : Prop)
+    (h : False) :
+    P := by
+  contradiction
+```
+
+명제 $`P`가 성립하지 않는다는 명제를 그 *부정*이라고 하며 `¬ P`로 쓴다.
+Lean에서 이는 `P → False`로 정의된다.
+따라서 `¬ P`를 증명할 때는 `intro hP`로 `P`를 가정하고 모순을 보이면 된다.
+이 임시 가정은 $`P`가 실제로 참이라고 주장하는 것이 아니라, $`P`가 성립하면 어떤 결과가 나오는지 확인하는 단계이다.
+
+```savedLean
+example : ¬ False := by
+  intro hFalse
+  exact hFalse
+```
+
+이 예에서 `intro hFalse` 뒤에는 가정과 목표가 모두 `False`이므로 그 가정을 제시하면 된다.
+
+이번에는 `hnotP : ¬ P`와 `hP : P`를 함께 알고 있다고 하자.
+`hnotP`는 `P → False`의 증명이므로 앞에서 배운 `apply`를 사용할 수 있다.
+목표 `False`에 `apply hnotP`를 쓰면 `P`가 새 목표로 남으며, 이는 `hP`로 증명한다.
+
+```savedLean
+example (P : Prop)
+    (hnotP : ¬ P)
+    (hP : P) :
+    False := by
+  apply hnotP
+  exact hP
+```
+
+등식의 부정 `¬ (a = b)`는 `a ≠ b`로 줄여 쓴다.
+예를 들어 `3 ≠ 5`를 증명하려면 두 수가 같다고 가정하여 모순을 보이면 된다.
+
+## 대우
+%%%
+tag := "logic-contrapositive"
+%%%
+
+$`a<b`이면 $`a+2<b+2`이다. 따라서 $`a+2<b+2`가 성립하지 않는다면 $`a<b`도 성립할 수 없다.
+만약 $`a<b`라면 처음의 함의에 따라 $`a+2<b+2`를 얻어 모순이 생기기 때문이다.
+
+함의 $`P\Rightarrow Q`의 *대우*는 $`\neg Q\Rightarrow\neg P`이다.
+원래 함의에서 그 대우를 얻는 위 논증은 부정의 정의만으로 작성할 수 있다.
+
+```savedLean
+theorem contrapositive (P Q : Prop)
+    (h : P → Q) :
+    ¬ Q → ¬ P := by
+  intro hnotQ
+  intro hP
+  apply hnotQ
+  apply h
+  exact hP
+```
+
+첫 `intro`로 `¬ Q`를 가정하면 목표는 `¬ P`이다.
+둘째 `intro`로 `P`를 가정하면 목표가 `False`로 바뀌며,
+`h`로 얻은 `Q`를 `hnotQ`와 함께 사용하여 모순을 보인다.
+
+대우는 두 명제의 자리만 바꾼 *역* $`Q\Rightarrow P`와 구별해야 한다.
+예를 들어 $`n=2`이면 $`n<4`이지만 $`n<4`인 수가 모두 $`2`인 것은 아니다.
+$`n=3`이 그 역의 반례이다.
+
+## 배중률과 이중 부정
+%%%
+tag := "sets-classical-logic"
+%%%
+
+$`P`가 성립하면 $`\neg\neg P`도 성립한다.
+실제로 $`\neg P`라고 가정하면 이미 알고 있는 $`P`와 모순이다.
+
+```savedLean
+theorem double_negation_intro (P : Prop)
+    (hP : P) :
+    ¬¬ P := by
+  intro hnotP
+  apply hnotP
+  exact hP
+```
+
+이번에는 반대 방향인 $`\neg\neg P\Rightarrow P`를 생각하자.
+가정은 `¬ P`의 증명을 받아 모순을 주지만, 목표인 `P`의 증명을 직접 제공하지는 않는다.
+여기서 고전논리의 *배중률*을 사용하자. 배중률은 모든 명제 $`P`에 대해
+$`P\lor\neg P`가 성립한다는 원리이다.
+
+$`P`인 경우에는 원하는 결론을 이미 갖고 있고,
+$`\neg P`인 경우에는 가정 $`\neg\neg P`와 모순이므로 어느 경우에도 $`P`를 얻는다.
+Lean에서는 `by_cases h : P`로 이 두 경우를 나눈다.
+첫 경우에는 `h : P`, 둘째 경우에는 `h : ¬ P`를 사용하며 목표는 양쪽 모두 `P`이다.
+
+```savedLean
+theorem double_negation_elim (P : Prop)
+    (h : ¬¬ P) :
+    P := by
+  by_cases hP : P
+  · exact hP
+  · have hFalse : False := by
+      apply h
+      exact hP
+
+    contradiction
+```
+
+이를 *이중 부정 제거*라고 한다. Lean의 정리 `Classical.not_not`도 `¬¬ P ↔ P`를 나타내므로
+그 정방향 `Classical.not_not.mp`로 같은 추론을 사용할 수 있다.
+
+이후에는 고전논리를 기본으로 사용하겠다. 다음 선언을 적으면 그 범위에서 고전논리를 사용할 수 있다.
+이 설정은 `import`로 다른 파일에 전달되지 않으므로 풀이 파일에도 같은 선언을 둔다.
+
+```savedLean
+open scoped Classical
+```
+
+한 증명 안에서만 설정할 때는 `classical`을 쓴다.
+
+## 귀류법과 대우의 역방향
+%%%
+tag := "logic-classical-proofs"
+%%%
+
+$`P`를 보이기 위해 $`\neg P`를 가정하여 모순을 얻는 방법을 *귀류법*이라고 한다.
+이 논증은 $`\neg\neg P`를 증명하므로 이중 부정 제거를 사용하면 $`P`를 얻는다.
+전술 `by_contra h`는 목표의 부정을 `h`로 가정하고 목표를 `False`로 바꾼다.
+
+```savedLean
+example (P : Prop)
+    (h : ¬¬ P) :
+    P := by
+  by_contra hnotP
+  apply h
+  exact hnotP
+```
+
+`¬ P`를 보이기 위해 `P`를 가정하는 `intro`와, `P`를 보이기 위해 `¬ P`를 가정하는 `by_contra`에서
+무엇이 목표이고 무엇이 임시 가정인지 비교하라.
+
+이중 부정 제거 정리를 직접 사용할 때는 `apply Classical.not_not.mp`로 목표 `P`를 `¬¬ P`로 바꾼다.
+그 목표의 증명을 이미 갖고 있으면 다음과 같이 마칠 수 있다.
+
+```savedLean
+example (P : Prop)
+    (h : ¬¬ P) :
+    P := by
+  apply Classical.not_not.mp
+  exact h
+```
+
+이제 대우에서 원래 함의를 얻어 보자.
+$`\neg Q\Rightarrow\neg P`를 알고 $`P`를 가정했다고 하자.
+만약 $`\neg Q`라면 대우에 따라 $`\neg P`를 얻어 모순이므로 귀류법으로 $`Q`이다.
+
+```savedLean
+theorem implication_of_contrapositive (P Q : Prop)
+    (h : ¬ Q → ¬ P) :
+    P → Q := by
+  intro hP
+  by_contra hnotQ
+  apply h hnotQ
+  exact hP
+```
+
+따라서 고전논리에서는 원래 함의와 그 대우가 동치이다.
+원래 함의에서 대우로 가는 방향과 달리, 위 역방향에서는 귀류법을 사용했다.
+
+```savedLean
+theorem implication_iff_contrapositive (P Q : Prop) :
+    (P → Q) ↔ (¬ Q → ¬ P) := by
+  constructor
+  · apply contrapositive
+  · apply implication_of_contrapositive
+```
+
+*문제 7* (함의가 성립하는 경우)
+
+고전논리에서 $`P\Rightarrow Q`일 필요충분조건은 $`\neg P\lor Q`임을 증명하라.
+각 방향의 증명에서 배중률이 필요한지 함께 확인하라.
+
+```savedLean -keep
+theorem exercise_implication_cases (P Q : Prop) :
+    (P → Q) ↔ (¬ P ∨ Q) := by
+  sorry
+```
+
+{anchor "logic-transformations"}[]
+
+## 드모르간 법칙
+%%%
+tag := "logic-de-morgan"
+%%%
+
+$`P` 또는 $`Q`가 성립한다는 주장이 거짓이라면 둘 중 어느 것도 성립할 수 없다.
+따라서 $`\neg(P\lor Q)`는 $`\neg P\land\neg Q`와 동치이다.
+이런 식으로 논리곱·논리합의 부정을 바꾸는 법칙을 *드모르간 법칙*이라고 한다.
+
+```savedLean
+theorem not_or_iff (P Q : Prop) :
+    ¬ (P ∨ Q) ↔ (¬ P ∧ ¬ Q) := by
+  constructor
+  · intro h
+    constructor
+    · intro hP
+      apply h
+      left
+      exact hP
+
+    · intro hQ
+      apply h
+      right
+      exact hQ
+
+  · intro h hOr
+    cases hOr with
+    | inl hP =>
+        apply h.left
+        exact hP
+    | inr hQ =>
+        apply h.right
+        exact hQ
+```
+
+정방향에서 `¬ P`를 보이는 내부 증명은 `P`를 가정하여 `P ∨ Q`를 만든 뒤 `h`와 모순을 얻는다.
+`¬ Q`도 같은 방식으로 증명한다. 역방향에서는 `P ∨ Q`의 어느 쪽이 주어져도 함께 주어진 부정과 모순이다.
+이 증명에는 배중률이나 귀류법을 쓰지 않았다.
+
+논리곱의 부정에서는 $`\neg(P\land Q)\leftrightarrow(\neg P\lor\neg Q)`이다.
+정방향에서 $`P`인지에 따라 나누자. $`\neg P`이면 결론의 왼쪽을 얻는다.
+$`P`이면 $`Q`까지 성립할 수는 없으므로 $`\neg Q`를 얻는다.
+
+```savedLean
+theorem not_and_iff (P Q : Prop) :
+    ¬ (P ∧ Q) ↔ (¬ P ∨ ¬ Q) := by
+  constructor
+  · intro h
+    by_cases hP : P
+    · right
+      intro hQ
+      apply h
+      constructor
+      · exact hP
+      · exact hQ
+
+    · left
+      exact hP
+
+  · intro h hAnd
+    cases h with
+    | inl hnotP =>
+        apply hnotP
+        exact hAnd.left
+    | inr hnotQ =>
+        apply hnotQ
+        exact hAnd.right
+```
+
+이 정방향에서는 `by_cases`로 배중률을 사용했다. 역방향은 `P ∧ Q`에서 필요한 한쪽을 꺼내 모순을 얻는다.
+
+## 함의의 반례
+%%%
+tag := "logic-negated-implication"
+%%%
+
+“$`P`이면 $`Q`이다”가 성립하지 않는 경우는 $`P`가 성립하면서 $`Q`가 성립하지 않는 경우이다.
+전제가 거짓인 경우에는 그 전제를 가정하여 모순에서 결론을 얻을 수 있으므로 함의의 반례가 되지 않는다.
+따라서 고전논리에서는 다음 동치가 성립한다.
+
+$$`\neg(P\Rightarrow Q)\ \longleftrightarrow\ P\land\neg Q.`
+
+정방향에서 먼저 $`P`를 보이자. 만약 $`\neg P`라면 $`P`를 가정했을 때 모순이므로 $`P\Rightarrow Q`를 얻어 가정과 모순이다.
+또 $`Q`가 성립하면 $`P`를 가정하든 하지 않든 $`Q`를 제시할 수 있으므로 역시 $`P\Rightarrow Q`가 되어 모순이다.
+
+```savedLean
+theorem not_imp_iff (P Q : Prop) :
+    ¬ (P → Q) ↔ (P ∧ ¬ Q) := by
+  constructor
+  · intro h
+    constructor
+    · by_contra hnotP
+      apply h
+      intro hP
+      have hFalse : False := by
+        apply hnotP
+        exact hP
+
+      contradiction
+
+    · intro hQ
+      apply h
+      intro hP
+      exact hQ
+
+  · intro h hPQ
+    apply h.right
+    apply hPQ
+    exact h.left
+```
+
+역방향에서는 $`P`와 $`\neg Q`를 알고 $`P\Rightarrow Q`를 가정한다.
+이 함의에 $`P`를 사용하면 $`Q`를 얻으므로 $`\neg Q`와 모순이다.
+
+## 자동 표현 정리
+%%%
+tag := "logic-auto-normalization"
+%%%
+
+고전논리에서 이중 부정을 제거하는 법을 확인했으므로 이후에는 이 변환을 자동으로 수행할 수도 있다.
+`open scoped Ample.Auto`를 선언하면 각 전술 전후에 표현을 정리하며,
+고전논리 설정이 켜져 있을 때 가정과 목표의 `¬¬ P`도 `P`로 정리한다.
+이 선언의 범위는 아래 `section`에서 `end`까지이며, 구체적인 정리 범위는 {ref "tactic-auto-normalization"}[전술 부록]에서 설명한다.
+
+```savedLean
+section
+open scoped Ample.Auto
+
+example (P : Prop)
+    (h : ¬¬ P) :
+    P := by
+  exact h
+
+end
+```
+
+
+# 술어와 양화사
+%%%
+tag := "logic-predicates-quantifiers"
+%%%
+
+“$`3`은 양의 자연수이다”는 명제이지만 “$`n`은 양의 자연수이다”라는 조건은 $`n`에 넣을 수에 따라 참과 거짓이 달라진다.
+이 조건을 나타내면 “모든 자연수가 양수이다”나 “양수인 자연수가 존재한다”도 표현할 수 있다.
+먼저 원소에 따라 달라지는 조건을 함수로 정의하고, 그 조건에 관한 명제로 범위를 넓혀 보자.
+
+## 함수의 정의
+%%%
+tag := "intro-functions"
+%%%
+
+```savedLean -show
+end ProofExamples
+namespace IntroExamples
+```
+
+{anchor "intro-function-application"}[]{anchor "intro-defining-functions"}[]
+더할 두 수를 인수로 받아 그 합을 구하는 함수를 정의하자.
+
+```savedLean
+def add (x y : Nat) : Nat := x + y
+```
+
+`(x y : Nat)`는 두 인수가 자연수라는 뜻이고, 뒤의 `: Nat`는 결과의 타입이다.
+함수값 $`f(x)`를 `f x`로 쓰는 것과 같이 `add 2 3`은 이 함수에 $`2`와 $`3`을 넣은 식이다.
+
+```lean (name := functionSum)
+#eval add 2 3
+```
+
+```leanOutput functionSum
+5
+```
+
+하나의 인수가 복잡한 식이면 괄호로 묶는다.
+`add (2 + 1) 4`에서는 $`2+1`과 $`4`를 더하며,
+`add 2 (add 3 4)`에서는 안쪽 함수값 $`7`과 $`2`를 더한다.
+
+```savedLean
+theorem add_two_three : add 2 3 = 5 := by
+  rfl
+```
+
+{anchor "intro-arguments-one-at-a-time"}[]`add x y`는 `(add x) y`로 읽는다.
+`add x`는 $`x`를 더하는 함수이며 여기에 $`y`를 넣어 합을 얻으므로
+`add`의 타입은 `Nat → (Nat → Nat)`이다.
+보통 괄호를 생략하여 `Nat → Nat → Nat`로 쓴다.
+앞에서 사용한 `Nat.add_lt_add_right h 2`도 증명 `h`와 자연수 `2`를 차례로 넣는 같은 표기이다.
+
+## 술어
+%%%
+tag := "intro-predicate-definitions"
+%%%
+
+{anchor "intro-predicates"}[]“$`n`은 양의 자연수이다”라는 조건에 $`3`을 넣으면 $`0<3`이고,
+$`0`을 넣으면 $`0<0`이다. 이처럼 원소마다 명제를 정하는 조건을 *술어*라고 한다.
+Lean에서는 수를 받아 명제를 돌려주는 함수로 나타낸다.
+
+```savedLean
+def positive : Nat → Prop := fun n => 0 < n
+```
+
+`Nat → Prop`은 자연수를 받아 명제를 돌려주는 함수의 타입이다.
+`fun n => 0 < n`은 수학의 $`n\mapsto(0<n)`을 나타내며,
+`def`로 이 함수에 `positive`라는 이름을 붙일 수 있다.
+앞의 `add`처럼 `def positive (n : Nat) : Prop := 0 < n`으로 정의해도 같은 술어이며,
+이후에는 함수의 타입을 먼저 적는 형태를 사용하겠다.
+`positive`는 술어이고 `positive 3`은 명제 $`0<3`이다.
+
+같은 방식으로 방정식의 해라는 조건도 나타낼 수 있다.
+자연수 $`a`를 고정하면 각 $`n`에 명제 $`n^2=a`가 대응된다.
+
+```savedLean
+def solvesSquare (a : Nat) : Nat → Prop :=
+  fun n => n * n = a
+```
+
+`solvesSquare 16 4`는 $`4\cdot4=16`이고,
+`solvesSquare 16 3`은 $`3\cdot3=16`이다.
+두 식 모두 명제이지만 첫째만 참이다.
+정의를 펼쳐 같은 명제가 되면 증명도 그대로 사용할 수 있다.
+가령 `h : positive n`은 `0 < n`의 증명으로 쓸 수 있다.
+
+함의를 증명할 때도 `fun`으로 인수를 받는 함수를 직접 쓸 수 있다.
+`P → P`의 증명은 받은 증명을 그대로 돌려주므로 다음과 같다.
+
+```savedLean
+example (P : Prop) : P → P :=
+  fun hP => hP
+```
+
+여기서 `hP`의 타입은 `P`이며 함수값도 `P`의 증명이다.
+앞에서 사용한 `intro hP`와 `exact hP`는 이 함수의 인수와 함수값을 단계별로 정한 것이다.
+
+*문제 8* (방정식의 해)
+
+(1) 앞에서 증명한 `exercise_four_square`를 사용하여 $`4`가 방정식 $`n^2=16`의 해임을 보이라.
+
+(2) 수의 값이 주어지지 않은 경우에도 해라는 가정에서 등식을 얻으라.
+
+```savedLean -keep
+theorem exercise_four_solves_square :
+    solvesSquare 16 4 := by
+  sorry
+
+theorem exercise_square_proof (a n : Nat)
+    (h : solvesSquare a n) :
+    n * n = a := by
+  sorry
+```
+
+```savedLean -show
+end IntroExamples
+namespace ProofExamples
+open IntroExamples
+open scoped Classical
+```
+
+## 전칭명제
 %%%
 tag := "proofs-universal-statements"
 file := "universal-statements"
@@ -689,6 +1235,8 @@ file := "universal-statements"
 모든 자연수는 $`0` 이상이므로 자연수 $`3`도 $`0` 이상이다.
 이 추론에서는 모든 자연수에 관한 사실에서 $`n=3`인 경우를 사용했다.
 이처럼 “모든 원소에서 성립한다”는 명제를 *전칭명제*라고 한다.
+원소 전체나 어떤 원소에 관해 말할 때 사용하는 기호를 *양화사*라고 하며,
+이러한 원소에 대한 양화를 다루는 논리를 *일차 논리*라고 한다.
 
 술어 `P : A → Prop`가 주어졌을 때
 “$`A`의 모든 원소 $`x`에서 $`P(x)`가 성립한다”는 명제는 `∀ x : A, P x`로 쓴다.
@@ -780,7 +1328,7 @@ example (A : Type) : ∀ x : A, x = x :=
 `fun x => ...`는 원소 `x`를 받고, `by rfl`은 그 원소에 관한 `x = x`의 증명을 만든다.
 어느 원소를 넣어도 이 논증을 사용할 수 있으므로 전칭명제의 증명이 된다.
 
-*문제 5* 두 원소에 관한 술어 `R : A → A → Prop`를 생각하자.
+*문제 9* 두 원소에 관한 술어 `R : A → A → Prop`를 생각하자.
 모든 원소 `x`, `y`에서 `R x y`가 성립한다는 사실을 주어진 원소 `a`, `b`에서 사용하라.
 첫 증명에서는 `apply`를 사용하고, 둘째 증명에서는 `exact h a b`처럼 인수를 직접 넣으라.
 
@@ -890,7 +1438,162 @@ example (f : Nat → Nat)
 이는 첫 절의 `comparisonProof`로 이미 증명한 사실이다.
 함수 $`f`의 구체적인 계산식을 몰라도 주어진 조건만으로 이 부등식을 얻을 수 있다.
 
-# 연습문제
+## 존재명제
+%%%
+tag := "logic-existence"
+%%%
+
+방정식 $`n^2=16`의 자연수 해가 존재함을 보이려면 $`n=4`를 제시하고 $`4^2=16`임을 확인하면 된다.
+이처럼 조건을 만족하는 원소가 하나 이상 있다는 명제를 *존재명제*라고 한다.
+술어 `P : A → Prop`에 대하여 `∃ x : A, P x`로 쓰며 `∃`는 `\exists`로 입력한다.
+
+목표가 존재명제일 때 `exists 4`를 쓰면 원소를 $`4`로 정하고 그 원소의 조건을 새 목표로 삼는다.
+
+```savedLean
+theorem square_sixteen_has_solution :
+    ∃ n : Nat, solvesSquare 16 n := by
+  exists 4
+```
+
+이 예제에서 남는 조건은 `4 * 4 = 16`이며 계산으로 확인되므로 `exists 4`가 증명까지 마친다.
+일반적인 조건에서는 원소를 택한 뒤 남은 목표를 계속 증명해야 한다.
+
+반대로 해가 존재한다는 사실을 알고 있다면 그 해와 함께 주어진 등식을 사용할 수 있다.
+전술 `rcases h with ⟨n, hn⟩`는 존재명제의 증명 `h`에서 원소를 `n`으로,
+그 원소가 조건을 만족한다는 증명을 `hn`으로 꺼낸다.
+꺾쇠괄호 `⟨`, `⟩`는 각각 `\<`, `\>`로 입력한다.
+
+```savedLean
+theorem square_solution_gives_square (a : Nat)
+    (h : ∃ n : Nat, solvesSquare a n) :
+    ∃ n : Nat, n * n = a := by
+  rcases h with ⟨n, hn⟩
+  exists n
+```
+
+`hn`은 `solvesSquare a n`, 곧 `n * n = a`의 증명이므로 같은 원소 `n`을 제시하면 된다.
+이때 `n`은 임의로 고른 원소가 아니라 가정 `h`가 존재를 보장하는 해이다.
+조건이 `P n ∧ Q n`처럼 여러 사실을 담으면 `rcases h with ⟨n, hP, hQ⟩`로 함께 분해할 수 있다.
+
+## 양화사의 순서
+%%%
+tag := "logic-quantifier-order"
+%%%
+
+모든 자연수 $`n`에 대해 $`n`보다 큰 자연수는 존재한다.
+이때 고르는 수는 $`n`에 따라 달라도 되므로 $`m=n+1`로 정하면 된다.
+이를 “모든 자연수보다 큰 자연수가 하나 존재한다”는 주장과 구별해야 한다.
+후자에서는 하나의 $`m`을 먼저 고른 뒤 어느 $`n`에도 같은 $`m`을 사용해야 한다.
+
+```savedLean
+theorem each_nat_has_larger_nat :
+    ∀ n : Nat, ∃ m : Nat, n < m := by
+  intro n
+  exists n + 1
+  apply Nat.lt_succ_self
+```
+
+`intro n`이 먼저 나오므로 `exists n + 1`에서 방금 받은 원소를 사용할 수 있다.
+마지막 정리 `Nat.lt_succ_self`는 모든 자연수에 대하여 `n < n + 1`임을 보장한다.
+양화사의 순서는 이처럼 어떤 원소를 고를 때 앞에서 받은 원소를 사용할 수 있는지도 정한다.
+
+*문제 10* (같은 원소의 사용)
+
+어떤 원소 $`x`가 모든 $`y`에 대하여 $`R(x,y)`를 만족한다고 하자.
+그러면 모든 $`y`에 대하여 $`R(x,y)`를 만족하는 원소가 존재함을 증명하라.
+
+```savedLean -keep
+theorem exercise_exists_forall_swap (A B : Type)
+    (R : A → B → Prop)
+    (h : ∃ x : A, ∀ y : B, R x y) :
+    ∀ y : B, ∃ x : A, R x y := by
+  sorry
+```
+
+## 양화사의 부정
+%%%
+tag := "logic-quantifier-negation"
+%%%
+
+방정식의 해가 존재하지 않는다는 것은 모든 수가 그 방정식의 해가 아니라는 뜻이다.
+술어 $`P`에 대해서도 $`\neg\exists x, P(x)`는 $`\forall x,\neg P(x)`와 동치이다.
+원소의 범위가 빈 타입이어도 두 주장은 모두 성립한다.
+
+```savedLean
+theorem not_exists_iff (A : Type) (P : A → Prop) :
+    (¬ ∃ x : A, P x) ↔ (∀ x : A, ¬ P x) := by
+  constructor
+  · intro h x hx
+    apply h
+    exists x
+
+  · intro h hExists
+    rcases hExists with ⟨x, hx⟩
+    apply h x
+    exact hx
+```
+
+정방향에서는 임의의 원소 `x`에서 `P x`를 가정하여 존재명제를 만들고 `h`와 모순을 얻는다.
+역방향에서는 존재명제에서 꺼낸 원소에 `h`를 사용하면 그 원소의 조건과 부정을 함께 얻는다.
+양쪽 모두 존재명제와 부정의 기본 규칙만 사용했다.
+
+이번에는 “모든 수가 양수이다”라는 주장을 부정해 보자.
+$`0`처럼 양수가 아닌 수 하나를 제시하면 이 주장이 거짓임을 알 수 있다.
+일반적으로도 반례가 있으면 전칭명제를 부정할 수 있다.
+고전논리에서는 그 역방향도 성립하여 전칭명제가 성립하지 않으면 반례가 존재한다.
+
+$$`\neg\bigl(\forall x, P(x)\bigr)\ \longleftrightarrow\ \exists x,\neg P(x).`
+
+정방향을 귀류법으로 증명하자. 반례가 없다고 가정하면 각 원소 $`x`에서 $`\neg P(x)`일 수 없다.
+이중 부정 제거로 $`P(x)`이므로 모든 원소에서 $`P`가 성립하여 처음 가정과 모순이다.
+
+```savedLean
+theorem not_forall_iff (A : Type) (P : A → Prop) :
+    (¬ ∀ x : A, P x) ↔ (∃ x : A, ¬ P x) := by
+  constructor
+  · intro h
+    by_contra hNoCounterexample
+    apply h
+    intro x
+    by_contra hnotPx
+    apply hNoCounterexample
+    exists x
+
+  · intro h hAll
+    rcases h with ⟨x, hnotPx⟩
+    apply hnotPx
+    exact hAll x
+```
+
+처음의 `by_contra`는 반례가 존재하지 않는다고 가정하고 `False`를 목표로 삼는다.
+`apply h` 뒤에는 `∀ x, P x`를 보여야 하며, `intro x` 뒤의 목표는 `P x`이다.
+둘째 `by_contra`로 `¬ P x`를 가정하면 이 원소 자체가 반례이므로 `hNoCounterexample`과 모순이다.
+
+`¬ (∀ x, P x)`는 모든 원소에서 `P`가 성립한다는 주장의 부정이다.
+이를 `∀ x, ¬ P x`와 혼동하지 않도록 하라. 양수가 아닌 자연수는 존재하지만 모든 자연수가 양수가 아닌 것은 아니다.
+
+*보기* 모든 원소가 $`P(x)\Rightarrow Q(x)`를 만족하지는 않는다고 하자.
+`not_forall_iff`에 술어 `fun x => P x → Q x`를 넣으면 그 함의가 성립하지 않는 원소의 존재를 얻는다.
+그 원소에서 `not_imp_iff`를 사용하면 $`P(x)`와 $`\neg Q(x)`를 얻는다.
+
+```savedLean
+theorem exists_counterexample (A : Type) (P Q : A → Prop)
+    (h : ¬ ∀ x, P x → Q x) :
+    ∃ x, P x ∧ ¬ Q x := by
+  have hIff : (¬ ∀ x : A, P x → Q x) ↔
+      (∃ x : A, ¬ (P x → Q x)) :=
+    not_forall_iff A (fun x => P x → Q x)
+  have hExists : ∃ x, ¬ (P x → Q x) := by
+    apply hIff.mp
+    exact h
+
+  rcases hExists with ⟨x, hx⟩
+  exists x
+  apply (not_imp_iff (P x) (Q x)).mp
+  exact hx
+```
+
+## 연습문제
 %%%
 tag := "proofs-exercises"
 file := "exercises"
@@ -899,7 +1602,7 @@ file := "exercises"
 전칭명제와 함의를 사용하여 여러 단계의 추론을 연결하라.
 다음 코드의 `sorry`를 증명으로 바꾸어 완성하라.
 
-*문제 6* 모든 원소 $`x`에서 $`P(x)\Rightarrow Q(x)`가 성립한다고 하자.
+*문제 11* 모든 원소 $`x`에서 $`P(x)\Rightarrow Q(x)`가 성립한다고 하자.
 또한 모든 원소에서 $`P(x)`가 성립하면 모든 원소에서 $`Q(x)`도 성립함을 보이라.
 
 ```savedLean -keep
@@ -925,7 +1628,7 @@ example (A : Type) (P Q : A → Prop) :
 ```
 :::
 
-*문제 7* (대소 관계를 보존하는 함수)
+*문제 12* (대소 관계를 보존하는 함수)
 
 자연수 함수 $`f`, $`g`가 각각 $`a<b`이면 $`f(a)<f(b)`, $`g(a)<g(b)`를 만족한다고 하자.
 
@@ -948,7 +1651,7 @@ theorem exercise_increasing_at_three_five
   sorry
 ```
 
-*문제 8* (함수값의 범위)
+*문제 13* (함수값의 범위)
 
 모든 자연수 $`n`에 대하여 $`f(n)<g(n)`이고 $`g(n)<n+10`이라고 하자.
 $`f(3)<13`임을 증명하라.
@@ -963,7 +1666,7 @@ theorem exercise_function_bound (f g : Nat → Nat)
   sorry
 ```
 
-*문제 9* (반복하여 유지되는 조건)
+*문제 14* (반복하여 유지되는 조건)
 
 함수 $`f:A\to A`가 조건 $`P`를 유지한다고 하자.
 즉 $`P(x)`이면 $`P(f(x))`이다.
@@ -986,7 +1689,7 @@ theorem exercise_property_four_times (A : Type)
   sorry
 ```
 
-*문제 10* (두 인수의 역할)
+*문제 15* (두 인수의 역할)
 
 두 원소에 관한 조건 `R`와 함수 `f`가 주어져 있다.
 `R x y`에서 `R y (f x)`를 얻을 수 있다고 하자.
@@ -1010,6 +1713,190 @@ theorem exercise_relation_iterate_twice {A : Type}
     (a b : A)
     (hab : R a b) :
     R (f (f a)) (f (f b)) := by
+  sorry
+```
+
+
+*문제 16* (양화사의 순서와 반례)
+
+모든 자연수 $`n`에 대해 $`n<m`인 자연수 $`m`이 존재함은 앞에서 보였다.
+정리 `Nat.lt_irrefl m`은 `¬ m < m`의 증명이다.
+이를 사용하여 모든 자연수보다 큰 자연수 하나가 존재하지는 않음을 증명하라.
+
+```savedLean -keep
+theorem exercise_no_largest_nat :
+    ¬ ∃ m : Nat, ∀ n : Nat, n < m := by
+  sorry
+```
+
+# 등식
+%%%
+tag := "logic-equality"
+%%%
+
+{anchor "logic-predicate-comparison"}[]두 식이 같은 대상을 나타내면 그 대상에 관한 조건에서도 서로 바꾸어 사용할 수 있다.
+가령 $`a=b`이고 $`a<5`이면 $`b<5`이다.
+
+## 등식의 사용
+%%%
+tag := "logic-equality-substitution"
+%%%
+
+전술 `rw [h]`는 등식 `h`의 왼쪽을 오른쪽으로 바꾼다.
+반대 방향으로 바꿀 때는 `rw [← h]`로 쓰며 `←`는 `\l`로 입력한다.
+
+```savedLean
+example (a b : Nat)
+    (h : a = b)
+    (ha : a < 5) :
+    b < 5 := by
+  rw [← h]
+  exact ha
+```
+
+`rw [← h]` 뒤에는 목표가 `a < 5`이므로 가정 `ha`를 쓸 수 있다.
+가정 안에서 바꿀 때는 `rw [h] at ha`처럼 적용할 위치를 지정한다.
+`symm`은 등식인 목표의 양변을 바꾸므로 `b = a`를 보일 때 `a = b`를 새 목표로 삼을 수 있다.
+
+```savedLean
+example (A : Type) (a b : A)
+    (h : a = b) :
+    b = a := by
+  symm
+  exact h
+```
+
+{anchor "logic-applying-functions"}[]같은 두 대상에 같은 함수를 적용하면 그 함수값도 같다.
+가령 $`a=b`이면 양변에 $`1`을 더하여 $`a+1=b+1`을 얻는다.
+`apply_fun`은 등식의 양변에 지정한 함수를 적용하는 전술이다.
+
+```savedLean
+example (a b : Nat)
+    (h : a = b) :
+    a + 1 = b + 1 := by
+  apply_fun (fun x => x + 1) at h
+  exact h
+```
+
+`fun x => x + 1`은 수에 $`1`을 더하는 함수이다.
+이 함수를 등식 `h`의 양변에 적용하면 `h : a + 1 = b + 1`이 되어 목표의 증명으로 사용할 수 있다.
+다른 함수에 대해서도 같은 방식으로 함수값의 등식을 얻는다.
+
+## 모든 술어에 대한 양화
+%%%
+tag := "logic-higher-order-quantification"
+%%%
+
+등식에서의 치환은 어떤 조건에서도 사용할 수 있다.
+이 성질을 하나의 명제로 표현하려면 원소에 따라 조건을 정하는 술어 자체에 대해 양화해야 한다.
+
+어떤 조건을 $`3`이 만족한다면 그 조건을 만족하는 자연수가 존재한다.
+양수라는 조건이면 $`3`이 양수인 자연수의 예이고, 홀수라는 조건이면 $`3`이 홀수인 자연수의 예이다.
+어떤 술어를 사용하든 같은 추론이 성립하므로 술어 자체에 대해 다음과 같이 양화할 수 있다.
+
+```savedLean
+example : ∀ P : Nat → Prop, P 3 → ∃ n : Nat, P n := by
+  intro P hThree
+  exists 3
+```
+
+첫 `intro`에서 받는 `P`는 자연수가 아니라 `Nat → Prop` 타입의 술어이다.
+`hThree : P 3`을 알고 있으므로 `exists 3`으로 조건에 맞는 원소와 그 증명을 제시한다.
+이처럼 원소에 대한 함수나 술어 자체도 양화의 대상으로 삼는 논리를 *고차 논리*라고 한다.
+
+앞의 등식 치환도 모든 술어에 대한 명제로 표현할 수 있다. 이를 등식의 *라이프니츠 법칙*이라고 한다.
+즉 $`x=y`이면 어떤 조건 $`F`에 대해서도 $`F(x)\leftrightarrow F(y)`이다.
+
+```savedLean
+theorem equality_preserves_predicates (A : Type)
+    (x y : A)
+    (h : x = y) :
+    ∀ F : A → Prop, F x ↔ F y := by
+  intro F
+  rw [h]
+```
+
+여기서 `∀ F`는 모든 원소가 아니라 모든 술어에 관한 양화이다.
+역방향도 성립한다. 모든 조건에서 두 원소가 구별되지 않는다고 하면,
+특히 “$`x`와 같다”는 조건 `fun z => x = z`를 사용할 수 있다.
+이 조건은 $`x`에서 성립하므로 $`y`에서도 성립하여 $`x=y`를 얻는다.
+따라서 등식을 다음과 같이 특징지을 수 있다.
+
+```savedLean
+theorem equality_iff_all_predicates (A : Type) (x y : A) :
+    x = y ↔ ∀ F : A → Prop, F x ↔ F y := by
+  constructor
+  · apply equality_preserves_predicates
+  · intro h
+    have hxy : x = x ↔ x = y :=
+      h (fun z => x = z)
+    apply hxy.mp
+    rfl
+```
+
+역방향에서는 `h`에 “`x`와 같다”는 술어를 넣어 동치 `x = x ↔ x = y`를 얻고 그 증명에 `hxy`라는 이름을 붙였다.
+`apply hxy.mp` 뒤에는 `x = x`만 보이면 되므로 `rfl`로 마친다.
+여기서는 Lean의 등식을 그대로 사용하여 그 성질을 증명했다.
+
+{anchor "sets-proposition-extensionality"}[]
+
+## 술어의 외연성
+%%%
+tag := "logic-predicate-extensionality"
+%%%
+
+$`P(x)\land Q(x)`와 $`Q(x)\land P(x)`는 같은 원소들에서 성립하는 조건이다.
+논리식을 다르게 적었더라도 모든 원소에서 두 조건이 동치이면 두 술어를 같다고 보는 원리가 *술어의 외연성*이다.
+Lean에서는 다음 가정에서 술어의 등식 `P = Q`를 얻는다.
+
+```
+h : ∀ x, P x ↔ Q x
+⊢ P = Q
+```
+
+술어는 원소를 명제로 보내는 함수이므로 먼저 원소 하나에서의 값을 비교한다.
+전술 `funext x`는 이 등식을 임의의 원소 `x`에서 `P x = Q x`를 보이는 목표로 바꾼다.
+이 단계에서 가정 `h x`의 명제는 `P x ↔ Q x`이므로 아직 목표와 형태가 다르다.
+
+다음은 이 단계에서 멈춘 미완성 증명이다.
+중간 사실 `hx`를 얻었지만 목표는 `P x = Q x`이므로 그 증명을 그대로 제시할 수는 없다.
+
+```tryLean +error -keep
+example (A : Type) (P Q : A → Prop)
+    (h : ∀ x, P x ↔ Q x) :
+    P = Q := by
+  funext x
+  have hx : P x ↔ Q x :=
+    h x
+```
+
+두 명제의 동치에서 그 명제의 등식을 얻는 원리를 *명제의 외연성*이라고 한다.
+Lean에서는 `apply propext`로 등식 `P x = Q x`를 동치 `P x ↔ Q x`를 보이는 목표로 바꾼다.
+
+```savedLean
+theorem predicate_ext (A : Type _) (P Q : A → Prop)
+    (h : ∀ x, P x ↔ Q x) :
+    P = Q := by
+  funext x
+  apply propext
+  exact h x
+```
+
+두 단계로 남은 목표가 가정 `h x`와 같아졌으므로 `exact h x`로 증명을 마친다.
+여기서 `Type _`의 `_`는 타입의 수준을 Lean이 추론하도록 둔 표시이며 증명에서는 앞의 `Type`과 같은 방식으로 사용한다.
+이 외연성은 배중률과는 별개의 원리이며 고전논리를 사용하지 않아도 성립한다.
+다음 장에서는 집합을 술어로 나타내고 이 원리로 집합의 같음을 증명한다.
+일반적인 함수의 같음도 함수값을 비교하는 같은 방식으로 다룬다.
+
+*문제 17* (같은 조건을 나타내는 술어)
+
+술어 $`P`, $`Q`에 대하여 “$`P`이고 $`Q`이다”와 “$`Q`이고 $`P`이다”를 나타내는 두 술어가 같음을 증명하라.
+앞의 `conjunction_comm`으로 원소마다 두 방향을 증명할 수 있다.
+
+```savedLean -keep
+theorem exercise_predicate_conjunction_comm (A : Type)
+    (P Q : A → Prop) :
+    (fun x => P x ∧ Q x) = (fun x => Q x ∧ P x) := by
   sorry
 ```
 

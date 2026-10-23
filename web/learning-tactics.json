@@ -37,6 +37,62 @@
       [
         "replace"
       ]
+    ],
+    [
+      "logic-conjunction",
+      [
+        "constructor",
+        "and_intros"
+      ]
+    ],
+    [
+      "logic-disjunction",
+      [
+        "cases",
+        "left",
+        "right"
+      ]
+    ],
+    [
+      "logic-negation",
+      [
+        "trivial",
+        "contradiction"
+      ]
+    ],
+    [
+      "sets-classical-logic",
+      [
+        "by_cases",
+        "by_contra",
+        "classical"
+      ]
+    ],
+    [
+      "logic-existence",
+      [
+        "exists",
+        "rcases"
+      ]
+    ],
+    [
+      "logic-equality-substitution",
+      [
+        "rw",
+        "symm"
+      ]
+    ],
+    [
+      "logic-applying-functions",
+      [
+        "apply_fun"
+      ]
+    ],
+    [
+      "logic-predicate-extensionality",
+      [
+        "funext"
+      ]
     ]
   ],
   "SetsFunctions": [
@@ -50,25 +106,6 @@
       ]
     ],
     [
-      "sets-basic-subsets",
-      [
-        "trivial",
-        "contradiction"
-      ]
-    ],
-    [
-      "sets-intersections-and-conjunctions",
-      [
-        "constructor"
-      ]
-    ],
-    [
-      "sets-function-extensionality",
-      [
-        "funext"
-      ]
-    ],
-    [
       "sets-proving-set-equality",
       [
         "ext",
@@ -76,48 +113,9 @@
       ]
     ],
     [
-      "sets-equality-comparisons",
+      "functions-unpack",
       [
-        "rw",
-        "symm"
-      ]
-    ],
-    [
-      "sets-unions-and-disjunctions",
-      [
-        "cases",
-        "left",
-        "right"
-      ]
-    ],
-    [
-      "sets-classical-logic",
-      [
-        "by_cases",
-        "by_contra",
-        "dne",
-        "classical"
-      ]
-    ],
-    [
-      "functions-image",
-      [
-        "exists",
-        "rcases"
-      ]
-    ],
-    [
-      "functions-element-equality",
-      [
-        "indisc",
-        "indisc!",
         "unpack"
-      ]
-    ],
-    [
-      "functions-congruence",
-      [
-        "congr"
       ]
     ],
     [
@@ -145,12 +143,6 @@
       [
         "arith",
         "suffices"
-      ]
-    ],
-    [
-      "preliminaries-equivalence-relations",
-      [
-        "and_intros"
       ]
     ]
   ],

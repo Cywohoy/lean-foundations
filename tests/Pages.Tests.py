@@ -111,8 +111,8 @@ for entries in sections.values():
             assert f'id="{entry["id"]}"' in page.read_text(encoding='utf-8'), entry
 exercise_items = sorted((v for v in json.loads((book / 'playground.json').read_text(encoding='utf-8')).values()
                          if v.get('exercise')), key=lambda v: v['exerciseOrder'])
-assert [v['exerciseOrder'] for v in exercise_items] == list(range(82))
-for chapter, count in [('proof', 10), ('sets-functions', 28), ('numbers-relations', 22), ('sizes', 22)]:
+assert [v['exerciseOrder'] for v in exercise_items] == list(range(89))
+for chapter, count in [('proof', 17), ('sets-functions', 28), ('numbers-relations', 22), ('sizes', 22)]:
     numbers = [v['exerciseNumber'] for v in exercise_items if v['exerciseChapter'] == chapter]
     assert numbers == list(range(1, count + 1)), (chapter, numbers)
 progress_index = json.loads((book / 'exercises.json').read_text(encoding='utf-8'))

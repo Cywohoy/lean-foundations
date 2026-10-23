@@ -12,3 +12,11 @@ Exercises/
 .env.*
 *.local
 web/wasm-runtime.local.json
+review/local/
+# Personal editorial history; retain locally, never publish as project sources.
+/REVIEW.md
+/EDITORIAL_REVIEW.md
+/RESTRUCTURING_PLAN.md
+/WORK_QUEUE.md
+/review/state.json
+/review/reports/
